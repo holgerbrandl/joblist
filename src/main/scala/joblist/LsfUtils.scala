@@ -28,11 +28,7 @@ object LsfUtils {
 
 
   /** Submits a task to the LSF. */
-  def bsub(cmd: String,
-           name: Option[String] = None,
-           joblist: JobList = new JobList(".jobs"),
-           numCores: Int = 1, queue: String = "short", otherArgs: String = "",
-           workingDirectory: File = File(".")) = {
+  def bsub(cmd: String, name: Option[String] = None, joblist: JobList = new JobList(".jobs"), queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")) = {
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
     val jobName = name.getOrElse(buildJobName(workingDirectory, cmd))

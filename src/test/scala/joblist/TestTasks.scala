@@ -11,8 +11,8 @@ import scalautils.Bash.BashMode
   *
   * @author Holger Brandl
   */
-// note change to class to disable test
-object TestTasks extends FlatSpec with Matchers {
+// note change to object to disable test
+class TestTasks extends FlatSpec with Matchers {
 
   //  import Matchers._
 
@@ -85,4 +85,11 @@ class playground extends App {
 
 
   private val failedJobs = jobRunner.joblist
+}
+
+
+class lsf_test extends App {
+
+  val jobId = LsfUtils.bsub("touch test_lsf.txt")
+  LsfUtils.wait4jobs()
 }

@@ -6,74 +6,73 @@ An hpc-ready task list manager. Among others it supports monitoring, automatic r
 
 JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs is finished. It can output average runtime statistics and estimates when the entire jobList should be finished. 'jl' can recover crashed jobs and submit them again.
 
-Joblists are simply lists of job-ids
+Joblists are simply lists of job-ids as reported by the underlying queuing system. Currently lsf, slurm and the local shell are supported as job runners.
+
+
+Installation
+------------
+
+```
+cd ~/bin
+https://github.com/holgerbrandl/datautils/archive/v1.20.tar.gz  | tar -zxvf -
+echo $(pwd)/joblist_v1.0:PATH >> ~/.bash_profile
+```
+
+Java8 is required to run JobList
+
+
+Basic Usage
+-----------
+
 
 ```
 jl --help
 jl --version
-jl wait
-jl check
-jl totop
 
-etc.
+
+## submit some jobs and wait until all of them are done:
+```
+busb "hello foo" | jl add
+busb "hello bar" | jl add
+
+jl wait
 ```
 
-Jobs can be
+All `jl` commands use `.jobs` as a default list, but you can provide your own for clarity:
+```
+busb "sleep 3" | jl add .other_jobs
+```
 
-a task runner with a Scala API to write HPC workflows
 
-`
+API Usage
+---------
 
+In addition to the provided shell utilities, joblist is also usable programmatically. Here's an example
+```
 
-How to assemble?
+```
+
+How to build?
 -----------------
 
 
+To package into a stand-alone jar run
 ```
 sbt assembly
 ```
-This will require bsub to be availabe since we run some tests prior to packageing
 
-
-
-Shell Integration
-------------------
-
-## todo continue this
+To deploy into the local ivy-index run
 
 ```
+sbt publishLocal
 
-jarFile=/home/brandl/Dropbox/cluster_sync/scalautils/target/scala-2.11/scalautils-assembly-0.1-SNAPSHOT.jar
-launcherScript=...
-
-
-export PATH=/home/brandl/Dropbox/cluster_sync/scalautils/src/main/scala/scalautils/tasks:$PATH
-/Users/brandl/Dropbox/cluster_sync/scalautils/src/main/scala/scalautils/tasks
-
-joblist(){
-    jl add $*
-}
-
-wait4jobs(){
-    jl wait $*
-}
+To run the tests you either need `bsub` and some of the lsf tools in your path. Alternativly you can also use/source the provided (dummy tools)(https://github.com/holgerbrandl/joblist/blob/master/scripts/fake_lsf.sh)
 
 
-```
-
-
-Misc
---------
-
-
-How to run?
-```
-sbt assembly
-java -cp ./target/scala-2.11/scalautils-assembly-0.1-SNAPSHOT.jar scalautils.tasks.JobListCLI
-```
 
 Related Projects
 ----------------
 
 
-* [para](https://github.com/hillerlab/ParasolLSF/)
+* [para](https://github.com/hillerlab/ParasolLSF/) is a parasol-like wrapper around LSF for efficiently handling batches of jobs on a compute cluster
+* [Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home)  is a workflow management system

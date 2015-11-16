@@ -1,10 +1,10 @@
 package joblist
 
+import better.files.File
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
-
-;
+import scala.collection.mutable
 
 
 /**
@@ -16,6 +16,7 @@ object JobListCLI extends App {
 
   val version = 0.1
 
+  val DEFAULT_JL = ".jobs"
 
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
     println(s"""
@@ -27,12 +28,19 @@ object JobListCLI extends App {
     System.exit(0)
   }
 
-  if (args.length == 0 && (args(0) == "-h" || args(0) == "--help")) {
-    Console.err.println(s"""Usage: jl <command> [options] [joblist_file]
+  if (args.length == 0 && (args.length == 1 && (args(0) == "-h" || args(0) == "--help"))) {
+    printUsageAndExit()
+
+  }
+
+
+  def printUsageAndExit(): Unit = {
+    Console.err.println("""Usage: jl <command> [options] <joblist_file>
     Supported commands are
-      add   Allows to feeed stderr in jl which will extract the job-id and add it to the list
-      wait  Wait for a list of tasks to finish
-      up    Moves a list of jobs to the top of a queue (if supported by the used queuing system
+      add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
+      wait      Wait for a list of tasks to finish
+      up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
+      shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
 
     By default joblists are trimmed to the right margin of th e
       """)
@@ -41,39 +49,88 @@ object JobListCLI extends App {
   }
 
 
-  val argsNoTask = args.toList
+  val argList = args.toList
 
 
-  args(0) match {
-    case "add" => add(argsNoTask)
-    case "wait" => wait4jl(argsNoTask)
+  argList.head match {
+    case "add" => add(argList)
+    case "wait" => wait4jl(argList)
+    case "up" => ???
+    case "kill" => ???
+    case "chill" => ???
+    case "shortcuts" => shortcuts(argList)
+    case _ => printUsageAndExit()
   }
 
 
-  def add(argsNoTask: List[String]) = {
-    //    def args() = "--chunk_size 5 /home/brandl/Dropbox/cluster_sync/scalautils/src/test/resources/bio/some_seqs_first_20.fasta".split(" ").toList
+  def add(args: List[String]) = {
+    //    def args() = "jl add .test_jobs".split(" ").toList
+    val doc = "Usage: jl add [options] <joblist_file>"
+
+    val results = new Docopt(doc).withExit(false).parse(args).map { case (key, value) => key -> value.toString }
+
+    val jlFile = getJlFileFromOpts(results)
+
+    val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "")
+    jlFile.appendLine(jobId)
+  }
+
+
+  def wait4jl(args: List[String]) = {
     val doc =
       """
-    Usage: jl add [options] [joblist_file]
-
+    Usage: jl wait [options] <joblist_file>
     Options:
-     --chunk_size <chunk_size>  The number of sequences per chunk [default: 400]
+     --num_resubmits <num_submits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 3]
       """.stripMargin
 
-    val results = new Docopt(doc).parse(argsNoTask).map { case (key, value) => key -> value.toString }
+    val results = new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }
+
+    val jlFile = getJlFileFromOpts(results)
+
+    val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "")
+    jlFile.appendLine(jobId)
 
   }
 
 
-  def wait4jl(argsNoTask: List[String]) = {}
+  def toTop(args: List[String]) = {}
 
 
-  def toTop(argsNoTask: List[String]) = {}
+  def kill(args: List[String]) = {
+    val doc =
+      """Usage: jl kill [options] <joblist_file>
+
+Options:
+ --chunk_size <chunk_size>  The number of sequences per chunk [default: 400]
+"""
+
+    val results = new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }
+
+  }
 
 
-  def stats(argsNoTask: List[String]) = {}
+  def stats(args: List[String]) = {}
 
 
-  // todo continue
+  def shortcuts(args: List[String]) = {
+    println("""
+joblist(){
+  jl add $*
+}
 
+wait4jobs(){
+  jl wait $*
+}
+
+wait4jobs(){
+  jl wait $*
+}
+""")
+  }
+
+
+  def getJlFileFromOpts(results: mutable.Map[String, String]): File = {
+    File(Option(results("<joblist_file>")).getOrElse(DEFAULT_JL))
+  }
 }
