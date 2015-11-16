@@ -1,10 +1,10 @@
-package scalautils.tasks
+package joblist
 
 import better.files.File
 
-import scalautils.tasks.Tasks.BashSnippet
+import scalautils.Bash
+import scalautils.tasks.Tasks._
 
-;
 
 
 /**

@@ -1,4 +1,8 @@
-package scalautils.tasks
+package joblist
+
+import org.docopt.Docopt
+
+import scala.collection.JavaConversions._
 
 ;
 
@@ -56,8 +60,7 @@ object JobListCLI extends App {
      --chunk_size <chunk_size>  The number of sequences per chunk [default: 400]
       """.stripMargin
 
-    val results = new Docopt(doc).parse(args()).map { case (key, value) => key -> value.toString }
-
+    val results = new Docopt(doc).parse(argsNoTask).map { case (key, value) => key -> value.toString }
 
   }
 

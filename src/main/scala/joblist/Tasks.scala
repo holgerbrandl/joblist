@@ -1,9 +1,11 @@
-package scalautils.tasks
+package joblist
 
 import java.util.concurrent.Executors
 
+import better.files.File
+
 import scala.concurrent.ExecutionContext
-;
+import scalautils.Bash
 
 
 /**

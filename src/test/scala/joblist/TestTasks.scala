@@ -1,6 +1,7 @@
 package joblist
 
 import better.files._
+import org.scalatest.{FlatSpec, Matchers}
 
 import scalautils.tasks.JobList
 import scalautils.tasks.Tasks.{BashSnippet, LsfExecutor, StringOps}
