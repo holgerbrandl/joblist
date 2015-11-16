@@ -19,7 +19,7 @@ object LsfUtils {
 
 
   def wait4jobs(joblist: JobList = new JobList(".jobs"), withReport: Boolean = false) = {
-    joblist.waitUntilDone(withReport)
+    joblist.waitUntilDone()
 
   }
 
@@ -41,17 +41,19 @@ object LsfUtils {
     val logsDir = workingDirectory / ".logs"
     logsDir.createIfNotExists(true)
 
-    val cmdLog = logsDir / s"$jobName.cmd"
-    require(cmdLog.notExists)
+    val jobLogs = JobLogs(name.get, joblist)
 
+    val cmdLog = jobLogs.cmd
+    require(cmdLog.notExists)
     cmdLog.write(cmd)
-    (logsDir / s"$jobName.lsfargs").write(lsfArgs)
+
+    jobLogs.queueArgs.write(lsfArgs)
 
 
     // submit the job to the lsf
     val bsubCmd = s"""
     cd '${workingDirectory.fullPath}'
-    bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/$jobName.err.log 1>.logs/$jobName.out.log'
+    bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/${jobLogs.err} 1>.logs/${jobLogs.out}'
     """
 
     val bsubStatus = Bash.eval(bsubCmd).stderr
@@ -63,7 +65,7 @@ object LsfUtils {
       throw new RuntimeException(s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
 
     val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
-    (logsDir / s"$jobName.jobid").write(jobID.toString)
+    jobLogs.idLog.write(jobID.toString)
 
     jobID
   }

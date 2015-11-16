@@ -4,7 +4,6 @@ import better.files.File
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 
 
 /**
@@ -42,10 +41,15 @@ object JobListCLI extends App {
       up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
       shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
 
-    By default joblists are trimmed to the right margin of th e
+    If no <joblist_file> is providd, jl will use '.jobs' as default
       """)
 
     System.exit(0)
+  }
+
+
+  def getJL(results: Map[String, String]) = {
+    new JobList(File(Option(results("<joblist_file>")).getOrElse(DEFAULT_JL)))
   }
 
 
@@ -55,25 +59,27 @@ object JobListCLI extends App {
   argList.head match {
     case "add" => add(argList)
     case "wait" => wait4jl(argList)
-    case "up" => ???
-    case "kill" => ???
+    case "up" => btop(argList)
+    case "kill" => kill(argList)
     case "chill" => ???
     case "shortcuts" => shortcuts(argList)
     case _ => printUsageAndExit()
   }
 
 
+  def parseArgs(args: List[String], doc: String) = {
+    new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }.toMap
+  }
+
+
   def add(args: List[String]) = {
-    //    def args() = "jl add .test_jobs".split(" ").toList
-    val doc = "Usage: jl add [options] <joblist_file>"
+    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
 
-    val results = new Docopt(doc).withExit(false).parse(args).map { case (key, value) => key -> value.toString }
-
-    val jlFile = getJlFileFromOpts(results)
+    val jl = getJL(results)
 
     try {
       val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "").toInt
-      jlFile.appendLine(jobId + "")
+      jl.file.appendLine(jobId + "")
       jobId
     } catch {
       case e: Throwable => throw new RuntimeException("could not extract jobid from stdin")
@@ -85,34 +91,34 @@ object JobListCLI extends App {
     val doc =
       """
     Usage: jl wait [options] <joblist_file>
+
     Options:
      --num_resubmits <num_submits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 3]
       """.stripMargin
 
-    val results = new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }
+    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
 
-    val jlFile = getJlFileFromOpts(results)
-    JobList(jlFile).waitUntilDone()
+    getJL(results).waitUntilDone()
   }
 
 
-  def toTop(args: List[String]) = {}
-
+  def btop(args: List[String]) = {
+    val results = parseArgs(args, "Usage: jl up <joblist_file>")
+    getJL(results).btop()
+  }
 
   def kill(args: List[String]) = {
-    val doc =
-      """Usage: jl kill [options] <joblist_file>
-
-Options:
- --chunk_size <chunk_size>  The number of sequences per chunk [default: 400]
-"""
-
-    val results = new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }
-
+    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+    getJL(results).kill()
   }
 
 
-  def stats(args: List[String]) = {}
+  def stats(args: List[String]) = {
+    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+    val jl = getJL(results)
+
+    // todo dump some table or other format
+  }
 
 
   def shortcuts(args: List[String]) = {
@@ -124,15 +130,7 @@ joblist(){
 wait4jobs(){
   jl wait $*
 }
-
-wait4jobs(){
-  jl wait $*
-}
 """)
   }
 
-
-  def getJlFileFromOpts(results: mutable.Map[String, String]): File = {
-    File(Option(results("<joblist_file>")).getOrElse(DEFAULT_JL))
-  }
 }

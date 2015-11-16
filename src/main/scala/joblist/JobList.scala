@@ -12,15 +12,41 @@ import scalautils.Bash
   *
   * @author Holger Brandl
   */
+
+private case class JobLogs(name: String, jl: JobList) {
+
+  def idLog = jl.file.parent / s".logs/$name.jobid"
+
+
+  val id: Int = {
+    require(idLog.isRegularFile)
+
+    idLog.lines.next().toInt
+  }
+
+  val cmd = jl.file.parent / s".logs/$name.cmd"
+  val err = jl.file.parent / s".logs/$name.err.log"
+  val out = jl.file.parent / s".logs/$name.out.log"
+  val stats = jl.file.parent / s".logs/$name.out.log"
+  val queueArgs = jl.file.parent / s".logs/$name.args"
+}
+
+
 case class JobList(file: File = File(".joblist")) extends AnyRef {
+
 
   def this(name: String) = this(File(name))
 
 
+  //
+  // Commands
+  //
+
   def btop() = Bash.eval(s"cat ${file.fullPath} | xargs -L1 btop")
 
 
-  def jobsIds: List[Int] = file.lines.map(_.toInt).toList
+  def kill() = logs.map(job => s"bkill ${job.id}").foreach(Bash.eval)
+
 
 
   def isRunning: Boolean = {
@@ -30,22 +56,36 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
     val alreadyDone = jobsIds.diff(inQueue)
 
     // write log file for already finished jobs (because  bjobs will loose history data soon)
-    ids2names.filterKeys(!alreadyDone.contains(_)).keySet.foreach(logFinalStats)
+    logs.filter(!alreadyDone.contains(_.)).foreach(logFinalStats)
 
     inQueue.intersect(jobsIds).isEmpty
   }
 
 
-  private def logFinalStats(jobId: Int): Any = {
+  def logsDir = file.parent / ".logs"
+
+
+  // build forward map
+  def logs = logsDir.
+    glob("*.jobid").
+    map(idFile => idFile.lines.mkString.toInt -> idFile.nameWithoutExtension).toMap.
+    filterKeys(jobsIds.contains(_)).
+    values.map(JobLogs(_, this))
+
+
+  def jobsIds: List[Int] = file.lines.map(_.toInt).toList
+
+
+  private def logFinalStats(job: JobLogs): Any = {
     // val jobId=736227
 
-    val statsFile = logsDir / (ids2names.get(jobId) + ".stats")
+    val statsFile = job.stats
 
     if (statsFile.notExists) {
       return
     }
 
-    val stats = Bash.eval(s"bjobs -lW $jobId").stdout.drop(0)
+    val stats = Bash.eval(s"bjobs -lW ${job.id}").stdout.drop(0)
     //    JobId,User,Stat,Queue,FromHost,ExecHost,JobName,SubmitTime,ProjName,CpuUsed,Mem,Swap,Pids,StartTime,FinishTime
     statsFile.write(stats)
   }
@@ -56,16 +96,6 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
     // tbd create bjobs -l snapshot for all jobs (becaus some might have slipped through because too short
   }
-
-
-  def logsDir = file.parent / ".logs"
-
-
-  // build forward map
-  def ids2names = logsDir.
-    glob("*.jobid").
-    map(idFile => idFile.lines.mkString.toInt -> idFile.nameWithoutExtension).toMap.
-    filterKeys(jobsIds.contains(_))
 
 
 
@@ -80,7 +110,7 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
     val isKilled: (File) => Boolean = jobIdFile => killedJobs.contains(jobIdFile.lines.mkString.toInt) // predicate function
 
 
-    val killedId2Names = ids2names.filterKeys(killedJobs.contains(_))
+    val killedId2Names = logs.filterKeys(killedJobs.contains(_))
 
     //  case class SnippetWithStatus(snippet:BashSnippet, prevJobId:Int)
 

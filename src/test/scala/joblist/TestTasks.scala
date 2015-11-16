@@ -21,6 +21,26 @@ class TestTasks extends FlatSpec with Matchers {
   wd.list.map(_.delete())
 
 
+  it should "submit a job, capture streams, wait for finish, and collect basic stats" in {
+
+    // todo clean up directory
+
+    val jobName = "testjob_" + System.currentTimeMillis()
+
+    val jobId = LsfUtils.bsub("""
+    sleep 3
+    echo "hello stderr" >&2
+    echo "hello stdout"
+    touch test_lsf.txt
+    """, name = Some(jobName))
+
+    JobList().waitUntilDone()
+
+    JobList().getJob
+    JobList().stderr()
+    (wd / ".logs/jobName.stderr").list.filter(_.name.contains("lsf")).next().lines.next should include("medium")
+  }
+
   it should "submit some jobs and wait until they are done " in {
     val tasks = for (i <- 1 to 5) yield {
       BashSnippet(s"""sleep 15; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
@@ -90,6 +110,4 @@ class playground extends App {
 
 class lsf_test extends App {
 
-  val jobId = LsfUtils.bsub("touch test_lsf.txt")
-  LsfUtils.wait4jobs()
 }
