@@ -28,6 +28,7 @@ Basic Usage
 ```
 jl --help
 jl --version
+```
 
 
 ## submit some jobs and wait until all of them are done:
