@@ -1,9 +1,9 @@
 package joblist
 
 import better.files.File
+import joblist.Tasks._
 
 import scalautils.Bash
-import scalautils.tasks.Tasks._
 
 
 

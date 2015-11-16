@@ -4,9 +4,9 @@ package joblist
 import java.io.{File => JFile}
 
 import better.files.File
+import joblist.Tasks.BashSnippet
 
 import scalautils.Bash._
-import scalautils.tasks.Tasks.BashSnippet
 
 // todo convert into actual unit tests.
 /**

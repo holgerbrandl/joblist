@@ -1,10 +1,10 @@
 package joblist
 
 import better.files._
+import joblist.Tasks.{BashSnippet, LsfExecutor, StringOps}
 import org.scalatest.{FlatSpec, Matchers}
 
-import scalautils.tasks.JobList
-import scalautils.tasks.Tasks.{BashSnippet, LsfExecutor, StringOps}
+import scalautils.Bash.BashMode
 
 /**
   * Document me!
