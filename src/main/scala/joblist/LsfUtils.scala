@@ -70,6 +70,9 @@ object LsfUtils {
       throw new RuntimeException(s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
 
     val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
+    (logsDir / s"$jobName.jobid").write(jobID.toString)
+
+    jobID
   }
 
 

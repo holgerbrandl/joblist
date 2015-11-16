@@ -22,6 +22,6 @@ libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
 libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
 
 
-
+libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
 initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
 
