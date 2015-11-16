@@ -20,3 +20,15 @@ eval $last
 
 echo "Job <$RANDOM> was submitted" 1>&2
 }
+
+bjobs()
+{
+
+# todo mimic bjobs better
+# echo the
+#cat .joblist
+#sleep 3
+
+
+echo ""
+}

@@ -22,6 +22,10 @@ libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
 libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
 
 
-libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
-initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
+//libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
+sys.env.get("TERM_PROGRAM").isDefined match {
+  case true => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9-SNAPSHOT" % "test" cross CrossVersion.full
+  case false => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
+}
 
+initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""

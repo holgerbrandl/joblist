@@ -18,12 +18,9 @@ import scalautils.Bash
 object LsfUtils {
 
 
-  def wait4jobs(joblist: File = File(".jobs"), withReport: Boolean = false) = {
-    if (withReport) {
-      Bash.eval(s"wait4jobsReport ${joblist.fullPath}")
-    } else {
-      Bash.eval(s"wait4jobs ${joblist.fullPath}")
-    }
+  def wait4jobs(joblist: JobList = new JobList(".jobs"), withReport: Boolean = false) = {
+    joblist.waitUntilDone(withReport)
+
   }
 
 
@@ -57,7 +54,7 @@ object LsfUtils {
     bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/$jobName.err.log 1>.logs/$jobName.out.log'
     """
 
-    val bsubStatus = Bash.evalCapture(bsubCmd).stderr
+    val bsubStatus = Bash.eval(bsubCmd).stderr
     //    new BashSnippet(bsubCmd).inDir(workingDirectory).eval(new LocalShell)
 
     val jobSubConfirmation = bsubStatus.split("\n").filter(_.startsWith("Job <"))

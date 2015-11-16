@@ -71,8 +71,13 @@ object JobListCLI extends App {
 
     val jlFile = getJlFileFromOpts(results)
 
-    val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "")
-    jlFile.appendLine(jobId)
+    try {
+      val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "").toInt
+      jlFile.appendLine(jobId + "")
+      jobId
+    } catch {
+      case e: Throwable => throw new RuntimeException("could not extract jobid from stdin")
+    }
   }
 
 
@@ -87,10 +92,7 @@ object JobListCLI extends App {
     val results = new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }
 
     val jlFile = getJlFileFromOpts(results)
-
-    val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "")
-    jlFile.appendLine(jobId)
-
+    JobList(jlFile).waitUntilDone()
   }
 
 

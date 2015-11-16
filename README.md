@@ -18,8 +18,12 @@ https://github.com/holgerbrandl/datautils/archive/v1.20.tar.gz  | tar -zxvf -
 echo $(pwd)/joblist_v1.0:PATH >> ~/.bash_profile
 ```
 
-Java8 is required to run JobList
+Java8 is required to run JobList.
 
+To use single verbs you can use some provided shortcuts by adding this to your bash_profile
+```
+eval $(jl shortcuts)
+```
 
 Basic Usage
 -----------
@@ -31,7 +35,7 @@ jl --version
 ```
 
 
-## submit some jobs and wait until all of them are done:
+Submit some jobs and wait until all of them are done:
 ```
 busb "hello foo" | jl add
 busb "hello bar" | jl add
@@ -50,7 +54,7 @@ API Usage
 
 In addition to the provided shell utilities, joblist is also usable programmatically. Here's an example
 ```
-
+TBD
 ```
 
 How to build?
@@ -66,6 +70,7 @@ To deploy into the local ivy-index run
 
 ```
 sbt publishLocal
+```
 
 To run the tests you either need `bsub` and some of the lsf tools in your path. Alternativly you can also use/source the provided (dummy tools)(https://github.com/holgerbrandl/joblist/blob/master/scripts/fake_lsf.sh)
 
