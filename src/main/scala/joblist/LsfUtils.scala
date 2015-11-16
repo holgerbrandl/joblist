@@ -35,21 +35,41 @@ object LsfUtils {
            workingDirectory: File = File(".")) = {
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
-
     val jobName = name.getOrElse(buildJobName(workingDirectory, cmd))
-
-    val job = s"""cd '${workingDirectory.fullPath}'; mysub "$jobName" '$cmd' -q $queue $threadArg $otherArgs | joblist ${joblist.file.fullPath}"""
+    val lsfArgs = s"""-q $queue $threadArg $otherArgs"""
+    //    val job = s"""cd '${workingDirectory.fullPath}'; mysub "$jobName" '$cmd' $lsfArgs | joblist ${joblist.file.fullPath}"""
 
     //todo could be avoided if we would call bsub directly (because ProcessIO takes care that arguments are correctly provided as input arguments to binaries)
     require(!cmd.contains("'"))
 
-    val bsubStatus = Bash.evalCapture(job).stderr
+    // create hidden log directory and log cmd as well as queuing args
+    require(workingDirectory.isDirectory)
+
+    val logsDir = workingDirectory / ".logs"
+    logsDir.createIfNotExists(true)
+
+    val cmdLog = logsDir / s"$jobName.cmd"
+    require(cmdLog.notExists)
+
+    cmdLog.write(cmd)
+    (logsDir / s"$jobName.lsfargs").write(lsfArgs)
+
+
+    // submit the job to the lsf
+    val bsubCmd = s"""
+    cd '${workingDirectory.fullPath}'
+    bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/$jobName.err.log 1>.logs/$jobName.out.log'
+    """
+
+    val bsubStatus = Bash.evalCapture(bsubCmd).stderr
+    //    new BashSnippet(bsubCmd).inDir(workingDirectory).eval(new LocalShell)
+
     val jobSubConfirmation = bsubStatus.split("\n").filter(_.startsWith("Job <"))
 
     if (jobSubConfirmation.isEmpty)
       throw new RuntimeException(s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
-    else
-      jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
+
+    val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
   }
 
 
