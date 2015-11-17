@@ -7,7 +7,7 @@ import scalautils.Bash
 
 
 /**
-  * A list of cluster jobs implemented as a text-file containing the job-IDs.
+  * A stateless wrapper around list of cluster jobs. The actual data is stoed in a plain text-file containing the job-IDs (one per line).
   *
   * @author Holger Brandl
   */

@@ -1,6 +1,7 @@
 package joblist
 
 import java.io.{BufferedWriter, FileWriter}
+import java.util.Objects
 
 import better.files.File
 import com.thoughtworks.xstream.XStream
@@ -30,22 +31,23 @@ object JobListCLI extends App {
     System.exit(0)
   }
 
-  if (args.length == 0 && (args.length == 1 && (args(0) == "-h" || args(0) == "--help"))) {
+  if (args.length < 2 || (args.length == 1 && (args(0) == "-h" || args(0) == "--help"))) {
     printUsageAndExit()
-
   }
 
 
   def printUsageAndExit(): Unit = {
-    Console.err.println("""Usage: jl <command> [options] <joblist_file>
-    Supported commands are
-      submit    Submits a named job including automatic stream redirection and adds it to a joblist
-      add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
-      wait      Wait for a list of tasks to finish
-      up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
-      shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
+    Console.err.println("""
+Usage: jl <command> [options] [<joblist_file>]
 
-    If no <joblist_file> is providd, jl will use '.jobs' as default
+Supported commands are
+  submit    Submits a named job including automatic stream redirection and adds it to a joblist
+  add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
+  wait      Wait for a list of tasks to finish
+  up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
+  shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
+
+If no <joblist_file> is providd, jl will use '.jobs' as default
       """)
 
     System.exit(0)
@@ -57,30 +59,29 @@ object JobListCLI extends App {
   }
 
 
-  val argList = args.toList
-
-
-
-  argList.head match {
+  args.head match {
     case "submit" => submit()
     case "add" => add()
     case "wait" => wait4jl()
     case "up" => btop()
     case "kill" => kill()
     case "chill" => ???
-    case "shortcuts" => shortcuts(argList)
+    case "shortcuts" => shortcuts()
     case _ => printUsageAndExit()
   }
 
 
-  def parseArgs(args: List[String], doc: String) = {
-    new Docopt(doc).parse(args).map { case (key, value) => key -> value.toString }.toMap
+  def parseArgs(args: Array[String], usage: String) = {
+    new Docopt(usage).
+      withExit(false). // just used for debugging
+      parse(args.toList).
+      map { case (key, value) => key -> Objects.toString(value) }.toMap
   }
 
 
   def submit() = {
 
-    val results = parseArgs(argList, """
+    val results = parseArgs(args, """
 Usage: jl submit [options] <joblist_file> <command>
 
 Options:
@@ -120,28 +121,31 @@ Options:
 
 
   def add() = {
-    val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
+    // val args = Array("jl", "add")
+    val results = parseArgs(args, "Usage: jl add [options] [<joblist_file>]")
 
     val jl = getJL(results)
 
     try {
 
       // extract job id from stdin stream and add it to the given JobList
-      val jobId = io.Source.stdin.getLines().filter(_.startsWith("Job <")).map(_.split(" ")(1).replaceAll("<>", "").toInt)
 
-      Console.err.println(s"Adding ${jobId.mkString(", ")}" to joblist $ {
-        jl.file.asJava
-      } ")
+      val jobIds = io.Source.stdin.getLines().filter(_.startsWith("Job <")).map(_.split(" ")(1).replaceAll("[<>]", "").toInt).toList
 
-      jobId.foreach(jl.add)
+      //      Console.err.println("pwd is "+File(".'"))
+      Console.err.println(s"Adding job '${jobIds.mkString(", ")}' to joblist '${jl.file.toJava}'")
 
-      //      require(jobId.size==1, "just one job can be registered per invokation") //todo this is not strictly necessary (see commented code
+      require(jobIds.nonEmpty)
+      jobIds.foreach(jl.add)
+
+      //tbd adding just one job per invokation this is not strictly necessary
+      // require(jobId.size==1, "just one job can be registered per invokation")
       //        jl.add(jobId.next)
       //        jl.add(jobId.next)
 
-      jobId
+      jobIds
     } catch {
-      case e: Throwable => throw new RuntimeException("could not extract jobid from stdin")
+      case e: Throwable => throw new RuntimeException("could not extract jobid from stdin", e)
     }
   }
 
@@ -156,7 +160,7 @@ Options:
      --resubmit_strategy <resub_strategy>  The used escalation strategy for job resubmission [default: longer_queue]
       """.stripMargin
 
-    val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
+    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
 
     val jl = getJL(results)
     jl.waitUntilDone()
@@ -191,34 +195,36 @@ Options:
 
 
   def btop() = {
-    val results = parseArgs(argList, "Usage: jl up <joblist_file>")
+    val results = parseArgs(args, "Usage: jl up <joblist_file>")
     getJL(results).btop()
   }
 
 
   def kill() = {
-    val results = parseArgs(argList, "Usage: jl kill [options] <joblist_file>")
+    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
     getJL(results).kill()
   }
 
 
   def stats() = {
-    val results = parseArgs(argList, "Usage: jl kill [options] <joblist_file>")
+    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
     val jl = getJL(results)
 
     // todo dump some table or other format
   }
 
 
-  def shortcuts(args: List[String]) = {
+  def shortcuts() = {
     println("""
 joblist(){
   jl add $*
 }
+export -f joblist
 
 wait4jobs(){
   jl wait $*
 }
+export -f wait4jobs
 
 
 ##note: mysb replacement

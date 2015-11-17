@@ -26,9 +26,8 @@ bjobs()
 
 echo
 "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME
-623071  brandl  RUN   long       falcon      5*n33       *hunk42000 Nov  6 14:03
-736228  brandl  PEND  short      falcon                  *3; exit 1 Nov 17 00:23
-"
+JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME  PROJ_NAME CPU_USED MEM SWAP PIDS START_TIME FINISH_TIME
+744191  brandl  DONE  short      falcon      n01         echo test; sleep 1 11/17-18:10:50 default    000:00:00.01 2648   33112   -  11/17-18:10:56 11/17-18:10:57"
 
 
 # todo mimic bjobs better

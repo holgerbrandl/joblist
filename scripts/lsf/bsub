@@ -6,13 +6,17 @@
 
 if [ $# -eq 0 ]; then echo "Usage: bsub [fake args]* <eval_command>+"; exit -1; fi
 
+
+
 sleep 1
 
-## run last argument which is supposed to be the cmd
-## inspired by http://stackoverflow.com/questions/1853946/getting-the-last-argument-passed-to-a-shell-script
-for last; do true; done
-#echo $last
-
-eval $last
-
 echo "Job <$RANDOM> was submitted"
+
+# wait to mimic queuing system which also needs some seconds to start a job
+sleep 3
+
+## run last argument which is supposed to be the cmd
+## see http://stackoverflow.com/questions/1853946/getting-the-last-argument-passed-to-a-shell-script
+eval "${@: -1}"
+
+exit 0

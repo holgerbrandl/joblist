@@ -10,7 +10,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
   * @author Holger Brandl
   */
 // note change to object to disable test
-class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
+object TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
   //  import Matchers._; import joblist._
 
