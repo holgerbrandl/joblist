@@ -85,7 +85,7 @@ object LsfUtils {
     // submit the job to the lsf
     val bsubCmd = s"""
     cd '${workingDirectory.fullPath}'
-    bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/${jobLogs.err} 1>.logs/${jobLogs.out}'
+    bsub  -J $jobName $lsfArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
     """
 
     //    import sys.process._
@@ -118,6 +118,9 @@ object LsfUtils {
 
   def buildJobName(directory: File, cmd: String) = {
     val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
+
+    // todo this should also work when running in /
+
     Seq(directory.parent.parent.name, directory.parent.name, Math.abs(cmd.hashCode).toString, timestamp).mkString("__")
   }
 

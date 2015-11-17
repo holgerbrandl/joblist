@@ -125,8 +125,19 @@ Options:
     val jl = getJL(results)
 
     try {
-      val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "").toInt
-      jl.add(jobId)
+
+      // extract job id from stdin stream and add it to the given JobList
+      val jobId = io.Source.stdin.getLines().filter(_.startsWith("Job <")).map(_.split(" ")(1).replaceAll("<>", "").toInt)
+
+      Console.err.println(s"Adding ${jobId.mkString(", ")}" to joblist $ {
+        jl.file.asJava
+      } ")
+
+      jobId.foreach(jl.add)
+
+      //      require(jobId.size==1, "just one job can be registered per invokation") //todo this is not strictly necessary (see commented code
+      //        jl.add(jobId.next)
+      //        jl.add(jobId.next)
 
       jobId
     } catch {
@@ -170,7 +181,7 @@ Options:
 
       // use an independent job list for the resubmission
       val resubmitJL = JobList(File(jl.file.fullPath + s"_resubmit_$numResubmits"))
-      taskConfigs.map(LsfUtils.bsub(_)).map(resubmitJL.add)
+      taskConfigs.map(LsfUtils.bsub).map(resubmitJL.add)
 
       resubmitJL.waitUntilDone()
     }
