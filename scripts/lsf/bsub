@@ -15,4 +15,4 @@ for last; do true; done
 
 eval $last
 
-echo "Job <$RANDOM> was submitted" 1>&2
+echo "Job <$RANDOM> was submitted"

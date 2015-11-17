@@ -1,7 +1,7 @@
 package joblist
 
 import better.files.File
-import joblist.Tasks._
+import joblist.LsfUtils.JobLogs
 
 import scalautils.Bash
 
@@ -13,85 +13,91 @@ import scalautils.Bash
   * @author Holger Brandl
   */
 
-private case class JobLogs(name: String, jl: JobList) {
-
-  def idLog = jl.file.parent / s".logs/$name.jobid"
-
-
-  val id: Int = {
-    require(idLog.isRegularFile)
-
-    idLog.lines.next().toInt
-  }
-
-  val cmd = jl.file.parent / s".logs/$name.cmd"
-  val err = jl.file.parent / s".logs/$name.err.log"
-  val out = jl.file.parent / s".logs/$name.out.log"
-  val stats = jl.file.parent / s".logs/$name.out.log"
-  val queueArgs = jl.file.parent / s".logs/$name.args"
-}
-
-
 case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
   def this(name: String) = this(File(name))
 
 
+  def add(jobId: Int) = file.appendLine(jobId + "")
+
+
+  case class Job(id: Int) {
+
+    val runinfoFile = logsDir / s"$id.runinfo"
+
+
+    def info = LsfUtils.readRunLog(runinfoFile)
+  }
+
+
+  def jobs = jobIds.map(Job)
+
+
+  //
+  // Monitoring and stats
+  //
+
+  def isRunning: Boolean = {
+    val inQueue = Bash.eval("bjobs").stdout.drop(1).
+      filter(!_.isEmpty).map(_.split(" ")(0).toInt).toList
+
+
+    // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
+    // for which we don't have final stats yet
+    val alreadyDone = jobIds.diff(inQueue)
+
+    // write log file for already finished jobs (because  bjobs will loose history data soon)
+    jobs.filter(job => alreadyDone.contains(job.id)).foreach(updateStatsFile)
+
+    inQueue.intersect(jobIds).isEmpty
+  }
+
+
   //
   // Commands
   //
 
-  def btop() = Bash.eval(s"cat ${file.fullPath} | xargs -L1 btop")
+
+  def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval)
 
 
-  def kill() = logs.map(job => s"bkill ${job.id}").foreach(Bash.eval)
+  def kill() = jobs.map(job => s"bkill ${job.id}").foreach(Bash.eval)
 
 
-
-  def isRunning: Boolean = {
-    val inQueue = Bash.eval("bjobs").stdout.split("\n").map(_.split(" ")(0).toInt)
-
-    // fetch final status for all those which are done now (for slurm do this much once the loop is done)
-    val alreadyDone = jobsIds.diff(inQueue)
-
-    // write log file for already finished jobs (because  bjobs will loose history data soon)
-    logs.filter(!alreadyDone.contains(_.)).foreach(logFinalStats)
-
-    inQueue.intersect(jobsIds).isEmpty
-  }
+  // Internal helpers
 
 
-  def logsDir = file.parent / ".logs"
+  // todo require that we have stats for finished jobs
+
+  def logsDir = file.parent / ".jl"
 
 
   // build forward map
   def logs = logsDir.
     glob("*.jobid").
     map(idFile => idFile.lines.mkString.toInt -> idFile.nameWithoutExtension).toMap.
-    filterKeys(jobsIds.contains(_)).
-    values.map(JobLogs(_, this))
+    filterKeys(jobIds.contains(_)).
+    values.map(JobLogs(_, this)).toList
 
 
-  def jobsIds: List[Int] = file.lines.map(_.toInt).toList
+  def jobIds = file.lines.map(_.toInt).toList
 
 
-  private def logFinalStats(job: JobLogs): Any = {
-    // val jobId=736227
-
-    val statsFile = job.stats
-
-    if (statsFile.notExists) {
+  private def updateStatsFile(job: Job): Any = {
+    // don't replace existing final logs
+    if (job.info.isDone) {
       return
     }
 
-    val stats = Bash.eval(s"bjobs -lW ${job.id}").stdout.drop(0)
-    //    JobId,User,Stat,Queue,FromHost,ExecHost,JobName,SubmitTime,ProjName,CpuUsed,Mem,Swap,Pids,StartTime,FinishTime
-    statsFile.write(stats)
+    // abstract queuing system here
+    LsfUtils.updateRunInfo(job.id, job.runinfoFile)
   }
 
 
   def waitUntilDone(msg: String = "", withReport: Boolean = false) = {
+    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
+
     while (isRunning) Thread.sleep(15000)
 
     // tbd create bjobs -l snapshot for all jobs (becaus some might have slipped through because too short
@@ -100,29 +106,20 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
   def killed = {
-    //todo use direct stats
-    val killedListFile = File(file.fullPath + ".killed_jobs.txt")
-    require(killedListFile.isRegularFile)
 
-    val killedJobs = killedListFile.lines.map(_.toInt)
+    val killedJobs = jobs.filter(_.info.exceededWallLimit)
 
-    // find cmd-logs of killed jobs
-    val isKilled: (File) => Boolean = jobIdFile => killedJobs.contains(jobIdFile.lines.mkString.toInt) // predicate function
-
-
-    val killedId2Names = logs.filterKeys(killedJobs.contains(_))
-
-    //  case class SnippetWithStatus(snippet:BashSnippet, prevJobId:Int)
-
-    //  convert back to bash-snippets
-
-    def restoreTaskFromLogs(jobname: String): BashSnippet = {
-      (logsDir / (jobname + ".cmd")).lines.mkString("\n").toBash.inDir(logsDir.parent)
-    }
-
-    killedId2Names.map { case (jobid, jobname) => restoreTaskFromLogs(jobname) }
+    //    //  convert back to bash-snippets ==> just works if jobs have been submitted with jl submit
+    //    def restoreTaskFromLogs(jobname: String): BashSnippet = {
+    //      (logsDir / (jobname + ".cmd")).lines.mkString("\n").toBash.inDir(logsDir.parent)
+    //    }
+    //
+    //    logs.filter(_.wasKilled).map(_.name).map(restoreTaskFromLogs)
+    killedJobs
   }
 
 
-  def reset = if (file.exists) file.delete()
+  //tbd
+  //  def reset() = if (file.exists) file.renameTo(file.fullPath+"_"+System.currentTimeMillis()  )
+  def reset() = if (file.exists) file.delete()
 }

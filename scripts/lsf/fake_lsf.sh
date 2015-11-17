@@ -24,11 +24,15 @@ echo "Job <$RANDOM> was submitted" 1>&2
 bjobs()
 {
 
+echo
+"JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME
+623071  brandl  RUN   long       falcon      5*n33       *hunk42000 Nov  6 14:03
+736228  brandl  PEND  short      falcon                  *3; exit 1 Nov 17 00:23
+"
+
+
 # todo mimic bjobs better
 # echo the
 #cat .joblist
 #sleep 3
-
-
-echo ""
 }

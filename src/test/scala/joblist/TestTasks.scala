@@ -14,32 +14,43 @@ import scalautils.Bash.BashMode
 // note change to object to disable test
 class TestTasks extends FlatSpec with Matchers {
 
-  //  import Matchers._
+  //  import Matchers._; import joblist._
 
   val wd = (home / "unit_tests").createIfNotExists(true)
 
-  wd.list.map(_.delete())
+  // clean up old unit-test data
+  wd.list.foreach(_.delete())
+
 
 
   it should "submit a job, capture streams, wait for finish, and collect basic stats" in {
 
     // todo clean up directory
 
+    val jl = JobList(wd / ".unit_jobs")
+    jl.reset()
+
+    jl.jobIds
+    jl.logs
+
+
     val jobName = "testjob_" + System.currentTimeMillis()
 
-    val jobId = LsfUtils.bsub("""
-    sleep 3
-    echo "hello stderr" >&2
-    echo "hello stdout"
-    touch test_lsf.txt
-    """, name = Some(jobName))
+    // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
+    val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
 
-    JobList().waitUntilDone()
+    val jobId = LsfUtils.bsub(cmd, name = Some(jobName), workingDirectory = wd)
+    jl.add(jobId)
 
-    JobList().getJob
-    JobList().stderr()
-    (wd / ".logs/jobName.stderr").list.filter(_.name.contains("lsf")).next().lines.next should include("medium")
+    jl.waitUntilDone()
+    jl.jobIds
+
+    val jobLogs = jl.logs.filter(_.name == jobName)
+    (wd / s".logs/$jobName.cmd").toJava should exist
+
+    //todo validate the other logs
   }
+
 
   it should "submit some jobs and wait until they are done " in {
     val tasks = for (i <- 1 to 5) yield {

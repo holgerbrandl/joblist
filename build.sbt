@@ -22,6 +22,11 @@ libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
 libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
 
 
+libraryDependencies ++= Seq(
+  "org.joda" % "joda-convert" % "1.5",
+  "joda-time" % "joda-time" % "2.3"
+)
+
 //libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
 sys.env.get("TERM_PROGRAM").isDefined match {
   case true => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9-SNAPSHOT" % "test" cross CrossVersion.full

@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import better.files.File
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
 
@@ -18,9 +20,30 @@ import scalautils.Bash
 object LsfUtils {
 
 
+
   def wait4jobs(joblist: JobList = new JobList(".jobs"), withReport: Boolean = false) = {
     joblist.waitUntilDone()
 
+  }
+
+
+  case class JobLogs(name: String, jl: JobList) {
+
+    val idLog = jl.file.parent / s".logs/$name.jobid"
+
+
+    def id: Int = {
+      require(idLog.isRegularFile, "no id yet. job has not been submitted yet")
+
+      idLog.lines.next().toInt
+    }
+
+
+    // file getters
+    val cmd = jl.file.parent / s".logs/$name.cmd"
+    val err = jl.file.parent / s".logs/$name.err.log"
+    val out = jl.file.parent / s".logs/$name.out.log"
+    val queueArgs = jl.file.parent / s".logs/$name.args"
   }
 
 
@@ -56,13 +79,14 @@ object LsfUtils {
     bsub  -J $jobName $lsfArgs '( $cmd ) 2>.logs/${jobLogs.err} 1>.logs/${jobLogs.out}'
     """
 
-    val bsubStatus = Bash.eval(bsubCmd).stderr
+    //    import sys.process._
+    //    Seq("bsub",  "-J", jobName ,lsfArgs.split(" "), "(" +cmd +s") 2>.logs/${jobLogs.err} 1>.logs/${jobLogs.out}").flatten!!
     //    new BashSnippet(bsubCmd).inDir(workingDirectory).eval(new LocalShell)
+    val bsubStatus = Bash.eval(bsubCmd).stdout
 
-    val jobSubConfirmation = bsubStatus.split("\n").filter(_.startsWith("Job <"))
 
-    if (jobSubConfirmation.isEmpty)
-      throw new RuntimeException(s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
+    val jobSubConfirmation = bsubStatus.filter(_.startsWith("Job <"))
+    require(jobSubConfirmation.nonEmpty, s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
 
     val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
     jobLogs.idLog.write(jobID.toString)
@@ -88,4 +112,62 @@ object LsfUtils {
     Seq(directory.parent.parent.name, directory.parent.name, Math.abs(cmd.hashCode).toString, timestamp).mkString("__")
   }
 
+
+  // use abstract class here to support slurm as well
+  case class RunLog(jobId: Int, user: String, status: String, queue: String,
+                    //                  FromHost:String,
+                    execHost: String,
+                    //                  JobName:String,
+                    submitTime: DateTime,
+                    //                  ProjName:String, CpuUsed:Int, Mem:Int, Swap:Int, Pids:List[Int],
+                    startTime: DateTime, finishTime: DateTime) {
+
+    def isDone: Boolean = List("EXIT", "DONE").contains(status)
+
+
+    def exceededWallLimit = status == "EXIT" // could also because it died
+  }
+
+
+  def updateRunInfo(jobId: Int, logFile: File) = {
+    // todo write more structured/parse data here (json,xml) to ease later use
+
+    val stats = Bash.eval(s"bjobs -lW ${jobId}").stdout
+    // format is JobId,User,Stat,Queue,FromHost,ExecHost,JobName,SubmitTime,ProjName,CpuUsed,Mem,Swap,Pids,StartTime,FinishTime
+
+    logFile.write(stats.mkString("\n"))
+  }
+
+
+  def readRunLog(logFile: File) = {
+    val data = Seq(scala.io.Source.fromFile(logFile.toJava).
+      getLines(). //map(_.replace("\"", "")).
+      map(_.split("[ ]+").map(_.trim)).
+      toSeq: _*)
+
+    //digest from start and end
+    val header = data(0).toList
+    val values = data(1)
+
+
+    val slimHeader = List(header.take(6), header.takeRight(8)).flatten
+    val slimValues = List(values.take(6), values.takeRight(8)).flatten
+
+
+
+    def parseDate(stringifiedDate: String): DateTime = {
+      DateTimeFormat.forPattern("MM/dd-HH:mm:ss").parseDateTime(stringifiedDate).withYear(new DateTime().getYear)
+    }
+
+    RunLog(
+      jobId = slimValues(0).toInt,
+      user = slimValues(1),
+      status = slimValues(2),
+      queue = slimValues(3),
+      execHost = slimValues(5),
+      submitTime = parseDate(slimValues(6)),
+      startTime = parseDate(slimValues(12)),
+      finishTime = parseDate(slimValues(12))
+    )
+  }
 }

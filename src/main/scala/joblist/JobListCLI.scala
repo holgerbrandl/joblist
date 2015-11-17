@@ -36,6 +36,7 @@ object JobListCLI extends App {
   def printUsageAndExit(): Unit = {
     Console.err.println("""Usage: jl <command> [options] <joblist_file>
     Supported commands are
+      submit    Submits a named job including automatic stream redirection and adds it to a joblist
       add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
       wait      Wait for a list of tasks to finish
       up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
@@ -56,7 +57,9 @@ object JobListCLI extends App {
   val argList = args.toList
 
 
+
   argList.head match {
+    //    case "submit" => submit(argList)
     case "add" => add(argList)
     case "wait" => wait4jl(argList)
     case "up" => btop(argList)
@@ -72,14 +75,21 @@ object JobListCLI extends App {
   }
 
 
-  def add(args: List[String]) = {
-    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
+  def submit(argList: List[String]) = {
+    val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
+
+  }
+
+
+  def add(argList: List[String]) = {
+    val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
 
     val jl = getJL(results)
 
     try {
       val jobId = io.Source.stdin.getLines().next().split(" ")(2).replaceAll("<>", "").toInt
-      jl.file.appendLine(jobId + "")
+      jl.add(jobId)
+
       jobId
     } catch {
       case e: Throwable => throw new RuntimeException("could not extract jobid from stdin")
@@ -129,6 +139,12 @@ joblist(){
 
 wait4jobs(){
   jl wait $*
+}
+
+
+##note: mysb replacement
+jsub(){
+  jl submit $*
 }
 """)
   }
