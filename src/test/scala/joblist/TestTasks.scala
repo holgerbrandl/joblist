@@ -32,19 +32,25 @@ class TestTasks extends FlatSpec with Matchers {
     jl.jobs
 
 
-    val jobName = "testjob_" + System.currentTimeMillis()
+    def submitJob = {
+      val jobName = "testjob_" + System.currentTimeMillis()
 
-    // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
-    val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
+      // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
+      val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
 
-    val jobId = LsfUtils.bsub(cmd, name = Some(jobName), workingDirectory = wd)
-    jl.add(jobId)
+      val jobId = LsfUtils.bsub(cmd, name = jobName, workingDirectory = wd)
+      jl.add(jobId)
+    }
+
+    submitJob
+    submitJob
+    submitJob
 
     jl.waitUntilDone()
     jl.jobs
 
     //    val jobLogs = jl.logs.filter(_.name == jobName)
-    (wd / s".logs/$jobName.cmd").toJava should exist
+    //    (wd / s".logs/$jobName.cmd").toJava should exist
 
     //todo validate the other logs
   }

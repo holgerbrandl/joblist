@@ -52,10 +52,11 @@ object LsfUtils {
 
 
   /** Submits a task to the LSF. */
-  def bsub(task: JobConfiguration, workingDirectory: File = File(".")) = bsub(task.cmd, task.name, task.queue, task.numThreads, task.otherQueueArgs)
+  // http://stackoverflow.com/questions/4652095/why-does-the-scala-compiler-disallow-overloaded-methods-with-default-arguments
+  def bsub(task: JobConfiguration): Int = bsub(task.cmd, task.name, task.queue, task.numThreads, task.otherQueueArgs)
 
 
-  def bsub(cmd: String, name: String, queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")) = {
+  def bsub(cmd: String, name: String, queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")): Int = {
 
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""

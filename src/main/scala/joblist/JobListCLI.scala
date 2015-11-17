@@ -62,11 +62,11 @@ object JobListCLI extends App {
 
 
   argList.head match {
-    case "submit" => submit(argList)
-    case "add" => add(argList)
-    case "wait" => wait4jl(argList)
-    case "up" => btop(argList)
-    case "kill" => kill(argList)
+    case "submit" => submit()
+    case "add" => add()
+    case "wait" => wait4jl()
+    case "up" => btop()
+    case "kill" => kill()
     case "chill" => ???
     case "shortcuts" => shortcuts(argList)
     case _ => printUsageAndExit()
@@ -78,7 +78,7 @@ object JobListCLI extends App {
   }
 
 
-  def submit(argList: List[String]) = {
+  def submit() = {
 
     val results = parseArgs(argList, """
 Usage: jl submit [options] <joblist_file> <command>
@@ -116,10 +116,10 @@ Options:
   }
 
 
-  case class JobConfiguration(cmd: String, name: String, queue: String, numThreads: Int = 1, otherQueueArgs = "")
+  case class JobConfiguration(cmd: String, name: String, queue: String, numThreads: Int = 1, otherQueueArgs: String = "")
 
 
-  def add(argList: List[String]) = {
+  def add() = {
     val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
 
     val jl = getJL(results)
@@ -135,19 +135,21 @@ Options:
   }
 
 
-  def wait4jl(args: List[String]) = {
+  def wait4jl() = {
     val doc =
       """
     Usage: jl wait [options] <joblist_file>
 
     Options:
      --num_resubmits <num_resubmits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 0]
+     --resubmit_strategy <resub_strategy>  The used escalation strategy for job resubmission [default: longer_queue]
       """.stripMargin
 
-    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
+    val results = parseArgs(argList, "Usage: jl add [options] <joblist_file>")
 
     val jl = getJL(results)
     jl.waitUntilDone()
+
 
 
     // in case jl.submit was used to launsch the jobs retry in case they've failed
@@ -176,19 +178,21 @@ Options:
     // decide escalation strategy -> more cores or longer queue, or just again?
   }
 
-  def btop(args: List[String]) = {
-    val results = parseArgs(args, "Usage: jl up <joblist_file>")
+
+  def btop() = {
+    val results = parseArgs(argList, "Usage: jl up <joblist_file>")
     getJL(results).btop()
   }
 
-  def kill(args: List[String]) = {
-    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+
+  def kill() = {
+    val results = parseArgs(argList, "Usage: jl kill [options] <joblist_file>")
     getJL(results).kill()
   }
 
 
-  def stats(args: List[String]) = {
-    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+  def stats() = {
+    val results = parseArgs(argList, "Usage: jl kill [options] <joblist_file>")
     val jl = getJL(results)
 
     // todo dump some table or other format
