@@ -22,6 +22,9 @@ libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
 libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
 
 
+libraryDependencies += "com.thoughtworks.xstream" % "xstream" % "1.4.3"
+
+
 libraryDependencies ++= Seq(
   "org.joda" % "joda-convert" % "1.5",
   "joda-time" % "joda-time" % "2.3"

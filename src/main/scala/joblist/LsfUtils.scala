@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import better.files.File
+import joblist.JobListCLI.JobConfiguration
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -27,9 +28,12 @@ object LsfUtils {
   }
 
 
-  case class JobLogs(name: String, jl: JobList) {
+  case class JobLogs(name: String, wd: File) {
 
-    val idLog = jl.file.parent / s".logs/$name.jobid"
+    def logsDir = wd / s".logs"
+
+
+    val idLog = logsDir / s"$name.jobid"
 
 
     def id: Int = {
@@ -40,18 +44,22 @@ object LsfUtils {
 
 
     // file getters
-    val cmd = jl.file.parent / s".logs/$name.cmd"
-    val err = jl.file.parent / s".logs/$name.err.log"
-    val out = jl.file.parent / s".logs/$name.out.log"
-    val queueArgs = jl.file.parent / s".logs/$name.args"
+    val cmd = logsDir / s"$name.cmd"
+    val err = logsDir / s"$name.err.log"
+    val out = logsDir / s"$name.out.log"
+    val queueArgs = logsDir / s"$name.args"
   }
 
 
   /** Submits a task to the LSF. */
-  def bsub(cmd: String, name: Option[String] = None, joblist: JobList = new JobList(".jobs"), queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")) = {
+  def bsub(task: JobConfiguration, workingDirectory: File = File(".")) = bsub(task.cmd, task.name, task.queue, task.numThreads, task.otherQueueArgs)
+
+
+  def bsub(cmd: String, name: String, queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")) = {
+
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
-    val jobName = name.getOrElse(buildJobName(workingDirectory, cmd))
+    val jobName = if (name == null || name.isEmpty) buildJobName(workingDirectory, cmd) else name
     val lsfArgs = s"""-q $queue $threadArg $otherArgs"""
     //    val job = s"""cd '${workingDirectory.fullPath}'; mysub "$jobName" '$cmd' $lsfArgs | joblist ${joblist.file.fullPath}"""
 
@@ -64,7 +72,7 @@ object LsfUtils {
     val logsDir = workingDirectory / ".logs"
     logsDir.createIfNotExists(true)
 
-    val jobLogs = JobLogs(name.get, joblist)
+    val jobLogs = JobLogs(jobName, workingDirectory)
 
     val cmdLog = jobLogs.cmd
     require(cmdLog.notExists)
@@ -86,7 +94,7 @@ object LsfUtils {
 
 
     val jobSubConfirmation = bsubStatus.filter(_.startsWith("Job <"))
-    require(jobSubConfirmation.nonEmpty, s"job submission of '${name.getOrElse(cmd)}' failed with:\n$bsubStatus")
+    require(jobSubConfirmation.nonEmpty, s"job submission of '${jobName}' failed with:\n$bsubStatus")
 
     val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
     jobLogs.idLog.write(jobID.toString)
@@ -156,7 +164,11 @@ object LsfUtils {
 
 
     def parseDate(stringifiedDate: String): DateTime = {
-      DateTimeFormat.forPattern("MM/dd-HH:mm:ss").parseDateTime(stringifiedDate).withYear(new DateTime().getYear)
+      try {
+        DateTimeFormat.forPattern("MM/dd-HH:mm:ss").parseDateTime(stringifiedDate).withYear(new DateTime().getYear)
+      } catch {
+        case _: Throwable => null
+      }
     }
 
     RunLog(

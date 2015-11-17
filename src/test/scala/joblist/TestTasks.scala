@@ -29,9 +29,7 @@ class TestTasks extends FlatSpec with Matchers {
 
     val jl = JobList(wd / ".unit_jobs")
     jl.reset()
-
-    jl.jobIds
-    jl.logs
+    jl.jobs
 
 
     val jobName = "testjob_" + System.currentTimeMillis()
@@ -43,9 +41,9 @@ class TestTasks extends FlatSpec with Matchers {
     jl.add(jobId)
 
     jl.waitUntilDone()
-    jl.jobIds
+    jl.jobs
 
-    val jobLogs = jl.logs.filter(_.name == jobName)
+    //    val jobLogs = jl.logs.filter(_.name == jobName)
     (wd / s".logs/$jobName.cmd").toJava should exist
 
     //todo validate the other logs

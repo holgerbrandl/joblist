@@ -1,7 +1,6 @@
 package joblist
 
 import better.files.File
-import joblist.LsfUtils.JobLogs
 
 import scalautils.Bash
 
@@ -19,10 +18,16 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
   def this(name: String) = this(File(name))
 
 
-  def add(jobId: Int) = file.appendLine(jobId + "")
+  def add(jobId: Int) = {
+    file.appendLine(jobId + "")
+    updateStatsFile(Job(jobId))
+  }
 
 
   case class Job(id: Int) {
+
+    def isDone: Boolean = runinfoFile.isRegularFile && info.isDone
+
 
     val runinfoFile = logsDir / s"$id.runinfo"
 
@@ -70,23 +75,23 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
   // todo require that we have stats for finished jobs
 
-  def logsDir = file.parent / ".jl"
+  def logsDir = (file.parent / ".jl").createIfNotExists(true)
 
 
-  // build forward map
-  def logs = logsDir.
-    glob("*.jobid").
-    map(idFile => idFile.lines.mkString.toInt -> idFile.nameWithoutExtension).toMap.
-    filterKeys(jobIds.contains(_)).
-    values.map(JobLogs(_, this)).toList
+  //  // build forward map
+  //  def logs = logsDir.
+  //    glob("*.jobid").
+  //    map(idFile => idFile.lines.mkString.toInt -> idFile.nameWithoutExtension).toMap.
+  //    filterKeys(jobIds.contains(_)).
+  //    values.map(JobLogs(_, this)).toList
 
 
-  def jobIds = file.lines.map(_.toInt).toList
+  def jobIds = if (file.isRegularFile) file.lines.map(_.toInt).toList else List()
 
 
   private def updateStatsFile(job: Job): Any = {
     // don't replace existing final logs
-    if (job.info.isDone) {
+    if (job.isDone) {
       return
     }
 
@@ -106,16 +111,7 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
   def killed = {
-
-    val killedJobs = jobs.filter(_.info.exceededWallLimit)
-
-    //    //  convert back to bash-snippets ==> just works if jobs have been submitted with jl submit
-    //    def restoreTaskFromLogs(jobname: String): BashSnippet = {
-    //      (logsDir / (jobname + ".cmd")).lines.mkString("\n").toBash.inDir(logsDir.parent)
-    //    }
-    //
-    //    logs.filter(_.wasKilled).map(_.name).map(restoreTaskFromLogs)
-    killedJobs
+    jobs.filter(_.info.exceededWallLimit).map(_.id)
   }
 
 
