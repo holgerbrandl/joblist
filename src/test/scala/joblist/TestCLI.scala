@@ -33,10 +33,15 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     System.setIn(in)
 
 
+    // add and...
     JobListCLI.main(("add " + jl.file.fullPath).split(" "))
+
 
     jl.file.toJava should exist
     bstatus should include(jl.jobIds.head.toString)
+
+    // wait until its done
+    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
 
     jl.jobs.head.info.isDone should be(true)
   }

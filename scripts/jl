@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-java -cp /home/brandl/Dropbox/cluster_sync/joblist/target/scala-2.11/joblist-assembly-0.1-SNAPSHOT.jar joblist.JobListCLI $*
+java -cp $(dirname $0)/../target/scala-2.11/joblist-assembly-0.1-SNAPSHOT.jar joblist.JobListCLI $*

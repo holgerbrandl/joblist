@@ -8,6 +8,7 @@ import com.thoughtworks.xstream.XStream
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
+import scalautils.StringUtils._
 
 
 /**
@@ -21,6 +22,8 @@ object JobListCLI extends App {
 
   val DEFAULT_JL = ".jobs"
 
+  //  Console.err.println(s"args are ${args.mkString(", ")}")
+
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
     println(s"""
     jl   v$version"
@@ -31,7 +34,7 @@ object JobListCLI extends App {
     System.exit(0)
   }
 
-  if (args.length < 2 || (args.length == 1 && (args(0) == "-h" || args(0) == "--help"))) {
+  if (args.length < 1 || (args.length == 1 && (args(0) == "-h" || args(0) == "--help"))) {
     printUsageAndExit()
   }
 
@@ -47,7 +50,7 @@ Supported commands are
   up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
   shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
 
-If no <joblist_file> is providd, jl will use '.jobs' as default
+If no <joblist_file> is provided, jl will use '.jobs' as default
       """)
 
     System.exit(0)
@@ -55,7 +58,7 @@ If no <joblist_file> is providd, jl will use '.jobs' as default
 
 
   def getJL(results: Map[String, String]) = {
-    new JobList(File(Option(results("<joblist_file>")).getOrElse(DEFAULT_JL)))
+    new JobList(File(Option(results("joblist_file")).getOrElse(DEFAULT_JL)))
   }
 
 
@@ -75,14 +78,16 @@ If no <joblist_file> is providd, jl will use '.jobs' as default
     new Docopt(usage).
       withExit(false). // just used for debugging
       parse(args.toList).
-      map { case (key, value) => key -> Objects.toString(value) }.toMap
+      map { case (key, value) =>
+        key.stripPrefix("--").replaceAll("[<>]", "") -> Objects.toString(value)
+      }.toMap
   }
 
 
   def submit() = {
 
     val results = parseArgs(args, """
-Usage: jl submit [options] <joblist_file> <command>
+Usage: jl submit [options] [<joblist_file>] <command>
 
 Options:
  -n <threads>  Number of threads [default: 1]
@@ -95,9 +100,9 @@ Options:
 
     val jl = getJL(results)
 
-    val jobName = results.get("<job_name>").get
+    val jobName = results.get("job_name").get
 
-    val jc = JobConfiguration(results.get("<command>").get, jobName, results.get("<queue>").get, results.get("<threads>").get.toInt, results.get("<other_queue_args>").get)
+    val jc = JobConfiguration(results.get("command").get, jobName, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
 
 
     // save for later in case we need to restore it
@@ -115,9 +120,6 @@ Options:
   def jobXml(jobId: Int): File = {
     File(s".jl/$jobId.job")
   }
-
-
-  case class JobConfiguration(cmd: String, name: String, queue: String, numThreads: Int = 1, otherQueueArgs: String = "")
 
 
   def add() = {
@@ -153,14 +155,14 @@ Options:
   def wait4jl() = {
     val doc =
       """
-    Usage: jl wait [options] <joblist_file>
+    Usage: jl wait [options] [<joblist_file>]
 
     Options:
      --num_resubmits <num_resubmits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 0]
      --resubmit_strategy <resub_strategy>  The used escalation strategy for job resubmission [default: longer_queue]
-      """.stripMargin
+      """.alignLeft
 
-    val results = parseArgs(args, "Usage: jl add [options] <joblist_file>")
+    val results = parseArgs(args, doc)
 
     val jl = getJL(results)
     jl.waitUntilDone()
@@ -168,15 +170,16 @@ Options:
 
 
     // in case jl.submit was used to launsch the jobs retry in case they've failed
-    val maxResubmits = results.get("<num_resubmits>").get.toInt
+    val maxResubmits = results.get("num_resubmits").get.toInt
     var numResubmits = 0
 
 
     while (numResubmits < maxResubmits && jl.killed.nonEmpty) {
       numResubmits = numResubmits + 1
 
-      def isRestoreable(jobId: Int) = jobXml(jobId).isRegularFile
       val killedJobs = jl.killed
+
+      def isRestoreable(jobId: Int) = jobXml(jobId).isRegularFile
 
       require(killedJobs.forall(isRestoreable), "jobs can be resubmitted only if they were intially submitted with jl submit")
 
@@ -201,13 +204,13 @@ Options:
 
 
   def kill() = {
-    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+    val results = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
     getJL(results).kill()
   }
 
 
   def stats() = {
-    val results = parseArgs(args, "Usage: jl kill [options] <joblist_file>")
+    val results = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
     val jl = getJL(results)
 
     // todo dump some table or other format

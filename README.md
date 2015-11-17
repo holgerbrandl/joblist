@@ -6,7 +6,7 @@ An hpc-ready task list manager. Among others it supports monitoring, automatic r
 
 JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs is finished. It can output average runtime statistics and estimates when the entire jobList should be finished. 'jl' can recover crashed jobs and submit them again.
 
-Joblists are simply lists of job-ids as reported by the underlying queuing system. Currently lsf, slurm and the local shell are supported as job runners.
+JobLists are simple lists of job-ids as reported by the underlying queuing system. Currently [LSF](https://en.wikipedia.org/wiki/Platform_LSF), [slurm](http://slurm.schedmd.com/) and the local shell are supported as job runners.
 
 
 Installation
@@ -57,8 +57,15 @@ jl submit ""
 API Usage
 ---------
 
-In addition to the provided shell utilities, joblist is also usable programmatically. Here's an example
+In addition to the provided shell utilities, joblist is also usable programatically. To get started add it as a dependency to your build.sbt
+
 ```
+libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.1-SNAPSHOT"
+```
+
+Here's an example
+```
+
 TBD
 ```
 

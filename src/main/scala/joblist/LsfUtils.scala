@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import better.files.File
-import joblist.JobListCLI.JobConfiguration
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -56,6 +55,8 @@ object LsfUtils {
   def bsub(task: JobConfiguration): Int = bsub(task.cmd, task.name, task.queue, task.numThreads, task.otherQueueArgs)
 
 
+  // todo save configs in here and not in JobListCLI
+
   def bsub(cmd: String, name: String, queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")): Int = {
 
 
@@ -106,13 +107,6 @@ object LsfUtils {
 
   private def changeWdOptional(wd: File): String = {
     if (wd != null && wd != File(".")) "cd " + wd.fullPath + "; " else ""
-  }
-
-
-  def mailme(subject: String, body: String = "", logSubject: Boolean = true) = {
-    if (logSubject) Console.err.println(s"$subject")
-
-    Bash.eval(s"""echo -e 'Subject:$subject\n\n $body' | sendmail $$(whoami)@mpi-cbg.de > /dev/null""")
   }
 
 
@@ -187,3 +181,6 @@ object LsfUtils {
     )
   }
 }
+
+
+case class JobConfiguration(cmd: String, name: String, queue: String, numThreads: Int = 1, otherQueueArgs: String = "")

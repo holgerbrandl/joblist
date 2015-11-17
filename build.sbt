@@ -35,6 +35,7 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3"
 )
 
+// todo remove for release or use custom property
 //libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
 sys.env.get("TERM_PROGRAM").isDefined match {
   case true => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9-SNAPSHOT" % "test" cross CrossVersion.full
@@ -42,3 +43,13 @@ sys.env.get("TERM_PROGRAM").isDefined match {
 }
 
 initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
+
+
+
+// disable tests
+// see http://stackoverflow.com/questions/9763543/how-can-i-skip-tests-in-an-sbt-build
+//test in assembly := {joblist.JobListCLI.class}
+test in assembly := {}
+
+// to test just some follow http://stackoverflow.com/questions/6997730/how-to-execute-tests-that-match-a-regular-expression-only
+//sbt> testOnly com.example.*Spec
