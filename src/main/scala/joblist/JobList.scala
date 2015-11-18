@@ -80,15 +80,31 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
   def waitUntilDone(msg: String = "", withReport: Boolean = false) = {
-    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
+    //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
+    if (file.isRegularFile && file.lines.nonEmpty) {
+      Console.err.println(s"There is no joblist named ${this.file.path}")
+    }
 
     while (isRunning) Thread.sleep(10000)
-
-    // tbd create bjobs -l snapshot for all jobs (becaus some might have slipped through because too short
   }
 
 
   def reset() = if (file.exists) file.delete()
+
+
+  def killed = {
+    jobs.filter(_.info.exceededWallLimit).map(_.id)
+  }
+
+
+  def jobConfigs = {
+    jobIds.map(jobId => jobId -> restoreConfig(jobId)).toMap
+  }
+
+
+  def restoreConfig(jobId: Int) = {
+    LsfJobConfiguration.fromXML(jobId, file.parent)
+  }
 
 
   //
@@ -115,17 +131,4 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
 
-  def killed = {
-    jobs.filter(_.info.exceededWallLimit).map(_.id)
-  }
-
-
-  def jobConfigs = {
-    jobIds.map(jobId => jobId -> restoreConfig(jobId)).toMap
-  }
-
-
-  def restoreConfig(jobId: Int) = {
-    LsfJobConfiguration.fromXML(jobId, file.parent)
-  }
 }
