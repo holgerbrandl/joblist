@@ -63,10 +63,25 @@ In addition to the provided shell utilities, joblist is also usable programatica
 libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.1-SNAPSHOT"
 ```
 
-Here's an example
+Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback ), submits some jobs, waits for all of the to finish, and resubmits failed ones again with more threads:
 ```
 
-TBD
+import joblist._
+
+val jl = JobList
+
+jl.run(JobConfiguration("echo foo"))
+jl.run(JobConfiguration("echo bar"))
+
+// block execution until are jobs are done
+jl.waitUntilDone()
+
+// get jobs that hit the Wall limit ...
+val failedConfigs: Iterable[JobConfiguration] = jl.jobConfigs.filterKeys(!jl.jobIds.contains(_)).values
+
+// ... and resubmit them with more threads
+failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.run)
+
 ```
 
 How to build?
