@@ -36,8 +36,10 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
     val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
 
-    val jobId = LsfUtils.bsub(LsfJobConfiguration(cmd, jobName))
-    jl.add(jobId)
+    val jobId = jl.run(JobConfiguration(cmd, jobName))
+
+    // check that serialize file is ther
+    (wd / ".jl" / s"$jobId.job").toJava should exist
 
     jl.waitUntilDone()
     jl.jobs

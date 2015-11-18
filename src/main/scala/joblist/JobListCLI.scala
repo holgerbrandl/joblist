@@ -100,17 +100,10 @@ Options:
 
     val jobName = results.get("job_name")
 
-    val jc = LsfJobConfiguration(results.get("command").get, jobName.orNull, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
-
+    val jc = JobConfiguration(results.get("command").get, jobName.orNull, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
 
     // save for later in case we need to restore it
-
-    val jobId = LsfUtils.bsub(jc)
-
-    jl.add(jobId)
-
-
-    // save task description in case we need to rerun it
+    jl.run(jc)
   }
 
 
@@ -171,7 +164,7 @@ Options:
 
       val killedJobs = jl.killed
 
-      def isRestoreable(jobId: Int) = LsfJobConfiguration.jcXML(jobId).isRegularFile
+      def isRestoreable(jobId: Int) = JobConfiguration.jcXML(jobId).isRegularFile
 
       require(
         killedJobs.forall(isRestoreable),
@@ -179,11 +172,11 @@ Options:
       )
 
       // restore job configurations
-      val killedJC: List[LsfJobConfiguration] = killedJobs.map(LsfJobConfiguration.fromXML(_))
+      val killedJC: List[JobConfiguration] = killedJobs.map(JobConfiguration.fromXML(_))
 
       // use an independent job list for the resubmission
       val resubmitJL = JobList(File(jl.file.fullPath + s"_resubmit_$numResubmits"))
-      killedJC.map(jc => LsfUtils.bsub(jc)).map(resubmitJL.add)
+      killedJC.foreach(jl.run)
 
       resubmitJL.waitUntilDone()
     }

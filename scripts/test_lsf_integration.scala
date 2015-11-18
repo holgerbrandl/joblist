@@ -1,3 +1,5 @@
+
+
 /**
   * Document me!
   *
@@ -8,11 +10,12 @@ import java.io.File
 
 import joblist.Tasks.BashSnippet
 import joblist._
+  import joblist.utils._
 
 
 new File(".").getAbsoluteFile
 
-val jobId = LsfUtils.bsub("""
+  val jobId = guessQueue().submit("""
 echo test
 echo test >&2
 touch test_lsf.txt
@@ -20,7 +23,10 @@ touch test_lsf.txt
 
   JobList().waitUntilDone()
 val snippter = new BashSnippet("touch test_lsf.txt")
-} {
+}
+
+val a = 1; {
+
   import joblist.Tasks.{BashSnippet, LsfExecutor}
   import joblist._
 
@@ -31,15 +37,17 @@ val snippter = new BashSnippet("touch test_lsf.txt")
 
 
   // block execution until are jobs are done
-  jobRunner.joblist.waitUntilDone()
+  val jl = jobRunner.joblist
+  jl.waitUntilDone()
 
-// get jobs that hit the Wall limit and resubmit them with more cores
-//jobRunner.joblist.
-//  killed.restore.
-//  foreach(_.eval(jobRunner.copy(numThreads = 10)))
-//}
+  // get jobs that hit the Wall limit and resubmit them with more cores
+  val failedConfigs = jl.jobConfigs.filterKeys(!jl.jobIds.contains(_)).values
 
-
-//sumbit scala snippets
+  jl.failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.add())
+  //}
 
 
+  //sumbit scala snippets
+
+
+}

@@ -1,10 +1,9 @@
 package joblist
 
 import better.files.File
+import joblist.utils._
 
 import scalautils.Bash
-
-
 
 /**
   * A stateless wrapper around list of cluster jobs. The actual data is stoed in a plain text-file containing the job-IDs (one per line).
@@ -12,7 +11,7 @@ import scalautils.Bash
   * @author Holger Brandl
   */
 
-case class JobList(file: File = File(".joblist")) extends AnyRef {
+case class JobList(file: File = File(".joblist"), scheduler: QueueSystem = guessQueue()) extends AnyRef {
 
 
   def this(name: String) = this(File(name))
@@ -21,6 +20,18 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
   //
   // Model
   //
+
+  def run(jc: JobConfiguration) = {
+    val jobId = scheduler.submit(jc)
+
+    add(jobId)
+
+    // serialzie job configuration in case we need to rerun it
+    jc.saveAsXml(jobId, logsDir)
+
+    jobId
+  }
+
 
   def add(jobId: Int) = {
     file.appendLine(jobId + "")
@@ -36,7 +47,7 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
     val runinfoFile = logsDir / s"$id.runinfo"
 
 
-    def info = LsfUtils.readRunLog(runinfoFile)
+    def info = scheduler.readRunLog(runinfoFile)
   }
 
 
@@ -50,9 +61,7 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
   def isRunning: Boolean = {
     Thread.sleep(2000) // because sometimes it takes a few seconds until jobs show up in bjobs
 
-    val inQueue = Bash.eval("bjobs").stdout.drop(1).
-      filter(!_.isEmpty).
-      map(_.split(" ")(0).toInt).toList
+    val inQueue = scheduler.getRunning
 
 
     // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
@@ -72,7 +81,6 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
   // Commands
   //
 
-
   def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval)
 
 
@@ -86,6 +94,9 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
     }
 
     while (isRunning) Thread.sleep(10000)
+
+    // print a short report
+    Console.err.println(s"${file.name} complete (${jobs.size - killed.size} done; ${killed.size} killed)")
   }
 
 
@@ -103,7 +114,7 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
 
 
   def restoreConfig(jobId: Int) = {
-    LsfJobConfiguration.fromXML(jobId, file.parent)
+    JobConfiguration.fromXML(jobId, logsDir)
   }
 
 
@@ -126,9 +137,6 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
     }
 
     // abstract queuing system here
-    LsfUtils.updateRunInfo(job.id, job.runinfoFile)
+    scheduler.updateRunInfo(job.id, job.runinfoFile)
   }
-
-
-
 }

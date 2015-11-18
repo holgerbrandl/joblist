@@ -3,6 +3,7 @@ package joblist
 import java.util.concurrent.Executors
 
 import better.files.File
+import joblist.utils._
 
 import scala.concurrent.ExecutionContext
 import scalautils.Bash
@@ -68,10 +69,9 @@ object Tasks extends App {
 
     override def eval(bashSnippet: BashSnippet): Unit = {
       // todo since we forward everything we could also inine bsub here
-      val jc = LsfJobConfiguration(bashSnippet.cmd, bashSnippet.name, queue = queue, numThreads = numThreads, wd = bashSnippet.wd.toJava)
+      val jc = JobConfiguration(bashSnippet.cmd, bashSnippet.name, queue = queue, numThreads = numThreads, wd = bashSnippet.wd)
 
-      val jobId = LsfUtils.bsub(jc)
-      joblist.add(jobId)
+      val jobId = joblist.run(jc)
 
       Console.err.println(s"Submitting '${bashSnippet.withAutoName.name}' to '$queue' with jobid '$jobId'")
     }
@@ -86,7 +86,7 @@ object Tasks extends App {
 
 
     def withAutoName: BashSnippet = {
-      this.copy(name = LsfUtils.buildJobName(this.wd, this.cmd))
+      this.copy(name = buildJobName(this.wd, this.cmd))
     }
 
 
