@@ -46,6 +46,7 @@ object JobConfiguration {
 }
 
 
+// see http://x-stream.github.io/converter-tutorial.html
 class BetterFilerConverter extends AbstractSingleValueConverter {
 
   def canConvert(o: Class[_]): Boolean = {

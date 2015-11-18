@@ -14,7 +14,7 @@ import scalautils.Bash
   *
   * @author Holger Brandl
   */
-class LsfScheduler extends QueueSystem {
+class LsfScheduler extends JobScheduler {
 
 
   /** Submits a task to the LSF. */

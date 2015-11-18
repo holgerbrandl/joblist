@@ -9,7 +9,7 @@ import joblist.utils.RunLog
   *
   * @author Holger Brandl
   */
-class SlurmScheduler extends QueueSystem {
+class SlurmScheduler extends JobScheduler {
 
   override def getRunning: List[Int] = ???
 

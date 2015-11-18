@@ -15,7 +15,7 @@ import scalautils.Bash
   *
   * @author Holger Brandl
   */
-abstract class QueueSystem {
+abstract class JobScheduler {
 
   def submit(cmd: String, name: String): Int = submit(JobConfiguration(cmd, name))
 
@@ -36,7 +36,7 @@ abstract class QueueSystem {
 
 package object utils {
 
-  def guessQueue(): QueueSystem = {
+  def guessQueue(): JobScheduler = {
     if (Bash.eval("which bsub").stdout.headOption.nonEmpty) {
       return new LsfScheduler()
     }

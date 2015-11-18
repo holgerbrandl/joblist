@@ -11,7 +11,7 @@ import scalautils.Bash
   * @author Holger Brandl
   */
 
-case class JobList(file: File = File(".joblist"), scheduler: QueueSystem = guessQueue()) extends AnyRef {
+case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
 
 
   def this(name: String) = this(File(name))
