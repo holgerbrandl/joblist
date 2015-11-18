@@ -31,19 +31,13 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.jobs
 
 
-    def submitJob = {
-      val jobName = "testjob_" + System.currentTimeMillis()
+    val jobName = "testjob_" + System.currentTimeMillis()
 
-      // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
-      val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
+    // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
+    val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
 
-      val jobId = LsfUtils.bsub(cmd, name = jobName, workingDirectory = wd)
-      jl.add(jobId)
-    }
-
-    //    submitJob
-    //    submitJob
-    submitJob
+    val jobId = LsfUtils.bsub(LsfJobConfiguration(cmd, jobName))
+    jl.add(jobId)
 
     jl.waitUntilDone()
     jl.jobs
@@ -58,7 +52,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
   it should "submit some jobs and wait until they are done " in {
 
     val tasks = for (i <- 1 to 3) yield {
-      BashSnippet(s"""sleep 15; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
+      BashSnippet(s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
     }
 
     val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium")
@@ -76,7 +70,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
     // relative globbing broken in b-f --> fixed for new version
     //    (wd / ".logs").glob("*").toList.head.lines.next should include ("medium")
-    (wd / ".logs").list.filter(_.name.contains("args")).next().lines.next should include("medium")
+    //    (wd / ".logs").list.filter(_.name.contains("args")).next().lines.next should include("medium")
 
     //    val wd = File("/Volumes/home/brandl/unit_tests")
     (wd / ".test_tasks").toJava should exist
@@ -86,6 +80,10 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     (wd / "task_3.txt").toJava should exist
 
     (wd / "task_3.txt").lines.next shouldBe "this is task 3"
+
+    // make sure that we can still access the job configurations
+    val restoredJC = runner.joblist.jobConfigs.values.head
+    restoredJC.queue should equal("medium")
   }
 
   //  Bash.eval("echo test")(BashMode(beVerbose = true))

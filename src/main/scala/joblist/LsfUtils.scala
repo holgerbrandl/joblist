@@ -1,9 +1,12 @@
 package joblist
 
+import java.io.{BufferedWriter, FileWriter}
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import better.files.File
+import better.files._
+import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.io.xml.StaxDriver
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -27,87 +30,80 @@ object LsfUtils {
   }
 
 
+  /** Log files that might be of interest for the users. JL does not rely on them. */
   case class JobLogs(name: String, wd: File) {
 
     def logsDir = wd / s".logs"
 
-
-    val idLog = logsDir / s"$name.jobid"
-
-
-    def id: Int = {
-      require(idLog.isRegularFile, "no id yet. job has not been submitted yet")
-
-      idLog.lines.next().toInt
-    }
-
-
     // file getters
+    val id = logsDir / s"$name.jobid"
     val cmd = logsDir / s"$name.cmd"
     val err = logsDir / s"$name.err.log"
     val out = logsDir / s"$name.out.log"
-    val queueArgs = logsDir / s"$name.args"
   }
 
 
   /** Submits a task to the LSF. */
   // http://stackoverflow.com/questions/4652095/why-does-the-scala-compiler-disallow-overloaded-methods-with-default-arguments
-  def bsub(task: JobConfiguration): Int = bsub(task.cmd, task.name, task.queue, task.numThreads, task.otherQueueArgs)
+  def bsub(jc: LsfJobConfiguration): Int = {
 
-
-  // todo save configs in here and not in JobListCLI
-
-  def bsub(cmd: String, name: String, queue: String = "short", numCores: Int = 1, otherArgs: String = "", workingDirectory: File = File(".")): Int = {
-
+    val numCores = jc.numThreads
+    val cmd = jc.cmd
+    val wd = File(jc.wd.getAbsolutePath)
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
-    val jobName = if (name == null || name.isEmpty) buildJobName(workingDirectory, cmd) else name
-    val lsfArgs = s"""-q $queue $threadArg $otherArgs"""
-    //    val job = s"""cd '${workingDirectory.fullPath}'; mysub "$jobName" '$cmd' $lsfArgs | joblist ${joblist.file.fullPath}"""
+    val jobName = if (jc.name == null || jc.name.isEmpty) buildJobName(wd, cmd) else jc.name
+    val lsfArgs = s"""-q ${jc.queue} $threadArg ${jc.otherQueueArgs}"""
 
-    //todo could be avoided if we would call bsub directly (because ProcessIO takes care that arguments are correctly provided as input arguments to binaries)
+    // TBD Could be avoided if we would call bsub directly (because ProcessIO
+    // TBD takes care that arguments are correctly provided as input arguments to binaries)
     require(!cmd.contains("'"))
 
     // create hidden log directory and log cmd as well as queuing args
-    require(workingDirectory.isDirectory)
+    require(wd.isDirectory)
 
-    val logsDir = workingDirectory / ".logs"
+    val logsDir = wd / ".logs"
     logsDir.createIfNotExists(true)
 
-    val jobLogs = JobLogs(jobName, workingDirectory)
-
-    val cmdLog = jobLogs.cmd
-    require(cmdLog.notExists)
-    cmdLog.write(cmd)
-
-    jobLogs.queueArgs.write(lsfArgs)
+    val jobLogs = JobLogs(jobName, wd)
 
 
     // submit the job to the lsf
-    val bsubCmd = s"""
-    cd '${workingDirectory.fullPath}'
+    var bsubCmd = s"""
     bsub  -J $jobName $lsfArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
     """
 
-    //    import sys.process._
-    //    Seq("bsub",  "-J", jobName ,lsfArgs.split(" "), "(" +cmd +s") 2>.logs/${jobLogs.err} 1>.logs/${jobLogs.out}").flatten!!
-    //    new BashSnippet(bsubCmd).inDir(workingDirectory).eval(new LocalShell)
+    // optionally prefix with working directory
+    if (File(".") != wd) {
+      bsubCmd = s"cd '${wd.fullPath}'\n" + bsubCmd
+    }
+
+    // run
     val bsubStatus = Bash.eval(bsubCmd).stdout
 
 
+    // extract job id
     val jobSubConfirmation = bsubStatus.filter(_.startsWith("Job <"))
     require(jobSubConfirmation.nonEmpty, s"job submission of '${jobName}' failed with:\n$bsubStatus")
-
     val jobID = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
-    jobLogs.idLog.write(jobID.toString)
+
+    // serialzie job configuration in case we need to rerun it
+    jc.saveAsXml(jobID)
+
+    // save user logs
+    //    require(jobLogs.cmd.notExists) // really?
+    jobLogs.id.write(jobID + "")
+    jobLogs.cmd.write(cmd)
+
+    // btw, name can be inferred via runinfo
 
     jobID
   }
 
 
-  private def changeWdOptional(wd: File): String = {
-    if (wd != null && wd != File(".")) "cd " + wd.fullPath + "; " else ""
-  }
+  //  private def changeWdOptional(wd: File): String = {
+  //    if (wd != null && wd != File(".")) "cd " + wd.fullPath + "; " else ""
+  //  }
 
 
   def buildJobName(directory: File, cmd: String) = {
@@ -183,4 +179,25 @@ object LsfUtils {
 }
 
 
-case class JobConfiguration(cmd: String, name: String, queue: String, numThreads: Int = 1, otherQueueArgs: String = "")
+case class LsfJobConfiguration(cmd: String, name: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: java.io.File = new java.io.File(".")) {
+
+  def saveAsXml(jobId: Int) = {
+    val xmlFile = LsfJobConfiguration.jcXML(jobId, wd.toScala).toJava
+    new XStream(new StaxDriver()).toXML(this, new BufferedWriter(new FileWriter(xmlFile)))
+  }
+}
+
+
+// utility method for JC
+object LsfJobConfiguration {
+
+  def jcXML(jobId: Int, wd: File = File(".")): File = {
+    (wd / ".jl").createIfNotExists(true) / s"$jobId.job"
+  }
+
+
+  def fromXML(jobId: Int, wd: File = File(".")): LsfJobConfiguration = {
+    val xmlFile = jcXML(jobId, wd).toJava
+    new XStream(new StaxDriver()).fromXML(xmlFile).asInstanceOf[LsfJobConfiguration]
+  }
+}

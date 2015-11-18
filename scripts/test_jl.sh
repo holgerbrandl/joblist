@@ -13,5 +13,11 @@ jl wait
 eval "$(jl shortcuts)"
 
 
-cd $(dirname $(which jl))/..
-sbt assembly; bsub "touch foo.txt" | jl add .myjobs && jl wait
+(cd $(dirname $(which jl))/.. && sbt assembly)
+
+cd ~/unit_tests
+bsub "touch foo.txt" | jl add .myjobs
+jl wait .myjobs
+
+eval "$(jl shortcuts)"
+wait4jobs .myjobs

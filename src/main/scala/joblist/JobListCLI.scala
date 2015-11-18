@@ -1,10 +1,8 @@
 package joblist
 
-import java.io.{BufferedWriter, FileWriter}
 import java.util.Objects
 
 import better.files.File
-import com.thoughtworks.xstream.XStream
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
@@ -100,9 +98,9 @@ Options:
 
     val jl = getJL(results)
 
-    val jobName = results.get("job_name").get
+    val jobName = results.get("job_name")
 
-    val jc = JobConfiguration(results.get("command").get, jobName, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
+    val jc = LsfJobConfiguration(results.get("command").get, jobName.orNull, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
 
 
     // save for later in case we need to restore it
@@ -113,12 +111,6 @@ Options:
 
 
     // save task description in case we need to rerun it
-    new XStream().toXML(jc, new BufferedWriter(new FileWriter(jobXml(jobId).toJava)))
-  }
-
-
-  def jobXml(jobId: Int): File = {
-    File(s".jl/$jobId.job")
   }
 
 
@@ -164,9 +156,9 @@ Options:
 
     val results = parseArgs(args, doc)
 
+    // wait until all jobs have finished
     val jl = getJL(results)
     jl.waitUntilDone()
-
 
 
     // in case jl.submit was used to launsch the jobs retry in case they've failed
@@ -179,21 +171,24 @@ Options:
 
       val killedJobs = jl.killed
 
-      def isRestoreable(jobId: Int) = jobXml(jobId).isRegularFile
+      def isRestoreable(jobId: Int) = LsfJobConfiguration.jcXML(jobId).isRegularFile
 
-      require(killedJobs.forall(isRestoreable), "jobs can be resubmitted only if they were intially submitted with jl submit")
+      require(
+        killedJobs.forall(isRestoreable),
+        "jobs can only be resubmitted only if they were all submitted with `jl submit`"
+      )
 
       // restore job configurations
-      val taskConfigs: List[JobConfiguration] = killedJobs.map(jobId => new XStream().fromXML(jobXml(jobId).toJava).asInstanceOf[JobConfiguration])
+      val killedJC: List[LsfJobConfiguration] = killedJobs.map(LsfJobConfiguration.fromXML(_))
 
       // use an independent job list for the resubmission
       val resubmitJL = JobList(File(jl.file.fullPath + s"_resubmit_$numResubmits"))
-      taskConfigs.map(LsfUtils.bsub).map(resubmitJL.add)
+      killedJC.map(jc => LsfUtils.bsub(jc)).map(resubmitJL.add)
 
       resubmitJL.waitUntilDone()
     }
 
-    // decide escalation strategy -> more cores or longer queue, or just again?
+    // TBD decide escalation strategy -> more cores or longer queue, or just again?
   }
 
 

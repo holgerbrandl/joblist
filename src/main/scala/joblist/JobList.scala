@@ -118,4 +118,14 @@ case class JobList(file: File = File(".joblist")) extends AnyRef {
   def killed = {
     jobs.filter(_.info.exceededWallLimit).map(_.id)
   }
+
+
+  def jobConfigs = {
+    jobIds.map(jobId => jobId -> restoreConfig(jobId)).toMap
+  }
+
+
+  def restoreConfig(jobId: Int) = {
+    LsfJobConfiguration.fromXML(jobId, file.parent)
+  }
 }
