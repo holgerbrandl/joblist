@@ -3,12 +3,13 @@ package joblist.shell
 import better.files.File
 import joblist.{JobConfiguration, JobScheduler, RunInfo}
 
+
 /**
   * Document me!
   *
   * @author Holger Brandl
   */
-class ShellScheduler extends JobScheduler {
+class DirectRunScheduler extends JobScheduler {
 
   /** Submits a job and returns its jobID. */
   override def submit(jc: JobConfiguration): Int = ???

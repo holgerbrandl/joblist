@@ -1,16 +1,21 @@
 
-
 import joblist._
 
-val jl = JobList
 
-jl.run(JobConfiguration("echo test"))
-jl.run(JobConfiguration("echo test"))
+val jl = JobList()
+
+jl.run(JobConfiguration("echo foo"))
+jl.run(JobConfiguration("echo bar"))
 
 // block execution until are jobs are done
 jl.waitUntilDone()
 
-// get jobs that hit the Wall limit and resubmit them with more cores
-val failedConfigs: Iterable[JobConfiguration] = jl.jobConfigs.filterKeys(!jl.jobIds.contains(_)).values
+// get the run information about jobs that were killed by the queuing system
+val killedInfo: List[RunInfo] = jl.jobs.
+  filter(job => jl.killed.contains(job.id)).
+  map(_.info)
 
-failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.run)
+
+// resubmit them with more threads
+//failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.run)
+jl.resubmitKilled(new BetterQueue("long"))

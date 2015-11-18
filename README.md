@@ -65,10 +65,10 @@ libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.1-SNAPSHOT"
 
 Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback ), submits some jobs, waits for all of them to finish, and resubmits failed ones again with more threads:
 ```
-
 import joblist._
 
-val jl = JobList
+
+val jl = JobList()
 
 jl.run(JobConfiguration("echo foo"))
 jl.run(JobConfiguration("echo bar"))
@@ -76,11 +76,14 @@ jl.run(JobConfiguration("echo bar"))
 // block execution until are jobs are done
 jl.waitUntilDone()
 
-// get jobs that hit the Wall limit ...
-val failedConfigs: Iterable[JobConfiguration] = jl.jobConfigs.filterKeys(!jl.jobIds.contains(_)).values
+// get the run information about jobs that were killed by the queuing system
+val killedInfo: List[RunInfo] = jl.jobs.
+  filter(job => jl.killed.contains(job.id)).
+  map(_.info)
 
-// ... and resubmit them with more threads
-failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.run)
+
+// resubmit them with more threads
+jl.resubmitKilled(new BetterQueue("long"))
 
 ```
 

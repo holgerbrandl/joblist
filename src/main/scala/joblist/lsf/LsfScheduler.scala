@@ -2,7 +2,6 @@ package joblist.lsf
 
 import better.files.File
 import joblist._
-import joblist.utils.RunLog
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -111,7 +110,7 @@ class LsfScheduler extends JobScheduler {
       }
     }
 
-    RunLog(
+    RunInfo(
       jobId = slimValues(0).toInt,
       user = slimValues(1),
       status = slimValues(2),

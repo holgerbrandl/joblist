@@ -1,7 +1,6 @@
 package joblist
 
 import better.files.File
-import joblist.utils._
 
 import scalautils.Bash
 
@@ -12,6 +11,7 @@ import scalautils.Bash
   */
 
 case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
+
 
 
   def this(name: String) = this(File(name))
@@ -41,13 +41,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   case class Job(id: Int) {
 
-    def isDone: Boolean = runinfoFile.isRegularFile && info.isDone
+    def isDone: Boolean = infoFile.isRegularFile && info.isDone
 
 
-    val runinfoFile = logsDir / s"$id.runinfo"
+    val infoFile = logsDir / s"$id.runinfo"
 
 
-    def info = scheduler.readRunLog(runinfoFile)
+    def info = scheduler.readRunLog(infoFile)
   }
 
 
@@ -100,6 +100,26 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  /** Derives a new job-list for just the killed jobs */
+  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
+    val failedJobs: Map[Int, JobConfiguration] = jobConfigs.filterKeys(killed.contains)
+
+    // remove killed ids from list file
+    file.write(jobIds.diff(failedJobs.keys.toList).mkString("\n"))
+
+    val killed2resubIds = failedJobs.mapValues(jc => {
+      run(resubStrategy.escalate(jc))
+    })
+
+    // keep track of which jobs have been resubmitted by writing a graph file
+    killed2resubIds.foreach { case (oldId, resubId) => resubGraphFile.append(oldId + "\t" + resubId) }
+
+    // tbd consider to move/rename user-logs
+  }
+
+
+  val resubGraphFile = File(file.fullPath + ".resubgraph")
+
   def reset() = if (file.exists) file.delete()
 
 
@@ -108,6 +128,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  /** get all job configurations associated to the joblist */
   def jobConfigs = {
     jobIds.map(jobId => jobId -> restoreConfig(jobId)).toMap
   }
@@ -137,6 +158,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     }
 
     // abstract queuing system here
-    scheduler.updateRunInfo(job.id, job.runinfoFile)
+    scheduler.updateRunInfo(job.id, job.infoFile)
   }
 }
+
