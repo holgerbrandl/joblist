@@ -96,9 +96,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     while (isRunning) Thread.sleep(10000)
 
     // print a short report
-    Console.err.println(s"${file.name} complete (${jobs.size - killed.size} done; ${killed.size} killed)")
+    Console.err.println(statusReport)
   }
 
+
+  def statusReport: String = {
+    s"${file.name} complete (${jobs.size - killed.size} done; ${killed.size} killed)"
+  }
 
   /** Derives a new job-list for just the killed jobs */
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {

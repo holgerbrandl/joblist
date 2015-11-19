@@ -42,9 +42,13 @@ libraryDependencies ++= Seq(
 //  case false => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
 //}
 
-libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9" % "test" cross CrossVersion.full
-initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
-
+sys.env.get("USE_AMMO").isDefined match {
+  case true => {
+    libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9" % "test" cross CrossVersion.full
+    initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
+  }
+  case false => initialCommands in(Test, console) := """"""
+}
 
 
 // disable tests

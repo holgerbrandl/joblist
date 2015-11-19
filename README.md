@@ -63,7 +63,7 @@ In addition to the provided shell utilities, joblist is also usable programatica
 libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.1-SNAPSHOT"
 ```
 
-Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback ), submits some jobs, waits for all of them to finish, and resubmits failed ones again with more threads:
+Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback ), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
 ```
 import joblist._
 
@@ -81,8 +81,7 @@ val killedInfo: List[RunInfo] = jl.jobs.
   filter(job => jl.killed.contains(job.id)).
   map(_.info)
 
-
-// resubmit them with more threads
+// resubmit to other queue
 jl.resubmitKilled(new BetterQueue("long"))
 
 ```
