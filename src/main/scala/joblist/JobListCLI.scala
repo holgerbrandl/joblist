@@ -24,11 +24,11 @@ object JobListCLI extends App {
 
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
     println(s"""
-    jl   v$version"
-    Copyright 2015 Holger Brandl
-    License   Simplified BSD
+    JobList     v$version
+    Copyright   2015 Holger Brandl
+    License     Simplified BSD
     https://github.com/holgerbrandl/joblist
-    """)
+    """.stripMargin)
     System.exit(0)
   }
 
@@ -85,22 +85,27 @@ If no <joblist_file> is provided, jl will use '.jobs' as default
   def submit() = {
 
     val results = parseArgs(args, """
-Usage: jl submit [options] [<joblist_file>] <command>
+    Usage: jl submit [options] <command>
 
-Options:
- -n <threads>  Number of threads [default: 1]
- -q <queue>  Number of threads [default: short]
- -n <job_name>  Number of threads
- --other_queue_args <queue_args>  Additional queue parameters
-    """)
+    Options:
+     -j --joblist_file <joblist_file>  joblist name [default: .jobs]
+     -n --name <job_name>  Name of the job
+     -t --num_threads <threads>  Number of threads [default: 1]
+     -q --queue <queue>  Number of threads [default: short]
+     --other_queue_args <queue_args>  Additional queue parameters
+                                  """.alignLeft.trim)
 
     // todo add option to disable automatic stream redirection
 
     val jl = getJL(results)
 
-    val jobName = results.get("job_name")
-
-    val jc = JobConfiguration(results.get("command").get, jobName.orNull, results.get("<queue").get, results.get("threads").get.toInt, results.get("other_queue_args").get)
+    val jc = JobConfiguration(
+      cmd = results.get("command").get,
+      name = results.getOrElse("name", ""),
+      queue = results.get("queue").get,
+      numThreads = results.get("num_threads").get.toInt,
+      otherQueueArgs = results.getOrElse("other_queue_args", "")
+    )
 
     // save for later in case we need to restore it
     jl.run(jc)

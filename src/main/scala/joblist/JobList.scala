@@ -124,7 +124,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   val resubGraphFile = File(file.fullPath + ".resubgraph")
 
-  def reset() = if (file.exists) file.delete()
+  def reset() = {
+    file.delete(true)
+    resubGraphFile.delete(true)
+  }
 
 
   def killed = {

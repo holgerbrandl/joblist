@@ -21,3 +21,12 @@ jl wait .myjobs
 
 eval "$(jl shortcuts)"
 wait4jobs .myjobs
+
+
+## fake a walltime hit
+
+
+# https://bmi.cchmc.org/resources/software/lsf-examples
+
+
+
