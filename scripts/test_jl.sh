@@ -28,5 +28,8 @@ wait4jobs .myjobs
 
 # https://bmi.cchmc.org/resources/software/lsf-examples
 
+mcdir ~/jl_test
 
+eval "$(jl shortcuts)"
 
+jsub --other_queue_args "-W 00:01""sleep 12"

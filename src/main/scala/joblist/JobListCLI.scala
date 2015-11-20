@@ -150,7 +150,7 @@ If no <joblist_file> is provided, jl will use '.jobs' as default
     Options:
      --num_resubmits <num_resubmits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 0]
      --resubmit_strategy <resub_strategy>  The used escalation strategy for job resubmission [default: longer_queue]
-      """.alignLeft
+      """.alignLeft.trim
 
     val results = parseArgs(args, doc)
 

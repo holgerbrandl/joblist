@@ -12,10 +12,7 @@ import scalautils.Bash
 
 case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
 
-
-
   def this(name: String) = this(File(name))
-
 
   //
   // Model
