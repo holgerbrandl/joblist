@@ -9,6 +9,9 @@ import better.files.File
   */
 abstract class JobScheduler {
 
+  def readIdsFromStdin(): List[Int]
+
+
   def submit(cmd: String, name: String): Int = submit(JobConfiguration(cmd, name))
 
 

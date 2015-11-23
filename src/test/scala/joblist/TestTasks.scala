@@ -4,6 +4,8 @@ import better.files._
 import joblist.Tasks.{BashSnippet, LsfExecutor}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scalautils.StringUtils.ImplStringUtils
+
 /**
   * Document me!
   *
@@ -54,7 +56,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
   it should "submit some jobs and wait until they are done " in {
 
     val tasks = for (i <- 1 to 3) yield {
-      BashSnippet(s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
+      BashSnippet( s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
     }
 
     val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium")
@@ -88,9 +90,53 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     restoredJC.queue should equal("medium")
   }
 
-  //  Bash.eval("echo test")(BashMode(beVerbose = true))
-  //  Bash.eval("ls")
-  //  BashSnippet("ls | grep ammo").inDir(home/"Desktop").eval(new LsfExecutor())
+
+  it should "submit a job, capture streams, wait for finish, and collect basic stats" in {
+
+    // todo clean up directory
+
+    val jl = JobList(wd / ".with_walllimit")
+
+    val cmds = for (runMinutes <- 1 to 5) yield {
+      s"""
+        sleep ${60 * runMinutes + 30}
+        touch walltime_test_${jl}.txt
+      """.alignLeft
+    }
+
+    cmds.foreach(cmd => jl.run(JobConfiguration(cmd, otherQueueArgs = "-W 00:01")))
+
+    jl.waitUntilDone()
+  }
+
+
+  it should "not detect a failed job as being killed by the queuing system" in {
+
+    val jl = JobList(wd / ".fail_no_walllimit")
+
+    jl.run(JobConfiguration( """echo "other job""""))
+
+    // run a job which failes
+    jl.run(new JobConfiguration(
+      """
+    touch failjob_test.txt
+    exit 1
+      """))
+
+    jl.waitUntilDone()
+
+    jl.jobs.map(_.info)
+
+    // check that is was partially run
+    (wd / "failjob_test.txt").toJava should exist
+
+    // ..not killed by the queue
+    jl.killed should be(Set.empty)
+
+    // .. but is detected as failed
+    jl.failed should have size (1)
+  }
+
 }
 
 

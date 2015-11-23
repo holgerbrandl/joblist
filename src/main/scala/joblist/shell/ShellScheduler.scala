@@ -21,4 +21,6 @@ class ShellScheduler extends JobScheduler {
 
 
   override def getRunning: List[Int] = ???
+
+  override def readIdsFromStdin(): List[Int] = ???
 }

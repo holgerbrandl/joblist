@@ -121,8 +121,7 @@ If no <joblist_file> is provided, jl will use '.jobs' as default
     try {
 
       // extract job id from stdin stream and add it to the given JobList
-
-      val jobIds = io.Source.stdin.getLines().filter(_.startsWith("Job <")).map(_.split(" ")(1).replaceAll("[<>]", "").toInt).toList
+      val jobIds = jl.scheduler.readIdsFromStdin()
 
       //      Console.err.println("pwd is "+File(".'"))
       Console.err.println(s"Adding job '${jobIds.mkString(", ")}' to joblist '${jl.file.toJava}'")

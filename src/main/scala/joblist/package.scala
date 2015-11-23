@@ -1,7 +1,10 @@
+import java.io.{BufferedWriter, FileWriter}
 import java.text.SimpleDateFormat
 import java.util.Date
 
 import better.files.File
+import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.io.xml.StaxDriver
 import joblist.lsf.LsfScheduler
 import joblist.shell.ShellScheduler
 import joblist.slurm.SlurmScheduler
@@ -48,7 +51,10 @@ package object joblist {
                      //                  JobName:String,
                      submitTime: DateTime,
                      //                  ProjName:String, CpuUsed:Int, Mem:Int, Swap:Int, Pids:List[Int],
-                     startTime: DateTime, finishTime: DateTime) {
+                     startTime: DateTime, finishTime: DateTime,
+                     // additional fields
+                     queueKilled: Boolean
+                    ) {
 
     def isDone: Boolean = List("EXIT", "DONE").contains(status)
 
@@ -57,4 +63,19 @@ package object joblist {
   }
 
 
+  def toXml(something: Any, file: File) = {
+    getXstrem.toXML(something, new BufferedWriter(new FileWriter(file.toJava)))
+  }
+
+
+  def fromXml(file: File) = {
+    getXstrem.fromXML(file.toJava)
+  }
+
+  def getXstrem: XStream = {
+    val xStream = new XStream(new StaxDriver())
+    xStream.registerConverter(new BetterFilerConverter())
+
+    xStream
+  }
 }

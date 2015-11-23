@@ -1,0 +1,53 @@
+bsub -W 00:01 "sleep 120"
+#Job <771278> is submitted to default queue <short>.
+
+bjobs -W 771278
+
+[test]$ bjobs -l 771278
+
+Job <771278>, User <brandl>, Project <default>, Status <EXIT>, Queue <short>, C
+                     ommand <sleep 120>, Share group charged </brandl>
+Mon Nov 23 10:16:26: Submitted from host <falcon>, CWD <$HOME/test>;
+
+ RUNLIMIT
+ 1.0 min of n28
+Mon Nov 23 10:16:31: Started on <n28>, Execution Home </home/brandl>, Execution
+                      CWD </home/brandl/test>;
+Mon Nov 23 10:17:33: Exited with exit code 140. The CPU time used is 0.1 second
+                     s.
+Mon Nov 23 10:17:33: Completed <exit>; TERM_RUNLIMIT: job killed after reaching
+                      LSF run time limit.
+
+ SCHEDULING PARAMETERS:
+           r15s   r1m  r15m   ut      pg    io   ls    it    tmp    swp    mem
+ loadSched   -     -     -     -       -     -    -     -     -      -      -
+ loadStop    -     -     -     -       -     -    -     -     -      -      -
+
+            ngpus gpushared gpuexcl_thrd gpuprohibited gpuexcl_proc gpumode0
+ loadSched     -         -            -             -            -        -
+ loadStop      -         -            -             -            -        -
+
+          gputemp0 gpuecc0 gpumode1 gputemp1 gpuecc1 gpumode2 gputemp2 gpuecc2
+ loadSched      -       -        -        -       -        -        -       -
+ loadStop       -       -        -        -       -        -        -       -
+
+          gpumode3 gputemp3 gpuecc3
+ loadSched      -        -       -
+ loadStop       -        -       -
+
+[test]$ bjobs -W 771278
+JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME  PROJ_NAME CPU_USED MEM SWAP PIDS START_TIME FINISH_TIME
+771278  brandl  EXIT  short      falcon      n28         sleep 120  11/23-10:16:26 default    000:00:00.06 4408   223940 126199,126201,126204 11/23-10:16:31 11/23-10:17:33
+
+
+from man bjobs --> exit alone is not enough
+
+   EXIT
+               The job has terminated with a non-zero
+               status – it may have been aborted due
+               to an error in its execution, or
+               killed by its owner or the LSF
+               administrator.
+
+
+bjobs -W 771278

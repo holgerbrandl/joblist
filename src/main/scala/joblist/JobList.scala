@@ -12,6 +12,7 @@ import scalautils.Bash
 
 case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
 
+
   def this(name: String) = this(File(name))
 
   //
@@ -86,8 +87,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def waitUntilDone(msg: String = "", withReport: Boolean = false) = {
     //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
-    if (file.isRegularFile && file.lines.nonEmpty) {
-      Console.err.println(s"There is no joblist named ${this.file.path}")
+    if (!file.isRegularFile || file.lines.isEmpty) {
+      throw new RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
     }
 
     while (isRunning) Thread.sleep(10000)
@@ -128,7 +129,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def killed = {
-    jobs.filter(_.info.exceededWallLimit).map(_.id)
+    jobs.filter(_.info.queueKilled).map(_.id)
+  }
+
+
+  def failed = {
+    /* see man bjobs for exit code: The job has terminated with a non-zero status – it may have been aborted due
+     to an error in its execution, or killed by its owner or the LSF administrator */
+    jobs.filter(_.info.status == "EXIT").map(_.id)
   }
 
 
@@ -156,12 +164,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   private def updateStatsFile(job: Job): Any = {
-    // don't replace existing final logs
     if (job.isDone) {
       return
     }
 
-    // abstract queuing system here
     scheduler.updateRunInfo(job.id, job.infoFile)
   }
 }

@@ -22,4 +22,6 @@ class DirectRunScheduler extends JobScheduler {
 
 
   override def getRunning: List[Int] = ???
+
+  override def readIdsFromStdin(): List[Int] = ???
 }

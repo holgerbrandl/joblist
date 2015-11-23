@@ -1,12 +1,9 @@
 package joblist
 
-import java.io.{BufferedWriter, FileWriter}
 import java.net.URI
 
 import better.files.File
-import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
-import com.thoughtworks.xstream.io.xml.StaxDriver
 
 /**
   * Document me!
@@ -17,8 +14,8 @@ import com.thoughtworks.xstream.io.xml.StaxDriver
 case class JobConfiguration(cmd: String, name: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
 
   def saveAsXml(jobId: Int, inDir: File) = {
-    val xmlFile = JobConfiguration.jcXML(jobId, inDir).toJava
-    JobConfiguration.getXmlConverter.toXML(this, new BufferedWriter(new FileWriter(xmlFile)))
+    val xmlFile = JobConfiguration.jcXML(jobId, inDir)
+    toXml(this, xmlFile)
   }
 }
 
@@ -32,16 +29,8 @@ object JobConfiguration {
 
 
   def fromXML(jobId: Int, wd: File = File(".")): JobConfiguration = {
-    val xmlFile = jcXML(jobId, wd).toJava
-    getXmlConverter.fromXML(xmlFile).asInstanceOf[JobConfiguration]
-  }
-
-
-  def getXmlConverter: XStream = {
-    val xStream = new XStream(new StaxDriver())
-    xStream.registerConverter(new BetterFilerConverter())
-
-    xStream
+    val xmlFile = jcXML(jobId, wd)
+    fromXml(xmlFile).asInstanceOf[JobConfiguration]
   }
 }
 

@@ -44,11 +44,16 @@ libraryDependencies ++= Seq(
 
 sys.env.get("USE_AMMO").isDefined match {
   case true => {
-    libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9" % "test" cross CrossVersion.full
-    initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
+    println("using ammonite shell")
+    libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.0" % "test" cross CrossVersion.full
+    // note does not work because the wole sb expression can just do ONE thing and not two. Why?
+    //    initialCommands in (Test, console) := """ammonite.repl.Repl.run("")"""
   }
   case false => initialCommands in(Test, console) := """"""
 }
+
+
+initialCommands in(Test, console) := """ammonite.repl.Repl.run("")"""
 
 
 // disable tests
