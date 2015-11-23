@@ -6,6 +6,7 @@ import better.files.File
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scalautils.StringUtils._
 
 
@@ -142,13 +143,17 @@ If no <joblist_file> is provided, jl will use '.jobs' as default
 
 
   def wait4jl() = {
+    // val args = Array("jl", "wait")
+    // val args = Array("jl", "wait", ".blastn")
     val doc =
       """
     Usage: jl wait [options] [<joblist_file>]
 
     Options:
-     --num_resubmits <num_resubmits>  The number of resubmission of jobs that hit the wall time limit of the underlying job scheduler [default: 0]
-     --resubmit_strategy <resub_strategy>  The used escalation strategy for job resubmission [default: longer_queue]
+     --resubmit_retry                 Simply retry without any change
+     --resubmit_queue <resub_queue>   Resubmit to different queue
+     --resubmit_wall <walltime>       Resubmit with different walltime limit
+     --resubmit_threads <num_threads> Resubmit with more threads
       """.alignLeft.trim
 
     val results = parseArgs(args, doc)
@@ -157,37 +162,42 @@ If no <joblist_file> is provided, jl will use '.jobs' as default
     val jl = getJL(results)
     jl.waitUntilDone()
 
+    // in case jl.submit was used to launch the jobs retry in case they've failed
+    // see http://docs.scala-lang.org/overviews/collections/concrete-mutable-collection-classes.html
 
-    // in case jl.submit was used to launsch the jobs retry in case they've failed
-    val maxResubmits = results.get("num_resubmits").get.toInt
     var numResubmits = 0
+    val resubChain = extractResubStrats(results).toIndexedSeq
 
-
-    while (numResubmits < maxResubmits && jl.killed.nonEmpty) {
+    while (jl.killed.nonEmpty && numResubmits < resubChain.size) {
+      jl.resubmitKilled(resubChain.get(numResubmits))
       numResubmits = numResubmits + 1
-
-      val killedJobs = jl.killed
-
-      def isRestoreable(jobId: Int) = JobConfiguration.jcXML(jobId).isRegularFile
-
-      require(
-        killedJobs.forall(isRestoreable),
-        "jobs can only be resubmitted only if they were all submitted with `jl submit`"
-      )
-
-      // restore job configurations
-      val killedJC: List[JobConfiguration] = killedJobs.map(JobConfiguration.fromXML(_))
-
-      // use an independent job list for the resubmission
-      val resubmitJL = JobList(File(jl.file.fullPath + s"_resubmit_$numResubmits"))
-      killedJC.foreach(jl.run)
-
-      resubmitJL.waitUntilDone()
     }
-
-    // TBD decide escalation strategy -> more cores or longer queue, or just again?
   }
 
+
+  def extractResubStrats(results: Map[String, String]) = {
+    val resubChain = mutable.ListBuffer.empty[ResubmitStrategy]
+
+    if (results.contains("resubmit_retry")) {
+      resubChain += new TryAgain()
+    }
+
+    if (results.contains("resubmit_queue")) {
+      resubChain += new BetterQueue(results.get("resubmit_queue").get)
+    }
+
+    if (results.contains("resubmit_wall")) {
+      resubChain += new DiffWalltime(results.get("resubmit_wall").get)
+    }
+
+    if (results.contains("resubmit_threads")) {
+      resubChain += new MoreThreads(results.get("resubmit_threads").get.toInt)
+    }
+
+    require(resubChain.length == 1, "multiple resub strategies are not yet possible. See and vote for https://github.com/holgerbrandl/joblist/issues/4")
+
+    resubChain
+  }
 
   def btop() = {
     val results = parseArgs(args, "Usage: jl up <joblist_file>")

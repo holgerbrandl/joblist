@@ -1,9 +1,11 @@
 package joblist
 
 import java.net.URI
+import java.util.Date
 
 import better.files.File
 import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
+import org.joda.time.DateTime
 
 /**
   * Document me!
@@ -11,7 +13,7 @@ import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
   * @author Holger Brandl
   */
 
-case class JobConfiguration(cmd: String, name: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
+case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
 
   def saveAsXml(jobId: Int, inDir: File) = {
     val xmlFile = JobConfiguration.jcXML(jobId, inDir)
@@ -45,6 +47,20 @@ class BetterFilerConverter extends AbstractSingleValueConverter {
 
   def fromString(str: String): AnyRef = {
     File(new URI(str).toURL.getFile)
+  }
+}
+
+
+// see http://x-stream.github.io/converter-tutorial.html
+class JodaConverter extends AbstractSingleValueConverter {
+
+  def canConvert(o: Class[_]): Boolean = {
+    o == classOf[DateTime]
+  }
+
+
+  def fromString(str: String): AnyRef = {
+    new DateTime(new Date(str))
   }
 }
 

@@ -97,16 +97,29 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
     val jl = JobList(wd / ".with_walllimit")
 
-    val cmds = for (runMinutes <- 1 to 5) yield {
+    val cmds = for (runMinutes <- 1 to 3) yield {
       s"""
-        sleep ${60 * runMinutes + 30}
-        touch walltime_test_${jl}.txt
+        sleep ${60 * runMinutes - 30}
+        touch walltime_test_${runMinutes}.txt
       """.alignLeft
     }
 
     cmds.foreach(cmd => jl.run(JobConfiguration(cmd, otherQueueArgs = "-W 00:01")))
 
     jl.waitUntilDone()
+
+    jl.jobs should have size (3)
+    jl.killed should have size (2)
+    jl.failed should have size (2)
+
+    // resubmit killed jobs with more walltime
+    jl.resubmitKilled(new DiffWalltime("-W 00:05"))
+
+    jl.scheduler.getRunning should have size (2)
+
+    jl.waitUntilDone()
+
+    jl.killed should be('empty)
   }
 
 

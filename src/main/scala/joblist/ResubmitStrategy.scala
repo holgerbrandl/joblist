@@ -32,3 +32,16 @@ class BetterQueue(queue: String) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(queue = queue)
 }
+
+class DiffWalltime(wallTime: String) extends ResubmitStrategy {
+  // todo ensure format is NN:NN
+
+  override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
+}
+
+
+class CompoundStrategy(elements: ResubmitStrategy*) extends ResubmitStrategy {
+  override def escalate(jc: JobConfiguration): JobConfiguration = {
+    elements.foldLeft(jc)((jc, rs) => rs.escalate(jc))
+  }
+}

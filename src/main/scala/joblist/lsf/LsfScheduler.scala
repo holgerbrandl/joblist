@@ -34,7 +34,12 @@ class LsfScheduler extends JobScheduler {
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
     val jobName = if (jc.name.isEmpty) buildJobName(wd, cmd) else jc.name
-    val lsfArgs = s"""-q ${jc.queue} $threadArg ${jc.otherQueueArgs}"""
+    val wallTime = if (!jc.wallTime.isEmpty) s"-W ${jc.wallTime}" else ""
+    val queue = if (!jc.queue.isEmpty) s"-q ${jc.queue}" else ""
+
+    // compile all args into cluster configuration
+    val lsfArgs =
+      s"""$queue $wallTime $threadArg ${jc.otherQueueArgs}"""
 
     // TBD Could be avoided if we would call bsub directly (because ProcessIO
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
@@ -127,6 +132,9 @@ class LsfScheduler extends JobScheduler {
     // extract additional info from the long data
     val hitRunLimit = logData.drop(3).mkString("\n").contains("TERM_RUNLIMIT: job killed")
 
+    // note if a user kills the jobs with bkill, log would rather state that:
+    // Mon Nov 23 14:00:39: Completed <exit>; TERM_OWNER: job killed by owner.
+
 
     val runLog = RunInfo(
       jobId = slimValues(0).toInt,
@@ -143,7 +151,5 @@ class LsfScheduler extends JobScheduler {
     toXml(runLog, File(runinfoFile.fullPath + ".xml"))
 
     runLog
-
   }
-
 }

@@ -32,4 +32,13 @@ mcdir ~/jl_test
 
 eval "$(jl shortcuts)"
 
-jsub --other_queue_args "-W 00:01""sleep 12"
+jsub --other_queue_args "-W 00:01" "sleep 12"
+
+
+## failing example which requires resubmission
+
+jsub --other_queue_args "-W 00:01" "sleep 12" |  jl add
+
+wait4jobs --resubmit_wall "00:10"
+
+jl stats

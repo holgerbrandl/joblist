@@ -85,13 +85,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def kill() = jobs.map(job => s"bkill ${job.id}").foreach(Bash.eval)
 
 
-  def waitUntilDone(msg: String = "", withReport: Boolean = false) = {
+  def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
     //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
     if (!file.isRegularFile || file.lines.isEmpty) {
       throw new RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
     }
 
-    while (isRunning) Thread.sleep(10000)
+    while (isRunning) Thread.sleep(sleepInterval)
 
     // print a short report
     Console.err.println(statusReport)
@@ -102,19 +102,26 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     s"${file.name} complete (${jobs.size - killed.size} done; ${killed.size} killed)"
   }
 
+
   /** Derives a new job-list for just the killed jobs */
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
+    // todo also provide means to retry failed jobs (because of user logic)
     val failedJobs: Map[Int, JobConfiguration] = jobConfigs.filterKeys(killed.contains)
 
     // remove killed ids from list file
     file.write(jobIds.diff(failedJobs.keys.toList).mkString("\n"))
+    file.appendNewLine()
+
+    // tbd maybe we should rather apply the escalate to the root jc?
 
     val killed2resubIds = failedJobs.mapValues(jc => {
       run(resubStrategy.escalate(jc))
     })
 
+    Console.err.println(s"${file.name}: Resubmitting ${failedJobs.size} with ${resubStrategy}...")
+
     // keep track of which jobs have been resubmitted by writing a graph file
-    killed2resubIds.foreach { case (oldId, resubId) => resubGraphFile.append(oldId + "\t" + resubId) }
+    killed2resubIds.foreach { case (oldId, resubId) => resubGraphFile.appendLine(oldId + "\t" + resubId) }
 
     // tbd consider to move/rename user-logs
   }
@@ -130,6 +137,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def killed = {
     jobs.filter(_.info.queueKilled).map(_.id)
+  }
+
+  /** Returns the graph of job resubmission due to cluster resource limitations (ie walltime hits).  */
+  private def resubGraph() = {
+    resubGraphFile.lines.map(line => {
+      val resubEvent = line.split("\t").map(_.toInt)
+      (Job(resubEvent(0)), Job(resubEvent(1)))
+    })
   }
 
 

@@ -74,7 +74,10 @@ package object joblist {
 
   def getXstrem: XStream = {
     val xStream = new XStream(new StaxDriver())
+
     xStream.registerConverter(new BetterFilerConverter())
+    xStream.registerConverter(new JodaConverter())
+    xStream.alias("RunInfo", classOf[RunInfo])
 
     xStream
   }
