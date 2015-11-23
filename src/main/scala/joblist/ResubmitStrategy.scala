@@ -1,7 +1,8 @@
 package joblist
 
 /**
-  * Document me!
+  * Resubmission patterns for jobs. They act as transformers on JobConfigurations which is simplified by the case-class
+  * induced copy() scheme.
   *
   * @author Holger Brandl
   */
@@ -9,7 +10,6 @@ trait ResubmitStrategy {
 
   /** Transform a job configuration into another one which is more likely to succeed. */
   def escalate(jc: JobConfiguration): JobConfiguration
-
 }
 
 
@@ -34,7 +34,7 @@ case class BetterQueue(queue: String) extends ResubmitStrategy {
 }
 
 case class DiffWalltime(wallTime: String) extends ResubmitStrategy {
-  // todo ensure format is NN:NN
+  // todo validate that format is [N]NN:NN
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
 }

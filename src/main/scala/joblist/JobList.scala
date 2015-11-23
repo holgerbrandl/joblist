@@ -71,7 +71,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // write log file for already finished jobs (because  bjobs will loose history data soon)
     jobs.filter(job => alreadyDone.contains(job.id)).foreach(updateStatsFile)
 
-    println(s"$file.name: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
+    println(s"${file.name}: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
 
     inQueue.intersect(jobIds).nonEmpty
   }
