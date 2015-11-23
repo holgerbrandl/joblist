@@ -37,8 +37,12 @@ jsub --other_queue_args "-W 00:01" "sleep 12"
 
 ## failing example which requires resubmission
 
-jsub --other_queue_args "-W 00:01" "sleep 12" |  jl add
+#bsub -W 00:01 "sleep 120; touch whit.txt" |  jl add .whit
+#jl wait
 
-wait4jobs --resubmit_wall "00:10"
+jl submit -j .whit "echo foo"
+jl submit -j .whit "echo bar"
+jl submit -j .whit -O "-W 00:01" "sleep 120; touch whit.txt"
+jl wait --resubmit_wall "00:10" .whit
 
 jl stats
