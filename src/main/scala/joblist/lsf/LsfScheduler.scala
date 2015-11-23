@@ -17,7 +17,7 @@ class LsfScheduler extends JobScheduler {
 
 
   override def readIdsFromStdin(): List[Int] = {
-    io.Source.stdin.getLines().
+    io.Source.stdin.getLines().take(1).
       filter(_.startsWith("Job <")).
       map(_.split(" ")(1).replaceAll("[<>]", "").toInt).
       toList

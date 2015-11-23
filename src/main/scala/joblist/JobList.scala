@@ -34,6 +34,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def add(jobId: Int) = {
     file.appendLine(jobId + "")
     updateStatsFile(Job(jobId))
+
+    Console.err.println(s"${file.name}: Added job '${jobId}'")
   }
 
 
@@ -69,7 +71,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // write log file for already finished jobs (because  bjobs will loose history data soon)
     jobs.filter(job => alreadyDone.contains(job.id)).foreach(updateStatsFile)
 
-    println(s"$file: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
+    println(s"$file.name: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
 
     inQueue.intersect(jobIds).nonEmpty
   }
@@ -99,18 +101,27 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def statusReport: String = {
-    s"${file.name} complete (${jobs.size - killed.size} done; ${killed.size} killed)"
+    s"${file} complete (${jobs.size - killed.size} done; ${killed.size} killed)"
   }
 
 
   /** Derives a new job-list for just the killed jobs */
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
+
+    def isRestoreable(jobId: Int) = JobConfiguration.jcXML(jobId, logsDir).isRegularFile
+
+    //    jobs.filter(killed.contains).forall(_.)
+    require(
+      killed.forall(isRestoreable),
+      "joblist can only be resubmitted automatically only if all contained jobs were all submitted via `jl submit`"
+    )
+
     // todo also provide means to retry failed jobs (because of user logic)
     val failedJobs: Map[Int, JobConfiguration] = jobConfigs.filterKeys(killed.contains)
 
     // remove killed ids from list file
-    file.write(jobIds.diff(failedJobs.keys.toList).mkString("\n"))
-    file.appendNewLine()
+    file.write("") // reset the file
+    jobIds.diff(failedJobs.keys.toList).foreach(id => file.appendLine(id + ""))
 
     // tbd maybe we should rather apply the escalate to the root jc?
 
@@ -118,7 +129,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       run(resubStrategy.escalate(jc))
     })
 
-    Console.err.println(s"${file.name}: Resubmitting ${failedJobs.size} with ${resubStrategy}...")
+    Console.err.println(s"${file.name}: Resubmitting failed ${failedJobs.size} job${if (failedJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
     // keep track of which jobs have been resubmitted by writing a graph file
     killed2resubIds.foreach { case (oldId, resubId) => resubGraphFile.appendLine(oldId + "\t" + resubId) }

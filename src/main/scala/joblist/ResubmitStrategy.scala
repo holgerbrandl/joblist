@@ -19,7 +19,7 @@ class TryAgain extends ResubmitStrategy {
 }
 
 
-class MoreThreads(threads: Int) extends ResubmitStrategy {
+case class MoreThreads(threads: Int) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = {
     require(threads > jc.numThreads, "Only an increased thread count is allowed for job escalation")
@@ -28,19 +28,19 @@ class MoreThreads(threads: Int) extends ResubmitStrategy {
 }
 
 
-class BetterQueue(queue: String) extends ResubmitStrategy {
+case class BetterQueue(queue: String) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(queue = queue)
 }
 
-class DiffWalltime(wallTime: String) extends ResubmitStrategy {
+case class DiffWalltime(wallTime: String) extends ResubmitStrategy {
   // todo ensure format is NN:NN
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
 }
 
 
-class CompoundStrategy(elements: ResubmitStrategy*) extends ResubmitStrategy {
+case class CompoundStrategy(elements: ResubmitStrategy*) extends ResubmitStrategy {
   override def escalate(jc: JobConfiguration): JobConfiguration = {
     elements.foldLeft(jc)((jc, rs) => rs.escalate(jc))
   }

@@ -52,7 +52,8 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     resultFile.delete(true)
 
     // http://stackoverflow.com/questions/7500081/scala-what-is-the-best-way-to-append-an-element-to-an-array
-    JobListCLI.main(s"submit -j ${jl.file.fullPath} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.fullPath}")
+    val cmd: Array[String] = s"submit -j ${jl.file.fullPath} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.fullPath}"
+    JobListCLI.main(cmd)
 
 
     jl.file.toJava should exist

@@ -4,6 +4,7 @@ import better.files._
 import joblist.Tasks.{BashSnippet, LsfExecutor}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scalautils.Bash
 import scalautils.StringUtils.ImplStringUtils
 
 /**
@@ -56,7 +57,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
   it should "submit some jobs and wait until they are done " in {
 
     val tasks = for (i <- 1 to 3) yield {
-      BashSnippet( s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
+      BashSnippet(s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
     }
 
     val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium")
@@ -127,7 +128,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
     val jl = JobList(wd / ".fail_no_walllimit")
 
-    jl.run(JobConfiguration( """echo "other job""""))
+    jl.run(JobConfiguration("""echo "other job""""))
 
     // run a job which failes
     jl.run(new JobConfiguration(
@@ -148,6 +149,24 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
     // .. but is detected as failed
     jl.failed should have size (1)
+  }
+
+
+  it should "use the shell launcher to trigger, monitor and resubmit jobs" in {
+    val jlName = ".whit"
+
+    val jl = JobList(wd / jlName)
+
+    Bash.eval(s"""
+    cd $wd
+    jl submit -j ${jlName} "echo foo"
+    jl submit -j ${jlName} "echo bar"
+    jl submit -j ${jlName} -O "-W 00:01" "sleep 120; touch whit.txt"
+    jl wait --resubmit_wall "00:10" ${jlName}
+    """.alignLeft)
+
+    jl.file.toJava should exist
+    jl.jobIds should have size (3)
   }
 
 }
