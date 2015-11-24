@@ -48,6 +48,17 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
     def info = scheduler.readRunLog(infoFile)
+
+
+    def resubAs(): Option[Job] = {
+      resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
+    }
+
+    def isRestoreable = JobConfiguration.jcXML(id, logsDir).isRegularFile
+
+    def restoreConfig = {
+      JobConfiguration.fromXML(id, logsDir)
+    }
   }
 
 
@@ -96,40 +107,77 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     while (isRunning) Thread.sleep(sleepInterval)
 
     // print a short report
-    Console.err.println(statusReport)
+    Console.err.println(file.name + ":" + statusReport)
   }
 
 
   def statusReport: String = {
-    s"${file} complete (${jobs.size - killed.size} done; ${killed.size} killed)"
+    s"complete (${jobs.size - killed.size} done; ${killed.size} killed)"
   }
 
+  def exportStatistics(statsBaseFile: File = File(file.fullPath + ".stats")) = {
+    val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
+
+    statsFile.write(Seq("jobId", "job_name", "submit_time", "start_time", "finish_time",
+      "exceeded_wall_limit", "exec_host", "status", "user", "resubmitted_as").mkString("\t"))
+    statsFile.appendNewLine()
+
+
+    val allIds: List[Int] = List.concat(jobs, resubGraph().keys).map(_.id)
+
+    allIds.map(Job(_).info).
+      map(ri => {
+        Seq(
+          ri.jobId, ri.jobName, ri.submitTime, ri.startTime, ri.finishTime,
+          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubAs().getOrElse("")
+        ).mkString("\t")
+      }).foreach(statsFile.appendLine)
+
+
+    // also write congig header where possible
+    val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
+    jcLogFile.write(
+      Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
+    )
+    jcLogFile.appendNewLine()
+
+
+    val allJC = allIds.map(Job).filter(_.isRestoreable).map(job => job -> job.restoreConfig).toMap
+
+    allJC.map({ case (job, jc) =>
+      Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
+    }).foreach(jcLogFile.appendLine)
+
+    // todo optionally render html report
+  }
 
   /** Derives a new job-list for just the killed jobs */
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
 
-    def isRestoreable(jobId: Int) = JobConfiguration.jcXML(jobId, logsDir).isRegularFile
-
-    //    jobs.filter(killed.contains).forall(_.)
     require(
-      killed.forall(isRestoreable),
+      killed.forall(Job(_).isRestoreable),
       "joblist can only be resubmitted automatically only if all contained jobs were all submitted via `jl submit`"
     )
 
     // todo also provide means to retry failed jobs (because of user logic)
-    val failedJobs: Map[Int, JobConfiguration] = jobConfigs.filterKeys(killed.contains)
+    val killedJobs = jobConfigs.filterKeys(killed.contains)
 
     // remove killed ids from list file
+    val suceededJobs = jobIds.diff(killedJobs.keys.toList)
+
     file.write("") // reset the file
-    jobIds.diff(failedJobs.keys.toList).foreach(id => file.appendLine(id + ""))
+
+    // readd successfully completed jobs
+    suceededJobs.foreach(id => file.appendLine(id + ""))
 
     // tbd maybe we should rather apply the escalate to the root jc?
 
-    val killed2resubIds = failedJobs.mapValues(jc => {
+    // add resubmit killed ones and add their ids to the list-file as well
+    Console.err.println(s"${file.name}: Resubmitting ${killedJobs.size} killed job${if (killedJobs.size > 1) "s" else ""} with ${resubStrategy}...")
+
+    val killed2resubIds = killedJobs.mapValues(jc => {
       run(resubStrategy.escalate(jc))
     })
-
-    Console.err.println(s"${file.name}: Resubmitting failed ${failedJobs.size} job${if (failedJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
     // keep track of which jobs have been resubmitted by writing a graph file
     killed2resubIds.foreach { case (oldId, resubId) => resubGraphFile.appendLine(oldId + "\t" + resubId) }
@@ -155,7 +203,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     resubGraphFile.lines.map(line => {
       val resubEvent = line.split("\t").map(_.toInt)
       (Job(resubEvent(0)), Job(resubEvent(1)))
-    })
+    }).toMap
   }
 
 
@@ -168,20 +216,19 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   /** get all job configurations associated to the joblist */
   def jobConfigs = {
-    jobIds.map(jobId => jobId -> restoreConfig(jobId)).toMap
+    jobIds.map(jobId => jobId -> Job(jobId).restoreConfig).toMap
   }
-
-
-  def restoreConfig(jobId: Int) = {
-    JobConfiguration.fromXML(jobId, logsDir)
-  }
-
 
   //
   // Internal helpers
   //
 
   // todo require that we have stats for finished jobs
+
+  override def toString: String = {
+    s"JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, status={$statusReport})"
+  }
+
 
   def logsDir = (file.parent / ".jl").createIfNotExists(true)
 

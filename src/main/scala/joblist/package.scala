@@ -48,7 +48,7 @@ package object joblist {
   case class RunInfo(jobId: Int, user: String, status: String, queue: String,
                      //                  FromHost:String,
                      execHost: String,
-                     //                  JobName:String,
+                     jobName: String,
                      submitTime: DateTime,
                      //                  ProjName:String, CpuUsed:Int, Mem:Int, Swap:Int, Pids:List[Int],
                      startTime: DateTime, finishTime: DateTime,

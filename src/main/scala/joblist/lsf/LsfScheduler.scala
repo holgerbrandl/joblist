@@ -6,6 +6,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
+import scalautils.Bash.BashResult
 
 /**
   * A scala reimplemenation of  https://raw.githubusercontent.com/holgerbrandl/datautils/master/bash/lsf_utils.sh
@@ -65,13 +66,15 @@ class LsfScheduler extends JobScheduler {
       bsubCmd = s"cd '${wd.fullPath}'\n" + bsubCmd
     }
 
+    val bashResult: BashResult = Bash.eval(bsubCmd)
     // run
-    val bsubStatus = Bash.eval(bsubCmd).stdout
+    val bsubStatus = bashResult.stdout
 
 
     // extract job id
     val jobSubConfirmation = bsubStatus.filter(_.startsWith("Job <"))
-    require(jobSubConfirmation.nonEmpty, s"job submission of '${jobName}' failed with:\n$bsubStatus")
+    require(jobSubConfirmation.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
+
     val jobId = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
 
     // save user logs
@@ -119,6 +122,7 @@ class LsfScheduler extends JobScheduler {
     val slimHeader = List(header.take(6), header.takeRight(8)).flatten
     val slimValues = List(values.take(6), values.takeRight(8)).flatten
 
+    val jobName = values.drop(6).dropRight(8).mkString(" ") ///todo continue here
 
 
     def parseDate(stringifiedDate: String): DateTime = {
@@ -142,6 +146,7 @@ class LsfScheduler extends JobScheduler {
       status = slimValues(2),
       queue = slimValues(3),
       execHost = slimValues(5),
+      jobName = jobName,
       submitTime = parseDate(slimValues(6)),
       startTime = parseDate(slimValues(12)),
       finishTime = parseDate(slimValues(12)),

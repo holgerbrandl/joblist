@@ -34,7 +34,8 @@ case class BetterQueue(queue: String) extends ResubmitStrategy {
 }
 
 case class DiffWalltime(wallTime: String) extends ResubmitStrategy {
-  // todo validate that format is [N]NN:NN
+  // validate that format is [N]NN:NN
+  require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(wallTime).matches)
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
 }

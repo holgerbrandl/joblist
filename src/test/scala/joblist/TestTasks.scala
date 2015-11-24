@@ -92,7 +92,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 
-  it should "submit a job, capture streams, wait for finish, and collect basic stats" in {
+  it should "resubmit killed jobs" in {
 
     // todo clean up directory
 
@@ -105,7 +105,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
       """.alignLeft
     }
 
-    cmds.foreach(cmd => jl.run(JobConfiguration(cmd, otherQueueArgs = "-W 00:01")))
+    cmds.foreach(cmd => jl.run(JobConfiguration(cmd, wallTime = "00:01")))
 
     jl.waitUntilDone()
 
@@ -114,7 +114,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.failed should have size (2)
 
     // resubmit killed jobs with more walltime
-    jl.resubmitKilled(new DiffWalltime("-W 00:05"))
+    jl.resubmitKilled(new DiffWalltime("00:05"))
 
     jl.scheduler.getRunning should have size (2)
 
@@ -168,7 +168,17 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.file.toJava should exist
     jl.jobIds should have size (3)
   }
+}
 
+class ReportingTest extends FlatSpec with Matchers {
+
+  it should "take run log data and do some reporting" in {
+    //    import Matchers._; import joblist._
+    val jl = new JobList("test_data/reporting/.blastn")
+    jl.jobIds
+
+    jl.exportStatistics()
+  }
 }
 
 
