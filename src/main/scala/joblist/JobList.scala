@@ -47,7 +47,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val infoFile = logsDir / s"$id.runinfo"
 
 
-    def info = scheduler.readRunLog(infoFile)
+    def info = {
+      try {
+        scheduler.readRunLog(infoFile)
+      } catch {
+        case t: Throwable => throw new RuntimeException(s"could not readinfo for $id")
+      }
+    }
 
 
     def resubAs(): Option[Job] = {
@@ -74,13 +80,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     val inQueue = scheduler.getRunning
 
-
     // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
     // for which we don't have final stats yet
-    val alreadyDone = jobIds.diff(inQueue)
+    val noLongerInQueue = jobIds.diff(inQueue)
 
     // write log file for already finished jobs (because  bjobs will loose history data soon)
-    jobs.filter(job => alreadyDone.contains(job.id)).foreach(updateStatsFile)
+    jobs.filter(job => noLongerInQueue.contains(job.id)).
+      //      filterNot(_.info.isDone).
+      foreach(updateStatsFile)
 
     println(s"${file.name}: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
 

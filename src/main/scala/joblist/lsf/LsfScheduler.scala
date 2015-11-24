@@ -96,7 +96,10 @@ class LsfScheduler extends JobScheduler {
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
     // todo write more structured/parse data here (json,xml) to ease later use
 
-    logFile.write(Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n"))
+    val runLog = Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n")
+    require(runLog.contains(jobId + ""), "queue is no longer in job history") // use bhist in such a case
+
+    logFile.write(runLog)
 
     logFile.appendNewLine()
     logFile.appendLine("-----")
@@ -107,7 +110,11 @@ class LsfScheduler extends JobScheduler {
 
   override def readRunLog(runinfoFile: File) = {
     // todo use a lazy init approach to parse the
-    val logData: Iterator[String] = scala.io.Source.fromFile(runinfoFile.toJava).getLines()
+    //    val logData: Iterator[String] = scala.io.Source.fromFile(runinfoFile.toJava).getLines()
+
+    val debugFile: File = File("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.jl/781486.runinfo")
+    debugFile.lines.length
+    val logData: Iterator[String] = scala.io.Source.fromFile(debugFile.toJava).getLines()
 
 
     val runData = Seq(logData.take(2). //map(_.replace("\"", "")).
