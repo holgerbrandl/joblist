@@ -110,7 +110,7 @@ class LsfScheduler extends JobScheduler {
 
   override def readRunLog(runinfoFile: File) = {
     // todo use a lazy init approach to parse the
-    val logData: Iterator[String] = scala.io.Source.fromFile(runinfoFile.toJava).getLines()
+    val logData = runinfoFile.allLines
 
 
     val runData = Seq(logData.take(2). //map(_.replace("\"", "")).

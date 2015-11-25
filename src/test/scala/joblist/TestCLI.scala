@@ -38,7 +38,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
 
     jl.file.toJava should exist
-    bstatus should include(jl.jobIds.head.toString)
+    bstatus should include(jl.jobs.head.id + "")
 
     // wait until its done
     JobListCLI.main(("wait " + jl.file.fullPath).split(" "))

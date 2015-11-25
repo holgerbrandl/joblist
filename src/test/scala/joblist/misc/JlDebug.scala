@@ -14,10 +14,13 @@ object JlDebug extends App {
   import joblist._
 
   implicit val jl = new JobList("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
-  //  val jl = new JobList("/lustre/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
-  jl.jobIds
+  //  implicit val jl = new JobList("/lustre/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
+  jl.jobs
 
-  Job(jl.failed.head).isRestoreable
+  jl.failed.head.isRestoreable
+  jl.failed.head.config
+
+  jl.resubmitKilled()
 
   jl.exportStatistics(File(jl.file.fullPath + ".stats"))
 

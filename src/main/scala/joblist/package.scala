@@ -15,7 +15,7 @@ import scala.collection.JavaConversions._
 import scalautils.Bash
 
 /**
-  * Document me!
+  * Some generic utilities used to manipulate, create and manage joblists.
   *
   * @author Holger Brandl
   */
@@ -65,6 +65,7 @@ package object joblist {
   }
 
 
+  //noinspection AccessorLikeMethodIsUnit
   def toXml(something: Any, file: File) = {
     getXstrem.toXML(something, new BufferedWriter(new FileWriter(file.toJava)))
   }

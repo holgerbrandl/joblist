@@ -77,9 +77,7 @@ jl.run(JobConfiguration("echo bar"))
 jl.waitUntilDone()
 
 // get the run information about jobs that were killed by the queuing system
-val killedInfo: List[RunInfo] = jl.jobs.
-  filter(job => jl.killed.contains(job.id)).
-  map(_.info)
+val killedInfo: List[RunInfo] = jl.killed.map(_.info)
 
 // resubmit to other queue
 jl.resubmitKilled(new BetterQueue("long"))

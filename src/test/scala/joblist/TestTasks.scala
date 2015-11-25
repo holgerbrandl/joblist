@@ -170,7 +170,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     """.alignLeft)
 
     jl.file.toJava should exist
-    jl.jobIds should have size (3)
+    jl.jobs should have size (3)
   }
 }
 
@@ -179,7 +179,7 @@ class ReportingTest extends FlatSpec with Matchers {
   it should "take run log data and do some reporting" in {
     //    import Matchers._; import joblist._
     val jl = new JobList("test_data/reporting/.blastn")
-    jl.jobIds
+    jl.jobs
 
     jl.exportStatistics()
   }

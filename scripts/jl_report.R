@@ -1,8 +1,5 @@
 #!/usr/bin/env Rscript
 
-#sessionInfo()
-
-
 devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.20/R/core_commons.R")
 devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.20/R/ggplot_commons.R")
 
@@ -24,25 +21,30 @@ if(!exists("reportName")){
     }
 }
 
-reportNiceName <- str_replace_all(reportName, "^[.]", "")
+reportNiceName <-
+ str_replace_all(reportName, "^[.]", "")
 #> # Job Report:  `r reportNiceName`
 
+stopifnot(file.exists(reportName))
 
 echo("processing job report for '", reportName,"'")
 
-jobData <- read.table(paste0(reportName, ".cluster_snapshots.txt"), header=F, fill=T) %>% as.df() %>%
-    set_names(c("jobid", "user", "stat", "queue", "from_host", "exec_host", "job_name", "submit_time", "proj_name", "cpu_used", "mem", "swap", "pids", "start_time", "finish_time", "snapshot_time")) %>%
+allJobs <- read.delim(paste0(reportName, ".stats.runinfo.log"), fill=T) %>%
     transform(jobid=factor(jobid)) %>%
-    arrange(jobid) %>%
-    subset(stat=="RUN")
+    arrange(jobid)
 
-if(nrow(jobData)==0){
-    system(paste("mailme 'no jobs were run in  ",normalizePath(reportName),"'"))
-    warning(paste("no jobs were run in  ",normalizePath(reportName)))
-    stop(-1)
-}
 
-#jobData %>% count(jobid) %>% nrow
+jobData <- allJobs %>% filter(is.na(resubmitted_as))
+
+    subset(status=="RUN")
+
+#if(nrow(jobData)==0){
+#    system(paste("mailme 'no jobs were run in  ",normalizePath(reportName),"'"))
+#    warning(paste("no jobs were run in  ",normalizePath(reportName)))
+#    stop(-1)
+#}
+
+
 
 
 ## extract multi-threading number
