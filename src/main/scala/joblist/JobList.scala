@@ -15,6 +15,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def this(name: String) = this(File(name))
 
+
   implicit val JobList = this
   //
   // Model
@@ -94,6 +95,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     s"complete (${jobs.size - killed.size} done; ${killed.size} killed)"
   }
 
+
   def exportStatistics(statsBaseFile: File = File(file.fullPath + ".stats")) = {
     val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
 
@@ -129,6 +131,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // todo optionally render html report
   }
+
 
   /** Derives a new job-list for just the killed jobs */
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
@@ -167,15 +170,19 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   val resubGraphFile = File(file.fullPath + ".resubgraph")
 
+
   def reset() = {
     file.delete(true)
     resubGraphFile.delete(true)
+
+    //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }
 
 
   def killed = {
     jobs.filter(_.wasKilled)
   }
+
 
   /** Returns the graph of job resubmission due to cluster resource limitations (ie walltime hits).  */
   def resubGraph(): Map[Job, Job] = {
@@ -199,6 +206,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def jobConfigs = {
     jobIds.map(jobId => jobId -> Job(jobId).config).toMap
   }
+
 
   //
   // Internal helpers
@@ -243,6 +251,7 @@ case class Job(id: Int)(implicit val jl: JobList) {
     }
   }
 
+
   def wasKilled = info.queueKilled
 
 
@@ -250,7 +259,9 @@ case class Job(id: Int)(implicit val jl: JobList) {
     jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
   }
 
+
   def isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
+
 
   def config = {
     JobConfiguration.fromXML(id, jl.logsDir)

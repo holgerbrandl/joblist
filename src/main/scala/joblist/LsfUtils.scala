@@ -3,9 +3,6 @@ package joblist
 import better.files._
 
 
-
-
-
 /** Log files that might be of interest for the users. JL does not rely on them. */
 case class JobLogs(name: String, wd: File) {
 
