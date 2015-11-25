@@ -15,6 +15,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def this(name: String) = this(File(name))
 
+  implicit val JobList = this
   //
   // Model
   //
@@ -39,36 +40,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  case class Job(id: Int) {
-
-    def isDone: Boolean = infoFile.isRegularFile && info.isDone
-
-
-    val infoFile = logsDir / s"$id.runinfo"
-
-
-    def info = {
-      try {
-        scheduler.readRunLog(infoFile)
-      } catch {
-        case t: Throwable => throw new RuntimeException(s"could not readinfo for $id")
-      }
-    }
-
-
-    def resubAs(): Option[Job] = {
-      resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
-    }
-
-    def isRestoreable = JobConfiguration.jcXML(id, logsDir).isRegularFile
-
-    def restoreConfig = {
-      JobConfiguration.fromXML(id, logsDir)
-    }
-  }
-
-
-  def jobs = jobIds.map(Job)
+  def jobs = jobIds.map(Job(_))
 
 
   //
@@ -107,7 +79,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
     //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
-    if (!file.isRegularFile || file.lines.isEmpty) {
+    if (!file.isRegularFile || file.allLines.isEmpty) {
       throw new RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
     }
 
@@ -149,7 +121,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     jcLogFile.appendNewLine()
 
 
-    val allJC = allIds.map(Job).filter(_.isRestoreable).map(job => job -> job.restoreConfig).toMap
+    val allJC = allIds.map(Job(_)).filter(_.isRestoreable).map(job => job -> job.restoreConfig).toMap
 
     allJC.map({ case (job, jc) =>
       Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
@@ -206,8 +178,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
   /** Returns the graph of job resubmission due to cluster resource limitations (ie walltime hits).  */
-  private def resubGraph() = {
-    resubGraphFile.lines.map(line => {
+  def resubGraph(): Map[Job, Job] = {
+    if (!resubGraphFile.isRegularFile) return Map()
+
+    resubGraphFile.allLines.map(line => {
       val resubEvent = line.split("\t").map(_.toInt)
       (Job(resubEvent(0)), Job(resubEvent(1)))
     }).toMap
@@ -240,7 +214,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def logsDir = (file.parent / ".jl").createIfNotExists(true)
 
 
-  def jobIds = if (file.isRegularFile) file.lines.map(_.toInt).toList else List()
+  def jobIds = if (file.isRegularFile) file.allLines.map(_.toInt).toList else List()
 
 
   private def updateStatsFile(job: Job): Any = {
@@ -251,4 +225,34 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     scheduler.updateRunInfo(job.id, job.infoFile)
   }
 }
+
+
+case class Job(id: Int)(implicit val jl: JobList) {
+
+  def isDone: Boolean = infoFile.isRegularFile && info.isDone
+
+
+  val infoFile = jl.logsDir / s"$id.runinfo"
+
+
+  def info = {
+    try {
+      jl.scheduler.readRunLog(infoFile)
+    } catch {
+      case t: Throwable => throw new RuntimeException(s"could not readinfo for $id", t)
+    }
+  }
+
+
+  def resubAs(): Option[Job] = {
+    jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
+  }
+
+  def isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
+
+  def restoreConfig = {
+    JobConfiguration.fromXML(id, jl.logsDir)
+  }
+}
+
 

@@ -47,6 +47,10 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.waitUntilDone()
     jl.jobs
 
+    // did we fetch the correct runinfo
+    jl.jobs.head.info.jobId should equal(jobId)
+    jl.jobs.head.info.jobId should equal(jobId)
+
     //    val jobLogs = jl.logs.filter(_.name == jobName)
     //    (wd / s".logs/$jobName.cmd").toJava should exist
 

@@ -40,6 +40,19 @@ object JobListCLI extends App {
   }
 
 
+  args.head match {
+    case "submit" => submit()
+    case "add" => add()
+    case "wait" => wait4jl()
+    case "up" => btop()
+    case "kill" => kill()
+    case "chill" => ???
+    case "shortcuts" => shortcuts()
+    case "status" => status()
+    case _ => printUsageAndExit()
+  }
+
+
   def printUsageAndExit(): Unit = {
     Console.err.println(
       """
@@ -51,6 +64,7 @@ object JobListCLI extends App {
         wait      Wait for a list of tasks to finish
         up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
         shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
+        status    Print a short summary of the processing status of a joblist
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
@@ -61,18 +75,6 @@ object JobListCLI extends App {
 
   def getJL(results: Map[String, String]) = {
     new JobList(File(Option(results("joblist_file")).getOrElse(DEFAULT_JL)))
-  }
-
-
-  args.head match {
-    case "submit" => submit()
-    case "add" => add()
-    case "wait" => wait4jl()
-    case "up" => btop()
-    case "kill" => kill()
-    case "chill" => ???
-    case "shortcuts" => shortcuts()
-    case _ => printUsageAndExit()
   }
 
 
@@ -213,6 +215,7 @@ object JobListCLI extends App {
     pargs
   }
 
+
   def btop() = {
     val results = parseArgs(args, "Usage: jl up <joblist_file>")
     getJL(results).btop()
@@ -225,33 +228,35 @@ object JobListCLI extends App {
   }
 
 
-  def stats() = {
-    val results = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
+  def status() = {
+    val results = parseArgs(args, "Usage: jl status [options] [<joblist_file>]")
     val jl = getJL(results)
 
+    println(jl.toString)
+
     // todo dump some table or other format
+    //    jl.exportStatistics()
   }
 
 
   def shortcuts() = {
     println(
       """
-joblist(){
-  jl add $*
-}
-export -f joblist
+      joblist(){
+        jl add $*
+      }
+      export -f joblist
 
-wait4jobs(){
-  jl wait $*
-}
-export -f wait4jobs
+      wait4jobs(){
+        jl wait $*
+      }
+      export -f wait4jobs
 
 
-##note: mysb replacement
-jsub(){
-  jl submit $*
-}
-      """)
+      ##note: mysb replacement
+      jsub(){
+        jl submit $*
+      }
+      """.alignLeft)
   }
-
 }

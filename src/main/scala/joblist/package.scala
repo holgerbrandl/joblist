@@ -1,4 +1,5 @@
 import java.io.{BufferedWriter, FileWriter}
+import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -10,6 +11,7 @@ import joblist.shell.ShellScheduler
 import joblist.slurm.SlurmScheduler
 import org.joda.time.DateTime
 
+import scala.collection.JavaConversions._
 import scalautils.Bash
 
 /**
@@ -72,6 +74,7 @@ package object joblist {
     getXstrem.fromXML(file.toJava)
   }
 
+
   def getXstrem: XStream = {
     val xStream = new XStream(new StaxDriver())
 
@@ -81,4 +84,12 @@ package object joblist {
 
     xStream
   }
+
+  implicit class ImplFileUtils(file: File) {
+    /** Workaround for https://github.com/pathikrit/better-files/issues/51 */
+    def allLines = {
+      Files.readAllLines(file.path).toList
+    }
+  }
+
 }
