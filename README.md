@@ -14,8 +14,9 @@ Installation
 
 ```
 cd ~/bin
-curl https://github.com/holgerbrandl/joblist/archive/v0.3/joblist_installer_v0.3.tar.gz | tar -zxvf -
+curl https://dl.dropboxusercontent.com/u/113630701/joblist_releases/joblist_installer_v0.3.tar.gz | tar -zxvf -
 echo 'export PATH='$(pwd)/joblist_v0.3':$PATH' >> ~/.bash_profile
+source ~/.bash_profile
 ```
 
 Java8 is required to run JobList.

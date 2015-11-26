@@ -14,10 +14,11 @@ cp target/scala-2.11/joblist-assembly-0.1-SNAPSHOT.jar joblist_v${version}/jobli
 cp scripts/jl joblist_v${version}
 
 tar -cvzf joblist_installer_v${version}.tar.gz  joblist_v${version}
+cp joblist_installer_v${version}.tar.gz /Users/brandl/Dropbox/Public/joblist_releases
 ```
  and attach to release
 
-4) Upload to jcenter
+4) Upload to jcenter (todo use https://github.com/softprops/bintray-sbt)
 
 Post-release
 5) set version to 1.x-SNAPSHOT
