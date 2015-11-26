@@ -106,7 +106,7 @@ To deploy into the local ivy-index run
 sbt publishLocal
 ```
 
-To run the tests you either need `bsub` and some of the lsf tools in your path. Alternativly you can also use/source the provided (dummy tools)(https://github.com/holgerbrandl/joblist/blob/master/scripts/fake_lsf.sh)
+To run the tests you either need `bsub` and some of the lsf tools in your path. Alternativly you can also use/source the provided [dummy tools](https://github.com/holgerbrandl/joblist/blob/master/scripts/fake_lsf.sh)
 
 
 
