@@ -18,7 +18,7 @@ import scalautils.StringUtils._
   */
 object JobListCLI extends App {
 
-  val version = 0.3
+  val version = "0.4-SNAPHOT"
 
   val DEFAULT_JL = ".jobs"
 
