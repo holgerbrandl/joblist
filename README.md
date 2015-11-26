@@ -35,12 +35,17 @@ jl --version
 ```
 
 
-Submit some jobs with busb as you're used to and use jl for blocking and monitoring:
+Submit some jobs with busb as you're used to and use jl for blocking and monitoring and final status handling:
 ```
 busb "hello foo" | jl add
 busb "hello bar" | jl add
 
 jl wait
+
+if [ -n "$(jl failed)" ]; then
+    echo "some jobs failed"
+fi
+
 ```
 
 All `jl` commands use `.jobs` as a default list, but you can provide your own for clarity:
@@ -50,7 +55,9 @@ busb "sleep 3" | jl add .other_jobs
 
 If jobs are submitted with `jl` they can also be resubmitted in case they fail:
 ```
-jl submit ""
+jl submit "sleep 10"          ## add a jobs
+jl submit "sleep 1000"        ## add another which won't finish in our default queue
+jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
 
 

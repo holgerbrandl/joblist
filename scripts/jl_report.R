@@ -20,138 +20,85 @@ if(!exists("reportName")){
         reportName=argv[1]
     }
 }
+# setwd("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
+# setwd("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
 
 reportNiceName <-
  str_replace_all(reportName, "^[.]", "")
-#> # Job Report:  `r reportNiceName`
+#' # Job Report:  `r reportNiceName`
 
 stopifnot(file.exists(reportName))
 
 echo("processing job report for '", reportName,"'")
 
 allJobs <- read.delim(paste0(reportName, ".stats.runinfo.log"), fill=T) %>%
-    transform(jobid=factor(jobid)) %>%
-    arrange(jobid)
+    transform(job_id=factor(job_id)) %>%
+    arrange(job_id) %>%
+    # impose an order on th ejob ids
+    mutate(job_id=reorder(job_id, as.numeric(job_id)), resubmitted_as=factor(resubmitted_as))
 
 
-jobData <- allJobs %>% filter(is.na(resubmitted_as))
+## parse the dates
+#parse_date_time(ac("00:00:00.00"), c("%d:%H:%M.%S"))
+#parse_date_time(ac("00:04:55.18"), c("%d:%H%M%S"))
+allJobs %<>% mutate_each(funs(ymd_hms), submit_time, start_time, finish_time)
 
-    subset(status=="RUN")
-
-#if(nrow(jobData)==0){
-#    system(paste("mailme 'no jobs were run in  ",normalizePath(reportName),"'"))
-#    warning(paste("no jobs were run in  ",normalizePath(reportName)))
-#    stop(-1)
-#}
-
-
+allJobs %<>% mutate(pending_time=difftime(start_time, submit_time,  units="secs"), pending_time_min=as.numeric(pending_time)/60)
+allJobs %<>% mutate(exec_time=difftime(finish_time, start_time, units="secs"), exec_time_min=as.numeric(exec_time)/60, exec_time_hours=as.numeric(exec_time)/3600)
 
 
 ## extract multi-threading number
-jobData %<>%    transform(num_cores=str_match(exec_host, "([0-9]+)[*]n")[,2]) %>% mutate(num_cores=ifelse(is.na(num_cores), 1, num_cores))
-
-
-
-jobData %>% count(exec_host)
-
-jobData %>% select(submit_time, start_time, finish_time) %>% head
-#    filter(finish_time!="-") %>% head
-
-#parse_date_time(ac("00:00:00.00"), c("%d:%H:%M.%S"))
-#parse_date_time(ac("00:04:55.18"), c("%d:%H%M%S"))
-## parse the submission time
-curYear=str_match(ac(jobData$snapshot_time[1]), "-([0-9]*)_")[,2]
-convertTimes <- function(someDate) parse_date_time(paste0(curYear, ac(someDate)), c("%Y/%m/%d-%H%M%S"))
-#convertedTimes <- colwise(convertTimes, .(submit_time, start_time, finish_time))(jobData)
-#jobData <- cbind(subset(jobData, select=!(names(jobData) %in% names(convertedTimes))), convertedTimes)
-
-jobData %<>% mutate_each(funs(convertTimes), submit_time, start_time, finish_time)
-
-
-jobData <- transform(jobData, snapshot_time=parse_date_time(ac(snapshot_time), c("%d-%m-%y_%H%M%S")))
-
-
-splitCPU <- str_split_fixed(jobData$cpu_used, "[.]", 2)[,1]
-splitCPUhms <- str_split_fixed(splitCPU, ":", 3)
-cpuSecs <- 3600*as.numeric(splitCPUhms[,1]) + 60*as.numeric(splitCPUhms[,2]) + as.numeric(splitCPUhms[,3])
-#splitCPU <- str_sub(splitCPU, 2, str_length(splitCPU))
-
-#as.numeric(as.difftime(jobData[22,]$cpu_used_hms, units="secs"))
-#jobData <- mutate(jobData, cpu_used_hms=hms(ac(splitCPU)), cpu_used_secs=as.numeric(as.difftime(cpu_used_hms, units="secs")), cpu_used_hours=cpu_used_secs/3600)
-jobData <- mutate(jobData, cpu_used_secs=cpuSecs, cpu_used_hours=cpu_used_secs/3600)
-jobData <- mutate(jobData, exec_time=difftime(snapshot_time, start_time, units="secs"), exec_time_min=as.numeric(exec_time)/60, exec_time_hours=as.numeric(exec_time)/3600)
-
+allJobs %<>% mutate(num_cores=str_match(exec_host, "([0-9]+)[*]n")[,2]) %>% mutate(num_cores=ifelse(is.na(num_cores), 1, num_cores))
 
 ## add the queue limits
+## todo read this from config or guess from scheduler
 wallLimits <- c(short=1, medium=8, long=96)
-jobData <- mutate(jobData, queueLimit=wallLimits[ac(queue)])
+allJobs %<>%  mutate(queueLimit=wallLimits[ac(queue)])
+allJobs %<>% mutate(exceeded_queue_limit=exec_time_hours>queueLimit)
 
 
-#tt <- head(subset(jobData, is.na(cpu_used_secs)), 100)
-#subset(jobData, cpu_used_secs==max(jobData$cpu_used_secs))
-#with(jobData, as.data.frame(table(is.na(cpu_used_secs))))
 
-if(max(jobData$cpu_used_secs)==0){
-    stop(echo("stopping job report generation for", reportName, "because no cpu time has been consumed"))
-    quit()
+# Extract the final set (not including the killed and resubmitted ones)
+jobs <- allJobs %>% filter(is.na(resubmitted_as))
+
+
+if(unlen(jobs$exec_host)<50){
+jobs %>% ggplot(aes(exec_host)) + geom_bar() + coord_flip()
 }
 
 
-## todo use rollapply to calculate better normalized cpu usage overtime
-#ggplot(jobData, aes(exec_time_min, cpu_used_secs/(60*exec_time_min), group=jobid)) + geom_line(alpha=0.3) + ggtitle("normalized cpu usage")
-#ggsave2()
+
+if(nrow(jobs)==0){
+    system(paste("mailme 'no jobs were run in  ",normalizePath(reportName),"'"))
+    warning(paste("no jobs were run in  ",normalizePath(reportName)))
+    stop()
+}
 
 
-save(jobData, file=paste0(reportName, ".cluster_snapshots.RData"))
-#jobData <- local(get(load(concat(reportName, ".cluster_snapshots.RData"))))
-
-#ggplot(jobData, aes(exec_time_min, cpu_used_secs, group=jobid)) + geom_line(alpha=0.3) + geom_smooth() + ggtitle("accumulated cpu usage")
-ggplot(jobData, aes(exec_time_hours, cpu_used_hours, group=jobid)) + geom_line(alpha=0.3)  + ggtitle("accumulated cpu usage") + geom_vline(aes(xintercept=queueLimit), color="red")
-
-#### ussage per time interval
-jobDataSlim <- with(jobData, data.frame(jobid,  num_cores, cpu_used_secs, exec_time=as.numeric(exec_time)))
-jobDataCPUChange = ddply(jobDataSlim, .(jobid), subset, diff(cpu_used_secs)!=0)
-smoothData <- ddply(jobDataCPUChange, .(jobid), mutate, exec_period=c(NA, diff(as.numeric(exec_time))), cpu_usage_in_period=c(NA, diff(cpu_used_secs)))
-smoothData[is.na(smoothData)] <- 0
-
-#ggplot(smoothData, aes(exec_time, cpu_usage_in_period, color=jobid)) + geom_line()
-ggplot(subset(smoothData, cpu_usage_in_period>0), aes(exec_time/3600, cpu_usage_in_period/(exec_period* as.numeric(as.character(num_cores))), color=num_cores, group=jobid)) +
-    geom_line(alpha=0.3) +
-    xlab("exec time [hours]") +
-    ylab("core normalized cpu usage") # + scale_color_discrete(name="jobid")
-
-
-
-#######################################################################################################################
-### sumarize the jobs
-jobSummaries <- mutate(subset(plyr::arrange(jobData, -1* exec_time), !duplicated(jobid)), pending_time=difftime(start_time, submit_time,  units="secs"), pending_time_min=as.numeric(pending_time)/60)
-jobSummaries <- transform(jobSummaries, jobid=reorder(jobid, as.numeric(jobid)))
-
-
-#ggplot(jobSummaries, aes(pending_time_min)) + geom_histogram() + ggtitle("pending times") + coord_flip()
-if(nrow(jobSummaries)<50){
-    ggplot(jobSummaries, aes(reorder(jobid, -as.numeric(jobid)), pending_time_min/60)) + geom_bar(stat="identity") + ggtitle("pending times") + coord_flip() + xlab("job id")
+#ggplot(jobs, aes(pending_time_min)) + geom_histogram() + ggtitle("pending times") + coord_flip()
+if(nrow(jobs)<50){
+    ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), pending_time_min/60)) + geom_bar(stat="identity") + ggtitle("pending times") + coord_flip() + xlab("job id")
 }else{
-    ggplot(jobSummaries, aes(as.numeric(jobid), pending_time_min/60)) + geom_area() + ggtitle("pending times")+xlab("job_nr") + ylab("pending time [h]")
+    ggplot(jobs, aes(as.numeric(job_id), pending_time_min/60)) + geom_area() + ggtitle("pending times")+xlab("job_nr") + ylab("pending time [h]")
 }
 #ggsave2(p=reportName)
 
-if(nrow(jobSummaries)<50){
-    ggplot(jobSummaries, aes(reorder(jobid, -as.numeric(jobid)), exec_time_hours)) + geom_bar(stat="identity") + ggtitle("job execution times") + coord_flip() + xlab("job id")
+if(nrow(jobs)<50){
+    ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), exec_time_hours)) + geom_bar(stat="identity") + ggtitle("job execution times") + coord_flip() + xlab("job id")
 }else{
-    ggplot(jobSummaries, aes(as.numeric(jobid), exec_time_hours))  + geom_area() + ggtitle("job execution times")+ xlab("job_nr") + geom_hline(mapping=aes(yintercept=queueLimit), color="red")
+    ggplot(jobs, aes(as.numeric(job_id), exec_time_hours))  + geom_area() + ggtitle("job execution times")+ xlab("job_nr") + geom_hline(mapping=aes(yintercept=queueLimit), color="red")
 }
 
-#ggplot(jobSummaries, aes(as.numeric(jobidx), exec_time_min/pending_time_min)) + geom_area() + ggtitle("pending vs exec time ratio")+xlab("job_nr")
-ggplot(jobSummaries, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pending vs exec time") + geom_abline()
+#ggplot(jobs, aes(as.numeric(job_idx), exec_time_min/pending_time_min)) + geom_area() + ggtitle("pending vs exec time ratio")+xlab("job_nr")
+ggplot(jobs, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pending vs exec time") + geom_abline()
 
-jobSummaries %<>% mutate(exceeded_queue_limit=exec_time_hours>queueLimit)
 
-write.delim(jobSummaries, file=paste0(reportName, ".jobSummaries.txt"))
-# jobSummaries <- read.delim("jobSummaries.txt")
+write.delim(jobs, file=paste0(reportName, ".stats.runinfo_ext.log"))
+# jobs <- read.delim("jobs.txt")
 
-require_auit(knitr)
-jobSummaries %>% mutate(pending_time_hours=pending_time_min/60) %>% select(jobid, exec_host, job_name, cpu_used_hours, pending_time_hours, exec_time_hours) %>% kable()
+#require_auto(knitr)
+require_auto(DT)
+jobs %>% mutate(pending_time_hours=pending_time_min/60) %>% select(job_id, exec_host, job_name, pending_time_hours, exec_time_hours) %>% datatable()
 
 
 #######################################################################################################################
@@ -159,15 +106,24 @@ jobSummaries %>% mutate(pending_time_hours=pending_time_min/60) %>% select(jobid
 ## todo finish send mail if wall time was exceeded
 
 
-numKilled=nrow(filter(jobSummaries, exceeded_queue_limit))
-numTotal= nrow(jobSummaries)
+numKilled=nrow(filter(jobs, exceeded_queue_limit))
+numTotal= nrow(jobs)
 
 killedListFile=paste0(reportName, ".killed_jobs.txt")
 if(numKilled >0){
     system(paste("mailme '",numKilled,"out of ",numTotal," jobs in ", getwd(), " died because of queue length limitation'"))
-    filter(jobSummaries, exceeded_queue_limit) %$% writeLines(jobid, con=killedListFile)
+    filter(jobs, exceeded_queue_limit) %$% writeLines(job_id, con=killedListFile)
 }else{
     ## Create an empty killed list to indicate that we actually looked into it
     file.create(killedListFile)
 }
 
+
+#' # Resubmission Statistics
+
+#' In total there were `r filter(allJobs, !is.na(resubmitted_as)) %>% nrow` job resubmissions
+resubmissions <- allJobs %>%
+    semi_join(allJobs, c("job_id"="resubmitted_as")) %>%
+ select(resubmitted_as, job_id, job_name)
+
+resubmissions %>% datatable()

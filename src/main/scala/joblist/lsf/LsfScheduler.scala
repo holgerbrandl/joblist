@@ -97,7 +97,7 @@ class LsfScheduler extends JobScheduler {
     // todo write more structured/parse data here (json,xml) to ease later use
 
     val runLog = Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n")
-    require(runLog.contains(jobId + ""), "queue is no longer in job history") // use bhist in such a case
+    require(runLog.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 
     logFile.write(runLog)
 
@@ -152,7 +152,7 @@ class LsfScheduler extends JobScheduler {
       jobName = jobName,
       submitTime = parseDate(slimValues(6)),
       startTime = parseDate(slimValues(12)),
-      finishTime = parseDate(slimValues(12)),
+      finishTime = parseDate(slimValues(13)),
       queueKilled = hitRunLimit
     )
 

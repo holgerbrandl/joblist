@@ -7,6 +7,8 @@ import scalautils.Bash
 /**
   * A stateless wrapper around list of cluster jobs. The actual data is stoed in a plain text-file containing the job-IDs (one per line).
   *
+  * By design JobList are invalid until a job is added to them (see <code>.requireListFile</code>)
+  *
   * @author Holger Brandl
   */
 
@@ -79,9 +81,11 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
+    requireListFile()
+
     //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
     if (!file.isRegularFile || file.allLines.isEmpty) {
-      throw new RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
+      throw new scala.RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
     }
 
     while (isRunning) Thread.sleep(sleepInterval)
@@ -91,15 +95,22 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  def requireListFile() = require(file.isRegularFile, s"job list '${file}'does not exist")
+
+
   def statusReport: String = {
+    requireListFile()
+
     s"complete (${jobs.size - killed.size} done; ${killed.size} killed)"
   }
 
 
   def exportStatistics(statsBaseFile: File = File(file.fullPath + ".stats")) = {
+    requireListFile()
+
     val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
 
-    statsFile.write(Seq("job_id", "job_name", "submit_time", "start_time", "finish_time",
+    statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
       "exceeded_wall_limit", "exec_host", "status", "user", "resubmitted_as").mkString("\t"))
     statsFile.appendNewLine()
 
@@ -109,7 +120,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     allIds.map(Job(_).info).
       map(ri => {
         Seq(
-          ri.jobId, ri.jobName, ri.submitTime, ri.startTime, ri.finishTime,
+          ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
           ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubAs().getOrElse("")
         ).mkString("\t")
       }).foreach(statsFile.appendLine)
@@ -134,15 +145,23 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   /** Derives a new job-list for just the killed jobs */
+  // tbd do we actually need this convenience method?
   def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
-
-    require(
-      killed.forall(_.isRestoreable),
-      "joblist can only be resubmitted automatically only if all contained jobs were all submitted via `jl submit`"
-    )
-
     // todo also provide means to retry failed jobs (because of user logic)
     val killedJobs = killed
+
+    resubmit(killedJobs, resubStrategy)
+
+    // tbd consider to move/rename user-logs
+  }
+
+
+  def resubmit(resubJobs: List[Job], resubStrategy: ResubmitStrategy = new TryAgain()): Unit = {
+
+    require(
+      resubJobs.forall(_.isRestoreable),
+      "joblist can only be resubmitted automatically only if all contained jobs were all submitted via `jl submit`"
+    )
 
     // remove killed ids from list file
     val succeededJobs = jobs.diff(killed)
@@ -150,21 +169,19 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     file.write("") // reset the file
 
     // readd successfully completed jobs
-    succeededJobs.foreach(id => file.appendLine(id + ""))
+    succeededJobs.foreach(job => file.appendLine(job.id + ""))
 
     // tbd maybe we should rather apply the escalate to the root jc?
 
     // add resubmit killed ones and add their ids to the list-file as well
-    Console.err.println(s"${file.name}: Resubmitting ${killedJobs.size} killed job${if (killedJobs.size > 1) "s" else ""} with ${resubStrategy}...")
+    Console.err.println(s"${file.name}: Resubmitting ${resubJobs.size} killed job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
-    val killed2resubIds = killedJobs.map(job => job -> {
+    val killed2resubIds = resubJobs.map(job => job -> {
       run(resubStrategy.escalate(job.config))
     }).toMap
 
     // keep track of which jobs have been resubmitted by writing a graph file
     killed2resubIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
-
-    // tbd consider to move/rename user-logs
   }
 
 
@@ -203,8 +220,9 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   /** get all job configurations associated to the joblist */
+  @Deprecated // unclear need
   def jobConfigs = {
-    jobIds.map(jobId => jobId -> Job(jobId).config).toMap
+    jobs.map(job => job -> job.config).toMap
   }
 
 
