@@ -14,8 +14,8 @@ Installation
 
 ```
 cd ~/bin
-https://github.com/holgerbrandl/datautils/archive/v1.20.tar.gz  | tar -zxvf -
-echo $(pwd)/joblist_v1.0:PATH >> ~/.bash_profile
+curl https://github.com/holgerbrandl/joblist/archive/v0.3/joblist_installer_v0.3.tar.gz | tar -zxvf -
+echo 'export PATH='$(pwd)/joblist_v0.3':$PATH' >> ~/.bash_profile
 ```
 
 Java8 is required to run JobList.
@@ -67,10 +67,10 @@ API Usage
 In addition to the provided shell utilities, joblist is also usable programatically. To get started add it as a dependency to your build.sbt
 
 ```
-libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.1-SNAPSHOT"
+libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.3"
 ```
 
-Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback ), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
+Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
 ```
 import joblist._
 
