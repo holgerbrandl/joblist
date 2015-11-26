@@ -102,23 +102,6 @@ jobs %>% mutate(pending_time_hours=pending_time_min/60) %>% select(job_id, exec_
 
 
 #######################################################################################################################
-## create warning email if jobs died
-## todo finish send mail if wall time was exceeded
-
-
-numKilled=nrow(filter(jobs, exceeded_queue_limit))
-numTotal= nrow(jobs)
-
-killedListFile=paste0(reportName, ".killed_jobs.txt")
-if(numKilled >0){
-    system(paste("mailme '",numKilled,"out of ",numTotal," jobs in ", getwd(), " died because of queue length limitation'"))
-    filter(jobs, exceeded_queue_limit) %$% writeLines(job_id, con=killedListFile)
-}else{
-    ## Create an empty killed list to indicate that we actually looked into it
-    file.create(killedListFile)
-}
-
-
 #' # Resubmission Statistics
 
 #' In total there were `r filter(allJobs, !is.na(resubmitted_as)) %>% nrow` job resubmissions

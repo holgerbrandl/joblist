@@ -245,14 +245,18 @@ object JobListCLI extends App {
 
     println(jl.toString)
 
-    jl.exportStatistics()
-    println(s"${jl.file.name}: exported statistics into ${jl.file.name}.{runinfo|jc}.log")
 
     // create an html report
     if (options.get("report").get.toBoolean) {
-      val scriptUrl = "https://raw.githubusercontent.com/holgerbrandl/joblist/master/misc/jl_report.R"
-      val reportScript = scala.io.Source.fromURL(scriptUrl).mkString
-      scalautils.r.rendr_snippet("reportScript", jl.file.path + "")
+      jl.exportStatistics()
+      println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
+
+      //todo load script from resource
+      //      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
+      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
+
+      val reportFile = scalautils.r.rendrSnippet(jl.file.name + ".stats", reportScript, showCode = false, args = ".blastn")
+      println(s"${jl.file.name}: Created html report ${reportFile.name}")
     }
   }
 
