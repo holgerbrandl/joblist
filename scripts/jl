@@ -3,4 +3,4 @@
 ## see http://www.tldp.org/LDP/abs/html/internalvariables.html#ARGLIST
 ## http://stackoverflow.com/questions/3811345/how-to-pass-all-arguments-passed-to-my-bash-script-to-a-function-of-mine
 
-java -cp $(dirname $0)/joblist_assembly.jar joblist.JobListCLI "$@"
+java -cp $(ls $(dirname $0)/../target/scala-2.11/joblist-assembly*jar) joblist.JobListCLI "$@"
