@@ -2,7 +2,7 @@ JobList
 =======
 
 
-An hpc-ready task list manager. Among others it supports monitoring, automatic resubmission, profiling of job lists.
+A task list manager for hpc-clusters. Among others it supports monitoring, automatic resubmission, profiling, and reporting of job lists.
 
 JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs is finished. It can output average runtime statistics and estimates when the entire jobList should be finished. 'jl' can recover crashed jobs and submit them again.
 
@@ -116,3 +116,4 @@ Related Projects
 
 * [para](https://github.com/hillerlab/ParasolLSF/) is a parasol-like wrapper around LSF for efficiently handling batches of jobs on a compute cluster
 * [Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home)  is a workflow management system
+* [lsf_utils](https://github.com/holgerbrandl/datautils/blob/master/bash/lsf_utils.sh) A collections of bash functions to manage list of lsf-cluster jobs
