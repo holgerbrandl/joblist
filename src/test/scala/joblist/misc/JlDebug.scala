@@ -12,20 +12,12 @@ object JlDebug extends App {
 
   import joblist._
 
-  implicit val jl = new JobList("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
-  //    implicit val jl = new JobList("/lustre/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
+  //  implicit val jl = new JobList("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
+  implicit val jl = new JobList("/lustre/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
   jl.jobs
 
-  jl.failed.head.isRestoreable
-  jl.failed.head.config
-  jl.jobs.size
 
-  val notDone = jl.jobs.filter(!_.isDone)
-  notDone.map(j => j -> j.config)
-  notDone.map(j => j -> j.info.status)
-  val killed = jl.jobs.filter(_.wasKilled)
-  jl.resubmit(notDone, new TryAgain)
-  jl.waitUntilDone()
+  //  jl.waitUntilDone()
   //  jl.resubmit(jl.failed, new TryAgain)
   //  jl.exportStatistics(File(jl.file.fullPath + ".stats"))
 

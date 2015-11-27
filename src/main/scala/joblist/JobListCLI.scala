@@ -169,7 +169,7 @@ object JobListCLI extends App {
 
     val options = parseArgs(args, doc)
 
-    // wait until all jobs have finished
+    // wait until all jobs have finishedsl
     val jl = getJL(options)
     jl.waitUntilDone()
 
