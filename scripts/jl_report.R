@@ -28,6 +28,8 @@ reportNiceName <-
  str_replace_all(reportName, "^[.]", "")
 #' # Job Report:  `r reportNiceName`
 
+#' Working Directory: `r normalizePath(reportName)`
+
 stopifnot(file.exists(reportName))
 
 
@@ -56,7 +58,7 @@ allJobs <- read.delim(paste0(reportName, ".stats.runinfo.log"), fill=T) %>%
     arrange(job_id) %>%
     # impose an order on th ejob ids
     mutate_each(funs(empty_as_na)) %>%
-    mutate(job_id=reorder(job_id, as.numeric(job_id)), resubmitted_as=factor(resubmitted_as))
+    mutate(job_id=reorder(job_id, as.numeric(job_id)), resubmission_of=factor(resubmission_of))
 
 
 ## parse the dates
@@ -81,8 +83,13 @@ write.delim(allJobs, file=paste0(reportName, ".stats.runinfo_ext.log"))
 
 
 # Extract the final set (not including the killed and resubmitted ones)
-jobs <- allJobs %>% filter(is.na(resubmitted_as))
+jobs <- allJobs %>%
+    group_by(job_name) %>%
+    arrange(desc(submit_time)) %>%
+    slice(1) %>% ungroup
 
+#jcLogsFile <- paste0(reportName, ".stats.jc.log")
+#if(file.exists(jcLogsFile)){ tbd...
 
 if(unlen(jobs$exec_host)<50){
     jobs %>% ggplot(aes(exec_host)) + geom_bar() + coord_flip()
@@ -123,9 +130,12 @@ jobs %>% mutate(pending_time_hours=pending_time_min/60) %>% select(job_id, exec_
 #######################################################################################################################
 #' # Resubmission Statistics
 
-#' In total there were `r filter(allJobs, !is.na(resubmitted_as)) %>% nrow` job resubmissions
+#' In total there were `r filter(allJobs, !is.na(resubmission_of)) %>% nrow` job resubmissions
 resubmissions <- allJobs %>%
-    semi_join(allJobs, c("job_id"="resubmitted_as")) %>%
- select(resubmitted_as, job_id, job_name)
+    filter(!is.na(resubmission_of)) %>%
+#    semi_join(allJobs, c("job_id"="resubmission_of")) %>%
+    transmute(job_id, status, exec_time_hours, job_name, resubmission_of)
 
 resubmissions %>% datatable()
+
+## todo link log files and configuration xmls into tables where possible

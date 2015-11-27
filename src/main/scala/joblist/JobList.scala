@@ -26,6 +26,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def run(jc: JobConfiguration) = {
     val jobId = scheduler.submit(jc)
 
+    require(jobs.forall(_.config.name != jc.name), "job names must be unique")
+
     add(jobId)
 
     // serialzie job configuration in case we need to rerun it
@@ -53,7 +55,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def isRunning: Boolean = {
     Thread.sleep(2000) // because sometimes it takes a few seconds until jobs show up in bjobs
 
-    val inQueue = scheduler.getRunning
+    val inQueue = running
 
     // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
     // for which we don't have final stats yet
@@ -73,6 +75,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //
   // Commands
   //
+
 
   def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval)
 
@@ -101,7 +104,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def statusReport: String = {
     requireListFile()
 
-    s"complete (${jobs.size - killed.size} done; ${killed.size} killed)"
+    s" ${jobs.size} jobs in total; ${jobs.size - killed.size} done; ${killed.size} killed; ${resubGraph().size} ressubmitted"
   }
 
 
@@ -111,7 +114,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
 
     statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
-      "exceeded_wall_limit", "exec_host", "status", "user", "resubmitted_as").mkString("\t"))
+      "exceeded_wall_limit", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
     statsFile.appendNewLine()
 
 
@@ -121,7 +124,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       map(ri => {
         Seq(
           ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubAs().map(_.id).getOrElse("")
+          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubOf().map(_.id).getOrElse("")
         ).mkString("\t")
       }).foreach(statsFile.appendLine)
 
@@ -140,20 +143,29 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     allJC.map({ case (job, jc) =>
       Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
     }).foreach(jcLogFile.appendLine)
-
-    // todo optionally render html report
   }
 
 
   /** Derives a new job-list for just the killed jobs */
-  // tbd do we actually need this convenience method?
-  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = {
+  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain(), useRoocJC: Boolean = true) = {
     // todo also provide means to retry failed jobs (because of user logic)
-    val killedJobs = killed
-
-    resubmit(killedJobs, resubStrategy)
+    var toBeResubmitted = killed
 
     // tbd consider to move/rename user-logs
+
+    // optionally (and by default) we should use apply the original job configurations for escalation and resubmission?
+    if (useRoocJC) {
+      def findRootJC(job: Job): Job = {
+        job.resubOf() match {
+          case Some(rootJob) => findRootJC(rootJob)
+          case None => job
+        }
+      }
+
+      toBeResubmitted = toBeResubmitted.map(findRootJC)
+    }
+
+    resubmit(toBeResubmitted, resubStrategy)
   }
 
 
@@ -164,25 +176,35 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       "joblist can only be resubmitted automatically only if all contained jobs were all submitted via `jl submit`"
     )
 
-    // remove killed ids from list file
-    val succeededJobs = jobs.diff(killed)
+    // Make sure that same jc's are not submitted again while still running
+    require(
+      running.map(_.config.name).intersect(resubJobs.map(_.config.name)).isEmpty,
+      s"jobs can not be resubmitted while still running: $resubJobs")
+
+
+    // remove existing job instances with same job name from the list
+    val otherJobs = {
+      val resubConfigs = resubJobs.map(_.config)
+      jobs.filterNot(j => resubConfigs.contains(j.config))
+    }
 
     file.write("") // reset the file
 
     // readd successfully completed jobs
-    succeededJobs.foreach(job => file.appendLine(job.id + ""))
+    otherJobs.foreach(job => file.appendLine(job.id + ""))
 
-    // tbd maybe we should rather apply the escalate to the root jc?
 
     // add resubmit killed ones and add their ids to the list-file as well
     Console.err.println(s"${file.name}: Resubmitting ${resubJobs.size} killed job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
-    val killed2resubIds = resubJobs.map(job => job -> {
+    val prev2NewIds = resubJobs.map(job => job -> {
       run(resubStrategy.escalate(job.config))
     }).toMap
 
     // keep track of which jobs have been resubmitted by writing a graph file
-    killed2resubIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
+    prev2NewIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
+
+    require(jobs.map(_.config.name).distinct.size == jobs.size, "Inconsistent sate. Each job name should appear just once per joblist")
   }
 
 
@@ -202,7 +224,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  /** Returns the graph of job resubmission due to cluster resource limitations (ie walltime hits).  */
+  def running = {
+    //noinspection ConvertibleToMethodValue
+    scheduler.getRunning.intersect(jobIds).map(Job(_))
+  }
+
+
+  /** Returns the graph of job resubmission (due to cluster resource limitations (ie walltime hits) or because the user
+    * enforced it).  */
   def resubGraph(): Map[Job, Job] = {
     if (!resubGraphFile.isRegularFile) return Map()
 
@@ -256,6 +285,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 case class Job(id: Int)(implicit val jl: JobList) {
 
+
   def isDone: Boolean = infoFile.isRegularFile && info.isDone
 
 
@@ -274,8 +304,15 @@ case class Job(id: Int)(implicit val jl: JobList) {
   def wasKilled = info.queueKilled
 
 
-  def resubAs(): Option[Job] = {
+  // todo actually this could be a collection of jobs because we escalate the base configuration
+  // furthermore not job-id are resubmitted but job configuration, so the whole concept is flawed
+  def resubAs() = {
     jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
+  }
+
+
+  def resubOf() = {
+    jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._1)
   }
 
 
