@@ -1,9 +1,9 @@
 package joblist
 
-import _root_.CollectionUtils.StrictSetOps
 import better.files.File
 
-import scalautils.Bash
+import scalautils.{Bash, CollectionUtils}
+import scalautils.CollectionUtils.StrictSetOps
 
 /**
   * A stateless wrapper around list of cluster jobs. The actual data is stoed in a plain text-file containing the job-IDs (one per line).
