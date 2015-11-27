@@ -136,8 +136,9 @@ class LsfScheduler extends JobScheduler {
       }
     }
 
+    val killCause = logData.drop(3).mkString("\n")
     // extract additional info from the long data
-    val hitRunLimit = logData.drop(3).mkString("\n").contains("TERM_RUNLIMIT: job killed")
+    val hitRunLimit = killCause.contains("TERM_RUNLIMIT: job killed") || killCause.contains("TERM_OWNER: job killed by owner")
 
     // note if a user kills the jobs with bkill, log would rather state that:
     // Mon Nov 23 14:00:39: Completed <exit>; TERM_OWNER: job killed by owner.

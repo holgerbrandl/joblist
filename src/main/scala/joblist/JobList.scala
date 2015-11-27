@@ -66,7 +66,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       //      filterNot(_.info.isDone).
       foreach(updateStatsFile)
 
-    println(s"${file.name}: Remaining ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
+    println(s"${file.name}: In queue are ${inQueue.intersect(jobIds).size} jobs out of ${jobIds.size}")
 
     inQueue.intersect(jobIds).nonEmpty
   }
@@ -104,7 +104,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def statusReport: String = {
     requireListFile()
 
-    s" ${jobs.size} jobs in total; ${jobs.size - killed.size} done; ${killed.size} killed; ${resubGraph().size} ressubmitted"
+    s" ${jobs.size} jobs in total; ${jobs.size - failed.size} done; ${killed.size} killed; ${resubGraph().size} ressubmitted"
   }
 
 
@@ -184,8 +184,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // remove existing job instances with same job name from the list
     val otherJobs = {
-      val resubConfigs = resubJobs.map(_.config)
-      jobs.filterNot(j => resubConfigs.contains(j.config))
+      val resubConfigs = resubJobs.map(_.name)
+      jobs.filterNot(j => resubConfigs.contains(j.name))
     }
 
     file.write("") // reset the file
@@ -316,11 +316,17 @@ case class Job(id: Int)(implicit val jl: JobList) {
   }
 
 
-  def isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
+  // note just use lazy val for properties that do not change
+
+  lazy val isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
 
 
-  def config = {
+  lazy val config = {
     JobConfiguration.fromXML(id, jl.logsDir)
+  }
+
+  lazy val name = {
+    JobConfiguration.fromXML(id, jl.logsDir).name
   }
 }
 
