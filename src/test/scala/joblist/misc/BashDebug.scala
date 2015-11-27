@@ -1,7 +1,7 @@
 package joblist.misc
 
 import better.files._
-import joblist.Tasks.BashSnippet
+import joblist.misc.Tasks.BashSnippet
 
 /**
   * Document me!

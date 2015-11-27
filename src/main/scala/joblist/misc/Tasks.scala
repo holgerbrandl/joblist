@@ -1,8 +1,9 @@
-package joblist
+package joblist.misc
 
 import java.util.concurrent.Executors
 
 import better.files.File
+import joblist._
 
 import scala.concurrent.ExecutionContext
 import scalautils.Bash

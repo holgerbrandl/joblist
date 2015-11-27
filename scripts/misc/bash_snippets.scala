@@ -12,9 +12,9 @@
 
 import java.io.File
 
-import joblist.Tasks.BashSnippet
 import joblist._
-import joblist.utils._
+import joblist.misc.Tasks
+import joblist.misc.Tasks.BashSnippet
 
 
 new File(".").getAbsoluteFile

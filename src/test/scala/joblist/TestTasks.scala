@@ -1,7 +1,8 @@
 package joblist
 
 import better.files._
-import joblist.Tasks.{BashSnippet, LsfExecutor}
+import joblist.misc.Tasks
+import joblist.misc.Tasks.{BashSnippet, LsfExecutor}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.Bash
@@ -91,7 +92,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     (wd / "task_3.txt").lines.next shouldBe "this is task 3"
 
     // make sure that we can still access the job configurations
-    val restoredJC = runner.joblist.jobConfigs.values.head
+    val restoredJC = runner.joblist.jobs.map(_.config).head
     restoredJC.queue should equal("medium")
   }
 

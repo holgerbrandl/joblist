@@ -4,7 +4,8 @@ package joblist
 import java.io.{File => JFile}
 
 import better.files.File
-import joblist.Tasks.BashSnippet
+import joblist.misc.Tasks
+import joblist.misc.Tasks.BashSnippet
 
 import scalautils.Bash._
 
