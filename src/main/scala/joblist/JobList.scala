@@ -1,5 +1,6 @@
 package joblist
 
+import _root_.CollectionUtils.StrictSetOps
 import better.files.File
 
 import scalautils.Bash
@@ -52,7 +53,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def inQueue = {
     //noinspection ConvertibleToMethodValue
-    scheduler.getRunning.intersect(ids).map(Job(_))
+    scheduler.getRunning.strictIntersect(ids).map(Job(_))
   }
 
 
@@ -63,7 +64,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
     // for which we don't have final stats yet
-    val noLongerInQueue = jobs.diff(nowInQueue)
+    val noLongerInQueue = jobs.strictDiff(nowInQueue)
 
     // write log file for already finished jobs (because  bjobs will loose history data soon)
     jobs.filter(job => noLongerInQueue.contains(job)).foreach(updateStatsFile)
@@ -150,7 +151,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // Make sure that same jc's are not submitted again while still running
     require(
-      inQueue.map(_.config.name).intersect(resubJobs.map(_.config.name)).isEmpty,
+      inQueue.map(_.config.name).strictIntersect(resubJobs.map(_.config.name)).isEmpty,
       s"jobs can not be resubmitted while still running: $resubJobs")
 
 
