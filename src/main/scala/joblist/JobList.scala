@@ -121,7 +121,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       map(ri => {
         Seq(
           ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubAs().getOrElse("")
+          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubAs().map(_.id).getOrElse("")
         ).mkString("\t")
       }).foreach(statsFile.appendLine)
 
@@ -134,6 +134,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     jcLogFile.appendNewLine()
 
 
+    //noinspection ConvertibleToMethodValue
     val allJC = allIds.map(Job(_)).filter(_.isRestoreable).map(job => job -> job.config).toMap
 
     allJC.map({ case (job, jc) =>
@@ -240,7 +241,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def logsDir = (file.parent / ".jl").createIfNotExists(true)
 
 
-  private def jobIds = if (file.isRegularFile) file.allLines.map(_.toInt).toList else List()
+  private def jobIds = if (file.isRegularFile) file.allLines.map(_.toInt) else List()
 
 
   private def updateStatsFile(job: Job): Any = {

@@ -252,8 +252,8 @@ object JobListCLI extends App {
       println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
 
       //todo load script from resource
-      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
-      //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
+      //      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
+      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
 
       val reportFile = scalautils.r.rendrSnippet(jl.file.name + ".stats", reportScript, showCode = false, args = ".blastn")
       println(s"${jl.file.name}: Created html report ${reportFile.name}")

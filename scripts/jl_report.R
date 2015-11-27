@@ -4,6 +4,7 @@ devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v
 devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.20/R/ggplot_commons.R")
 
 require_auto(lubridate)
+require_auto(DT)
 
 
 if(!exists("reportName")){
@@ -29,12 +30,32 @@ reportNiceName <-
 
 stopifnot(file.exists(reportName))
 
-echo("processing job report for '", reportName,"'")
+
+## todo remove redefinition once core_commons_v1.21 has been released
+safe_ifelse <- function(cond, yes, no) {
+  class.y <- class(yes)
+  if ("factor" %in% class.y) {  # Note the small condition change here
+    levels.y = levels(yes)
+  }
+  X <- ifelse(cond,yes,no)
+  if ("factor" %in% class.y) {  # Note the small condition change here
+    X = as.factor(X)
+    levels(X) = levels.y
+  } else {
+    class(X) <- class.y
+  }
+  return(X)
+}
+
+## todo remove redefinition once core_commons_v1.21 has been released
+empty_as_na <- function(x) safe_ifelse(x!="", x, NA)
+
 
 allJobs <- read.delim(paste0(reportName, ".stats.runinfo.log"), fill=T) %>%
     transform(job_id=factor(job_id)) %>%
     arrange(job_id) %>%
     # impose an order on th ejob ids
+    mutate_each(funs(empty_as_na)) %>%
     mutate(job_id=reorder(job_id, as.numeric(job_id)), resubmitted_as=factor(resubmitted_as))
 
 
@@ -56,6 +77,7 @@ wallLimits <- c(short=1, medium=8, long=96)
 allJobs %<>%  mutate(queueLimit=wallLimits[ac(queue)])
 allJobs %<>% mutate(exceeded_queue_limit=exec_time_hours>queueLimit)
 
+write.delim(allJobs, file=paste0(reportName, ".stats.runinfo_ext.log"))
 
 
 # Extract the final set (not including the killed and resubmitted ones)
@@ -63,9 +85,8 @@ jobs <- allJobs %>% filter(is.na(resubmitted_as))
 
 
 if(unlen(jobs$exec_host)<50){
-jobs %>% ggplot(aes(exec_host)) + geom_bar() + coord_flip()
+    jobs %>% ggplot(aes(exec_host)) + geom_bar() + coord_flip()
 }
-
 
 
 if(nrow(jobs)==0){
@@ -93,11 +114,9 @@ if(nrow(jobs)<50){
 ggplot(jobs, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pending vs exec time") + geom_abline()
 
 
-write.delim(jobs, file=paste0(reportName, ".stats.runinfo_ext.log"))
 # jobs <- read.delim("jobs.txt")
 
 #require_auto(knitr)
-require_auto(DT)
 jobs %>% mutate(pending_time_hours=pending_time_min/60) %>% select(job_id, exec_host, job_name, pending_time_hours, exec_time_hours) %>% datatable()
 
 
