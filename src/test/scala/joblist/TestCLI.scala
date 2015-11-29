@@ -6,6 +6,7 @@ import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.language.postfixOps
+import scalautils.Bash.eval
 
 /**
   * Make sure that the CLI of joblist is working as expected by testing the provided subcommands
@@ -14,26 +15,26 @@ import scala.language.postfixOps
   */
 class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
+  //  import Matchers._; import joblist._
+
 
   val wd = (home / "unit_tests").createIfNotExists(true)
 
   val jl = JobList(wd / ".cli_tests")
 
   before {
+    wd.list.foreach(_.delete(true))
     jl.reset()
   }
 
   it should "capture the job id from stdin and wait for it" in {
-    import sys.process._
-
-    val bstatus = "bsub 'touch cli_add_test.dat'" !!
+    val bstatus = eval("bsub 'touch cli_add_test.dat'").stdout.head
 
     // fake some stdin data which is normally provided by piping
     val in = new ByteArrayInputStream(bstatus.getBytes)
     System.setIn(in)
 
-
-    // add and...
+    // add it to jl
     JobListCLI.main(("add " + jl.file.fullPath).split(" "))
 
 
@@ -43,7 +44,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     // wait until its done
     JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
 
-    jl.jobs.head.info.isDone should be(true)
+    jl.jobs.head.isFinal should be(true)
   }
 
 
@@ -61,33 +62,42 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     // wait until its done
     JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+    jl.jobs.head.info
 
     resultFile.toJava should exist
 
-    jl.jobs.head.info.isDone should be(true)
+    jl.jobs.head.isFinal should be(true)
   }
 
 
-  //  it should "submit a job which is known to fail and resumit it once it fails" in {
-  //    import sys.process._
-  //
-  //    val bstatus = "bsub 'touch cli_add_test.dat'" !!
-  //
-  //    // fake some stdin data which is normally provided by piping
-  //    val in = new ByteArrayInputStream(bstatus.getBytes)
-  //    System.setIn(in)
-  //
-  //
-  //    // add and...
-  //    JobListCLI.main(("add " + jl.file.fullPath).split(" "))
-  //
-  //
-  //    jl.file.toJava should exist
-  //    bstatus should include(jl.jobIds.head.toString)
-  //
-  //    // wait until its done
-  //    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
-  //
-  //    jl.jobs.head.info.isDone should be(true)
-  //  }
+  it should "submit a job which is known to fail and resumit it once it fails" in {
+
+    val failTagFile = File("dont_fail_job.txt")
+    failTagFile.delete(true)
+    File("no_fail.dat").delete(true)
+
+    val bstatus = eval(s"""bsub 'if [ -f "${failTagFile.name}" ]; then exit 1; fi; touch no_fail.dat'""").stdout.head
+
+    // fake some stdin data which is normally provided by piping
+    val in = new ByteArrayInputStream(bstatus.getBytes)
+    System.setIn(in)
+
+    // addtry to run it
+    JobListCLI.main(("add " + jl.file.fullPath).split(" "))
+
+
+    jl.file.toJava should exist
+    bstatus should include(jl.jobs.head.id.toString)
+
+    jl.failed.size should be(1)
+    jl.killed should be(empty)
+
+    // fix tag file to make job runnable and retry agin
+    failTagFile.touch()
+
+    // wait with retry object to fix the failed one
+    JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
+
+    jl.jobs.head.isFinal should be(true)
+  }
 }

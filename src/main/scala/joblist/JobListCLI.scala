@@ -153,6 +153,8 @@ object JobListCLI extends App {
 
 
   def wait4jl() = {
+
+
     // val args = Array("jl", "wait")
     // val args = Array("jl", "wait", ".blastn")
     val doc =
@@ -179,6 +181,8 @@ object JobListCLI extends App {
     var numResubmits = 0
     val resubChain = extractResubStrats(options).toIndexedSeq
 
+    if (resubChain.nonEmpty) assert(jl.jobs.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
+
     while (jl.killed.nonEmpty && numResubmits < resubChain.size) {
       jl.resubmitKilled(resubChain.get(numResubmits))
       numResubmits = numResubmits + 1
@@ -188,7 +192,7 @@ object JobListCLI extends App {
 
     // reporting
     if (options.get("email").get.toBoolean) {
-      ShellUtils.mailme(s"file.name has finished", s"status: ${jl.statusReport}")
+      ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"status: ${jl.statusReport}")
       //todo include html report into email
     }
   }

@@ -19,6 +19,16 @@ case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "
     val xmlFile = JobConfiguration.jcXML(jobId, inDir)
     toXml(this, xmlFile)
   }
+
+
+  /** If the job configuration does not come along with a name we create one is unique. */
+  def withName() = {
+    if (name == null || name.isEmpty) {
+      this.copy(name = buildJobName(wd, cmd))
+    } else {
+      this
+    }
+  }
 }
 
 

@@ -1,7 +1,7 @@
 package joblist.shell
 
 import better.files.File
-import joblist.{JobConfiguration, JobScheduler, RunInfo}
+import joblist.{JobConfiguration, JobScheduler, QueueStatus, RunInfo}
 
 /**
   * Document me!
@@ -14,13 +14,13 @@ class ShellScheduler extends JobScheduler {
   override def submit(jc: JobConfiguration): Int = ???
 
 
-  override def readRunLog(runinfoFile: File): RunInfo = ???
+  override def parseRunInfo(runinfoFile: File): RunInfo = ???
 
 
   override def updateRunInfo(id: Int, runinfoFile: File): Unit = ???
 
 
-  override def getRunning: List[Int] = ???
+  override def getQueued: List[QueueStatus] = ???
 
 
   override def readIdsFromStdin(): List[Int] = ???

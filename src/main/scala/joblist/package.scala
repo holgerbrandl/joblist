@@ -58,10 +58,6 @@ package object joblist {
                      queueKilled: Boolean
                     ) {
 
-    def isDone: Boolean = List("EXIT", "DONE").contains(status)
-
-
-    def exceededWallLimit = status == "EXIT" // could also because it died
   }
 
 
@@ -98,6 +94,8 @@ package object joblist {
 
     def logsDir = wd / s".logs"
 
+
+    def createParent = logsDir.createIfNotExists(true)
 
     // file getters
     val id = logsDir / s"$name.jobid"

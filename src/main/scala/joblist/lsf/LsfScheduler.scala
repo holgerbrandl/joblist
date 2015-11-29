@@ -33,14 +33,17 @@ class LsfScheduler extends JobScheduler {
     val cmd = jc.cmd
     val wd = jc.wd
 
+
+    assert(jc.name.length > 0, "job name must not be empty")
+    val jobName = jc.name
+
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
-    val jobName = if (jc.name.isEmpty) buildJobName(wd, cmd) else jc.name
     val wallTime = if (!jc.wallTime.isEmpty) s"-W ${jc.wallTime}" else ""
     val queue = if (!jc.queue.isEmpty) s"-q ${jc.queue}" else ""
 
     // compile all args into cluster configuration
     val lsfArgs =
-      s"""$queue $wallTime $threadArg ${jc.otherQueueArgs}"""
+      s"""$queue $wallTime $threadArg ${Option(jc.otherQueueArgs).getOrElse("")}""".trim
 
     // TBD Could be avoided if we would call bsub directly (because ProcessIO
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
@@ -49,21 +52,19 @@ class LsfScheduler extends JobScheduler {
     // create hidden log directory and log cmd as well as queuing args
     require(wd.isDirectory)
 
-    val logsDir = wd / ".logs"
-    logsDir.createIfNotExists(true)
-
     val jobLogs = JobLogs(jobName, wd)
-
+    jobLogs.createParent
 
     // submit the job to the lsf
     var bsubCmd =
       s"""
     bsub  -J $jobName $lsfArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
-    """
+    """.trim
 
     // optionally prefix with working directory
     if (File(".") != wd) {
       bsubCmd = s"cd '${wd.fullPath}'\n" + bsubCmd
+
     }
 
     val bashResult: BashResult = Bash.eval(bsubCmd)
@@ -86,10 +87,13 @@ class LsfScheduler extends JobScheduler {
   }
 
 
-  override def getRunning: List[Int] = {
+  override def getQueued: List[QueueStatus] = {
     Bash.eval("bjobs").stdout.drop(1).
       filter(!_.isEmpty).
-      map(_.split(" ")(0).toInt).toList
+      map(bjLine => {
+        val bjLineSplit = bjLine.split(" ")
+        QueueStatus(bjLineSplit(0).toInt, bjLineSplit(2))
+      }).toList
   }
 
 
@@ -108,7 +112,7 @@ class LsfScheduler extends JobScheduler {
   }
 
 
-  override def readRunLog(runinfoFile: File) = {
+  override def parseRunInfo(runinfoFile: File) = {
     // todo use a lazy init approach to parse the
     val logData = runinfoFile.allLines
 

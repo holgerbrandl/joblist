@@ -22,10 +22,13 @@ class SlurmScheduler extends JobScheduler {
   }
 
 
-  override def getRunning: List[Int] = {
+  override def getQueued: List[QueueStatus] = {
     val queueStatus = Bash.eval("squeue -lu $(whoami)").stdout
 
-    queueStatus.drop(1).map(_.split(" ").head.toInt).toList
+    queueStatus.drop(1).map(slLine => {
+      val splitLine = slLine.split(" ")
+      QueueStatus(splitLine(0).toInt, splitLine(2))
+    }).toList
   }
 
 
@@ -83,7 +86,7 @@ class SlurmScheduler extends JobScheduler {
   }
 
 
-  override def readRunLog(runinfoFile: File): RunInfo = ???
+  override def parseRunInfo(runinfoFile: File): RunInfo = ???
 
 
   override def updateRunInfo(id: Int, runinfoFile: File): Unit = ???

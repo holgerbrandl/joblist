@@ -19,13 +19,14 @@ abstract class JobScheduler {
   def submit(jc: JobConfiguration): Int
 
 
-  def getRunning: List[Int]
+  def getQueued: List[QueueStatus]
 
 
-  def readRunLog(runinfoFile: File): RunInfo
+  def parseRunInfo(runinfoFile: File): RunInfo
 
 
   def updateRunInfo(id: Int, runinfoFile: File): Unit
 }
 
+case class QueueStatus(jobId: Int, status: String)
 

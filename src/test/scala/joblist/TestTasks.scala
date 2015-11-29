@@ -1,11 +1,10 @@
 package joblist
 
 import better.files._
-import joblist.misc.Tasks
 import joblist.misc.Tasks.{BashSnippet, LsfExecutor}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scalautils.Bash
+import scalautils.CollectionUtils.StrictSetOps
 import scalautils.StringUtils.ImplStringUtils
 
 /**
@@ -40,17 +39,17 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     // we don't use multiline here to ease repl debugging with ammonite which still fails to process multiline strings
     val cmd = "sleep 3\necho \"hello stderr\" >&2\necho \"hello stdout\"\ntouch test_lsf.txt\n    "
 
-    val jobId = jl.run(JobConfiguration(cmd, jobName))
+    val job = jl.run(JobConfiguration(cmd, jobName))
 
     // check that serialize file is ther
-    (wd / ".jl" / s"$jobId.job").toJava should exist
+    (wd / ".jl" / s"${job.id}").toJava should exist
 
     jl.waitUntilDone()
     jl.jobs
 
     // did we fetch the correct runinfo
-    jl.jobs.head.info.jobId should equal(jobId)
-    jl.jobs.head.info.jobId should equal(jobId)
+    jl.jobs.head.info.jobId should equal(job)
+    jl.jobs.head.info.jobId should equal(job)
 
     //    val jobLogs = jl.logs.filter(_.name == jobName)
     //    (wd / s".logs/$jobName.cmd").toJava should exist
@@ -121,7 +120,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     // resubmit killed jobs with more walltime
     jl.resubmitKilled(new DiffWalltime("00:05"))
 
-    jl.scheduler.getRunning should have size (2)
+    jl.scheduler.getQueued should have size (2)
 
     jl.waitUntilDone()
 
@@ -156,23 +155,6 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.failed should have size (1)
   }
 
-
-  it should "use the shell launcher to trigger, monitor and resubmit jobs" in {
-    val jlName = ".whit"
-
-    val jl = JobList(wd / jlName)
-
-    Bash.eval(s"""
-    cd $wd
-    jl submit -j ${jlName} "echo foo"
-    jl submit -j ${jlName} "echo bar"
-    jl submit -j ${jlName} -O "-W 00:01" "sleep 120; touch whit.txt"
-    jl wait --resubmit_wall "00:10" ${jlName}
-    """.alignLeft)
-
-    jl.file.toJava should exist
-    jl.jobs should have size (3)
-  }
 }
 
 class ReportingTest extends FlatSpec with Matchers {
@@ -183,6 +165,19 @@ class ReportingTest extends FlatSpec with Matchers {
     jl.jobs
 
     jl.exportStatistics()
+  }
+
+  it should "do a correct xor for QueueStatus" in {
+    val someQS = List(QueueStatus(1, "RUN"), QueueStatus(2, "PEND"), QueueStatus(3, "RUN"))
+    // one still running(1), one new(4), one change status and onne done(3)
+    val otherQS = List(QueueStatus(1, "RUN"), QueueStatus(2, "RUN"), QueueStatus(4, "PEND"))
+
+    val xor = someQS.strictXor(otherQS).map(_.jobId).distinct
+
+    xor should not contain (1)
+    xor should contain(2)
+    xor should contain(3)
+    xor should contain(4)
   }
 }
 

@@ -1,8 +1,10 @@
 package joblist
 
+import java.time.Instant
+
 import better.files.File
 
-import scalautils.{Bash, CollectionUtils}
+import scalautils.Bash
 import scalautils.CollectionUtils.StrictSetOps
 
 /**
@@ -28,10 +30,33 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //
 
   /** Loads the current state of this joblist from disk. If there is no list files yet, it returns an empty list. */
+  // Note: use cached .jobs instead
   private def ids = if (file.isRegularFile) file.allLines.map(_.toInt) else List()
 
 
-  def jobs = ids.map(Job(_))
+  def jobs = {
+    //    ids.map(Job(_))
+
+    if (wasUpdated()) {
+      _jobCache = ids.map(Job(_))
+    }
+
+    _jobCache
+  }
+
+
+  private var lastUpdate: Instant = null
+  private var _jobCache: List[Job] = List()
+
+
+  private def wasUpdated() = {
+    if (file.isRegularFile && (lastUpdate == null || file.lastModifiedTime.isAfter(lastUpdate))) {
+      lastUpdate = file.lastModifiedTime
+      true
+    } else {
+      false
+    }
+  }
 
 
   //
@@ -47,29 +72,42 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def failed = {
     /* see man bjobs for exit code: The job has terminated with a non-zero status – it may have been aborted due
      to an error in its execution, or killed by its owner or the LSF administrator */
-    jobs.filter(_.info.status == "EXIT")
+    jobs.filter(_.hasFailed)
   }
 
 
-  def inQueue = {
+  def queueStatus = {
     //noinspection ConvertibleToMethodValue
-    scheduler.getRunning.strictIntersect(ids).map(Job(_))
+    val jobIds = jobs.map(_.id) // inlining ot would cause it to be evaulated jl.size times
+    scheduler.getQueued.filter(qs => jobIds.contains(qs.jobId))
   }
+
+
+  def inQueue = queueStatus.map(qs => Job(qs.jobId))
+
+
+  var lastQueueStatus: List[QueueStatus] = List()
 
 
   def isRunning: Boolean = {
-    Thread.sleep(2000) // because sometimes it takes a few seconds until jobs show up in bjobs
+    Thread.sleep(1000) // because sometimes it takes a few seconds until jobs show up in bjobs
 
-    val nowInQueue = inQueue
+    val nowInQueue = queueStatus
 
-    // fetch final status for all those which are done now (for slurm do this much once the loop is done) and
-    // for which we don't have final stats yet
-    val noLongerInQueue = jobs.strictDiff(nowInQueue)
+    // calculate a list of jobs for which the queue status changed. This basically an xor-set operation
+    // (for which there's not library method)
+    // this will detect changed status as well as presence/absence
 
-    // write log file for already finished jobs (because  bjobs will loose history data soon)
-    jobs.filter(job => noLongerInQueue.contains(job)).foreach(updateStatsFile)
+    // note this type of xor is tested in joblist/TestTasks.scala:190
+    val changedQS: Seq[Job] = nowInQueue.strictXor(lastQueueStatus).map(_.jobId).distinct.map(Job(_))
 
-    println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${ids.size}")
+    // update runinfo for all jobs for which the queuing status has changed
+    changedQS.foreach(updateStatsFile)
+
+    println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
+
+    // update last status to prepare for next iteration
+    lastQueueStatus = nowInQueue
 
     nowInQueue.nonEmpty
   }
@@ -78,10 +116,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
     requireListFile()
 
-    //    require(file.isRegularFile && file.lines.nonEmpty, s"joblist '$file' is empy")
-    if (!file.isRegularFile || file.allLines.isEmpty) {
-      throw new scala.RuntimeException(s"Error: There is no valid joblist named ${this.file.path}")
-    }
+    updateNonFinalStats()
 
     while (isRunning) Thread.sleep(sleepInterval)
 
@@ -90,25 +125,36 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  private def updateNonFinalStats(): Unit = {
+    // update runinfo for all jobs for which are not queued but are habe not yet reached a final statue
+    val queueIds = queueStatus.map(_.jobId)
+    val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
+    unqeuedNonFinalJobs.foreach(updateStatsFile)
+  }
+
+
   //
   // List Manipulation
   //
 
-  def run(jc: JobConfiguration) = {
-    val jobId = scheduler.submit(jc)
 
-    require(jobs.forall(_.config.name != jc.name), "job names must be unique")
+  def run(jc: JobConfiguration) = {
+    val namedJC = jc.withName() // // fix auto-build a job configuration names if empty
+
+    val jobId = scheduler.submit(namedJC)
+
+    require(jobs.forall(_.config.name != namedJC.name), "job names must be unique")
 
     add(jobId)
 
     // serialzie job configuration in case we need to rerun it
-    jc.saveAsXml(jobId, logsDir)
+    namedJC.saveAsXml(jobId, logsDir)
 
     Job(jobId)
   }
 
 
-  /** Addtional interface for non-restorable jobs. JL can still monitor those and do some list manipulation, but not
+  /** Additional interface for non-restorable jobs. JL can still monitor those and do some list manipulation, but not
     * resubmit them.
     */
   def add(jobId: Int) = {
@@ -129,7 +175,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // optionally (and by default) we should use apply the original job configurations for escalation and resubmission?
     if (useRoocJC) {
       def findRootJC(job: Job): Job = {
-        job.resubOf() match {
+        job.resubOf match {
           case Some(rootJob) => findRootJC(rootJob)
           case None => job
         }
@@ -183,7 +229,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  def reset() = {
+  def reset(): Unit = {
     file.delete(true)
     resubGraphFile.delete(true)
 
@@ -202,9 +248,19 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //
 
   def statusReport: String = {
-    requireListFile()
+    if (!file.isRegularFile) {
+      return s"${file.name} has not been initialized by adding a job to it"
+    }
 
-    s" ${jobs.size} jobs in total; ${jobs.size - failed.size} done; ${killed.size} killed; ${resubGraph().size} ressubmitted"
+    // todo maybe we should refresh stats since some jobs might still be in the queue and it's not clear if jl is running
+
+    val queuedJobs = queueStatus
+    val numRunning = queueStatus.count(_.status == "RUN")
+    val pending = queuedJobs.size - numRunning
+
+    assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
+
+    f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${resubGraph().size}%4s ressubmitted"
   }
 
 
@@ -226,7 +282,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
 
     statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
-      "exceeded_wall_limit", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
+      "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
     statsFile.appendNewLine()
 
 
@@ -236,7 +292,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       map(ri => {
         Seq(
           ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-          ri.exceededWallLimit, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubOf().map(_.id).getOrElse("")
+          ri.queueKilled, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubOf.map(_.id).getOrElse("")
         ).mkString("\t")
       }).foreach(statsFile.appendLine)
 
@@ -265,25 +321,24 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   // todo require that we have stats for finished jobs
 
 
-  def requireListFile() = require(file.isRegularFile, s"job list '${file}'does not exist")
+  def requireListFile() = require(file.isRegularFile && file.allLines.nonEmpty, s"job list '${file}'does not exist or is empty")
 
 
   override def toString: String = {
-    s"JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, status={$statusReport})"
+    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.fullPath}) :,
+    $statusReport"""
   }
 
 
   def logsDir = (file.parent / ".jl").createIfNotExists(true)
 
 
-  private def updateStatsFile(job: Job) = if (!job.isDone) scheduler.updateRunInfo(job.id, job.infoFile)
+  /** Update the job statistics. This won't update data for final jobs. */
+  private def updateStatsFile(job: Job) = if (!job.isFinal) scheduler.updateRunInfo(job.id, job.infoFile)
 }
 
 
 case class Job(id: Int)(implicit val jl: JobList) {
-
-
-  def isDone: Boolean = infoFile.isRegularFile && info.isDone
 
 
   val infoFile = jl.logsDir / s"$id.runinfo"
@@ -291,7 +346,7 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
   def info = {
     try {
-      jl.scheduler.readRunLog(infoFile)
+      jl.scheduler.parseRunInfo(infoFile)
     } catch {
       case t: Throwable => throw new RuntimeException(s"could not readinfo for $id", t)
     }
@@ -301,6 +356,16 @@ case class Job(id: Int)(implicit val jl: JobList) {
   def wasKilled = info.queueKilled
 
 
+  def hasFailed = info.status == "EXIT"
+
+
+  def isDone = info.status == "DONE"
+
+
+  def isFinal: Boolean = infoFile.isRegularFile && List("EXIT", "DONE").contains(info.status)
+
+
+
   // todo actually this could be a collection of jobs because we escalate the base configuration
   // furthermore not job-id are resubmitted but job configuration, so the whole concept is flawed
   def resubAs() = {
@@ -308,7 +373,7 @@ case class Job(id: Int)(implicit val jl: JobList) {
   }
 
 
-  def resubOf() = {
+  lazy val resubOf = {
     jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._1)
   }
 
