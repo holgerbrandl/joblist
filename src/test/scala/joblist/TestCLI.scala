@@ -90,7 +90,6 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     // fix tag file to make job runnable and retry agin
     failTagFile.touch()
-    Thread.sleep(1000)
 
     Bash.eval(s"ls -l ${failTagFile.fullPath}").exitCode should be(0)
     //    Bash.eval(bashCmd)

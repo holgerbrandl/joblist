@@ -27,8 +27,6 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "submit a job, capture streams, wait for finish, and collect basic stats" in {
 
-    // todo clean up directory
-
     val jl = JobList(wd / ".unit_jobs")
     jl.reset()
     jl.jobs
@@ -97,8 +95,6 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "resubmit killed jobs" in {
 
-    // todo clean up directory
-
     val jl = JobList(wd / ".with_walllimit")
 
     val cmds = for (runMinutes <- 1 to 3) yield {
@@ -148,7 +144,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     (wd / "failjob_test.txt").toJava should exist
 
     // ..not killed by the queue
-    jl.killed should be(Set.empty)
+    jl.killed should be(empty)
 
     // .. but is detected as failed
     jl.failed should have size (1)

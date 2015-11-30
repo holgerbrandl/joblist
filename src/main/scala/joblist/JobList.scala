@@ -39,7 +39,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     //    }
 
     if (needsCacheUpdate()) {
-      Console.err.println("refreshing jobs cache")
+      //      Console.err.println("refreshing jobs cache")
       cache = ids.map(Job(_))
     }
 
