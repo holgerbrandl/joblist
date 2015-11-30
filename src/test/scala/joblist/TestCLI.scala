@@ -56,7 +56,6 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     val cmd: Array[String] = s"submit -j ${jl.file.fullPath} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.fullPath}"
     JobListCLI.main(cmd)
 
-
     jl.file.toJava should exist
     //    bstatus should include(jl.jobIds.head.toString)
 
@@ -76,7 +75,28 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     failTagFile.delete(true)
     File("no_fail.dat").delete(true)
 
-    val bstatus = eval(s"""bsub 'if [ -f "${failTagFile.name}" ]; then exit 1; fi; touch no_fail.dat'""").stdout.head
+    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ s"""if [ ! -f "${failTagFile.name}" ]; then exit 1; fi; touch no_fail.dat"""
+    JobListCLI.main(cmd)
+
+    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+
+    jl.file.toJava should exist
+    jl.jobs.size should be(1)
+    jl.killed should be(empty)
+    jl.failed.size should be(1)
+
+    // fix tag file to make job runnable and retry agin
+    failTagFile.touch()
+
+    // wait with retry object to fix the failed one
+    JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
+
+    jl.jobs.head.isDone should be(true)
+  }
+
+  it should "submit non-jl jobs but should not resubmit them" in {
+
+    val bstatus = eval(s"""bsub 'sleep 5; exit 1'""").stdout.head
 
     // fake some stdin data which is normally provided by piping
     val in = new ByteArrayInputStream(bstatus.getBytes)
@@ -85,19 +105,18 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     // addtry to run it
     JobListCLI.main(("add " + jl.file.fullPath).split(" "))
 
+    jl.jobs.size should be(1)
 
-    jl.file.toJava should exist
-    bstatus should include(jl.jobs.head.id.toString)
+    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
 
+    jl.jobs.size should be(1)
     jl.failed.size should be(1)
-    jl.killed should be(empty)
 
-    // fix tag file to make job runnable and retry agin
-    failTagFile.touch()
+    an[AssertionError] should be thrownBy {
+      JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
+    }
 
-    // wait with retry object to fix the failed one
-    JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
-
-    jl.jobs.head.isFinal should be(true)
+    jl.jobs.size should be(1)
+    jl.failed.size should be(1)
   }
 }

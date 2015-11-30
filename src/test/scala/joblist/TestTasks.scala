@@ -42,7 +42,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     val job = jl.run(JobConfiguration(cmd, jobName))
 
     // check that serialize file is ther
-    (wd / ".jl" / s"${job.id}").toJava should exist
+    (wd / ".jl" / (s"${job.id}" + ".job")).toJava should exist
 
     jl.waitUntilDone()
     jl.jobs
@@ -64,7 +64,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
       BashSnippet(s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
     }
 
-    val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium")
+    val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium", wd = wd)
     runner.joblist.reset()
 
     runner.eval(tasks)

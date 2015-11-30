@@ -12,6 +12,7 @@ import joblist.slurm.SlurmScheduler
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 import scalautils.Bash
 
 /**
@@ -35,12 +36,36 @@ package object joblist {
   }
 
 
+  def getConfigRoots(jobs: List[Job]) = {
+
+    // optionally (and by default) we should use apply the original job configurations for escalation and resubmission?
+    def findRootJC(job: Job): Job = {
+      job.resubOf match {
+        case Some(rootJob) => findRootJC(rootJob)
+        case None => job
+      }
+    }
+
+    jobs.map(findRootJC)
+  }
+
+
   def buildJobName(directory: File, cmd: String) = {
+    var nameElements: ListBuffer[String] = ListBuffer()
+
+    require(directory.isDirectory)
+    if (directory.parent.isDirectory && directory.parent.parent.isDirectory) {
+      nameElements += directory.parent.parent.name
+    }
+
+    if (directory.isDirectory && directory.parent.isDirectory) {
+      nameElements += directory.parent.name
+    }
+
     val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
+    nameElements +=(Math.abs(cmd.hashCode).toString, timestamp)
 
-    // todo this should also work when running in /
-
-    Seq(directory.parent.parent.name, directory.parent.name, Math.abs(cmd.hashCode).toString, timestamp).mkString("__")
+    nameElements.mkString("__")
   }
 
 
@@ -97,10 +122,12 @@ package object joblist {
 
     def createParent = logsDir.createIfNotExists(true)
 
+
     // file getters
     val id = logsDir / s"$name.jobid"
     val cmd = logsDir / s"$name.cmd"
     val err = logsDir / s"$name.err.log"
     val out = logsDir / s"$name.out.log"
   }
+
 }

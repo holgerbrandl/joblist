@@ -3,6 +3,7 @@ package joblist
 import java.time.Instant
 
 import better.files.File
+import joblist.lsf.LsfScheduler
 
 import scalautils.Bash
 import scalautils.CollectionUtils.StrictSetOps
@@ -90,8 +91,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def isRunning: Boolean = {
-    Thread.sleep(1000) // because sometimes it takes a few seconds until jobs show up in bjobs
-
     val nowInQueue = queueStatus
 
     // calculate a list of jobs for which the queue status changed. This basically an xor-set operation
@@ -114,6 +113,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
+    //// because sometimes it takes a few seconds until jobs show up in bjobs
+    if (scheduler.isInstanceOf[LsfScheduler]) {
+      Console.err.print("Initializing LSF monitoring...")
+      Thread.sleep(3000)
+      Console.err.println("Done")
+    }
+
     requireListFile()
 
     updateNonFinalStats()
@@ -165,30 +171,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  /** Derives a new job-list for just the killed jobs */
-  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain(), useRoocJC: Boolean = true) = {
-    // todo also provide means to retry failed jobs (because of user logic)
-    var toBeResubmitted = killed
-
-    // tbd consider to move/rename user-logs
-
-    // optionally (and by default) we should use apply the original job configurations for escalation and resubmission?
-    if (useRoocJC) {
-      def findRootJC(job: Job): Job = {
-        job.resubOf match {
-          case Some(rootJob) => findRootJC(rootJob)
-          case None => job
-        }
-      }
-
-      toBeResubmitted = toBeResubmitted.map(findRootJC)
-    }
-
-    resubmit(toBeResubmitted, resubStrategy)
-  }
+  /** Convenience wrapper only. */
+  //tbd needed?
+  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = resubmit(getConfigRoots(killed), resubStrategy)
 
 
   def resubmit(resubJobs: List[Job], resubStrategy: ResubmitStrategy = new TryAgain()): Unit = {
+    // tbd consider to move/rename user-logs
 
     require(
       resubJobs.forall(_.isRestoreable),
@@ -260,7 +249,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
 
-    f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${resubGraph().size}%4s ressubmitted"
+    f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
   }
 
 
@@ -363,7 +352,6 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
 
   def isFinal: Boolean = infoFile.isRegularFile && List("EXIT", "DONE").contains(info.status)
-
 
 
   // todo actually this could be a collection of jobs because we escalate the base configuration

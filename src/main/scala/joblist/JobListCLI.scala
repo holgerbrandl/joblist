@@ -166,6 +166,7 @@ object JobListCLI extends App {
      --resubmit_queue <resub_queue>   Resubmit to different queue
      --resubmit_wall <walltime>       Resubmit with different walltime limit
      --resubmit_threads <num_threads> Resubmit with more threads
+     --resubmit_type <fail_type>      Defines which failed jobs are beeing resubmitted. Possible values are all,killed,failed [default: all]
      --email                          Send an email report to `` once this joblist has finished
      """.alignLeft.trim
 
@@ -183,8 +184,17 @@ object JobListCLI extends App {
 
     if (resubChain.nonEmpty) assert(jl.jobs.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
 
-    while (jl.killed.nonEmpty && numResubmits < resubChain.size) {
-      jl.resubmitKilled(resubChain.get(numResubmits))
+
+    def tbd = options.get("fail_type").get match {
+      case "all" => jl.failed
+      case "failed" => jl.failed.filterNot(_.wasKilled)
+      case "killed" => jl.failed.filter(_.wasKilled)
+    }
+
+    while (tbd.nonEmpty && numResubmits < resubChain.size) {
+      // todo expose config root mapping as argument
+      jl.resubmit(getConfigRoots(tbd), resubChain.get(numResubmits))
+
       numResubmits = numResubmits + 1
 
       jl.waitUntilDone()
