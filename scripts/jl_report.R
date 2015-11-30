@@ -24,8 +24,7 @@ if(!exists("reportName")){
 # setwd("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
 # setwd("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
 
-reportNiceName <-
- str_replace_all(reportName, "^[.]", "")
+reportNiceName <- reportName %>% basename() %>% str_replace_all("^[.]", "")
 #' # Job Report:  `r reportNiceName`
 
 #' Working Directory: `r normalizePath(reportName)`

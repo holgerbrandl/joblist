@@ -194,7 +194,7 @@ object JobListCLI extends App {
 
     while (tbd.nonEmpty && numResubmits < resubChain.size) {
       // todo expose config root mapping as argument
-      jl.resubmit(getConfigRoots(tbd), resubChain.get(numResubmits))
+      jl.resubmit(resubChain.get(numResubmits), getConfigRoots(tbd))
 
       numResubmits = numResubmits + 1
 

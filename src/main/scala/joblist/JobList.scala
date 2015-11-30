@@ -7,7 +7,8 @@ import scalautils.Bash
 import scalautils.CollectionUtils.StrictSetOps
 
 /**
-  * A stateless wrapper around list of cluster jobs. The actual data is stoed in a plain text-file containing the job-IDs (one per line).
+  * A stateless wrapper around a list of cluster jobs. The actual data is stoed in a plain text-file containing
+  * the job-IDs (one per line).
   *
   * By design JobList are invalid until a job is added to them (see <code>.requireListFile</code>)
   *
@@ -15,6 +16,7 @@ import scalautils.CollectionUtils.StrictSetOps
   */
 
 case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
+
 
   def this(name: String) = this(File(name))
 
@@ -33,6 +35,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   private def ids = if (file.isRegularFile) file.allLines.map(_.toInt) else List()
 
 
+  private var lastFileMD5: String = null
+  private var cache: List[Job] = List()
+
+
   def jobs: List[Job] = {
     if (needsCacheUpdate()) {
       //      Console.err.println("refreshing jobs cache")
@@ -41,10 +47,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     cache
   }
-
-
-  private var lastFileMD5: String = null
-  private var cache: List[Job] = List()
 
 
   private def needsCacheUpdate(): Boolean = {
@@ -142,10 +144,12 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  /** Update runinfo for all jobs for which are not queued anylonger buthave not yet reached a final state */
+
   private def updateNonFinalStats(): Unit = {
-    // update runinfo for all jobs for which are not queued but are habe not yet reached a final statue
     val queueIds = queueStatus.map(_.jobId)
     val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
+
     unqeuedNonFinalJobs.foreach(updateStatsFile)
   }
 
@@ -182,12 +186,17 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  /** Convenience wrapper only. */
-  //tbd needed?
-  def resubmitKilled(resubStrategy: ResubmitStrategy = new TryAgain()) = resubmit(getConfigRoots(killed), resubStrategy)
+  /** Waits for current jl to finish, resubmit failed jobs, wait again */
+  def waitResubWait(resubmitStrategy: ResubmitStrategy = new TryAgain()) = {
+    waitUntilDone()
+    resubmit(resubmitStrategy)
+    waitUntilDone()
+  }
 
 
-  def resubmit(resubJobs: List[Job], resubStrategy: ResubmitStrategy = new TryAgain()): Unit = {
+  def resubmit(resubStrategy: ResubmitStrategy = new TryAgain(),
+               resubJobs: List[Job] = getConfigRoots(failed)): Unit = {
+
     // tbd consider to move/rename user-logs
 
     require(

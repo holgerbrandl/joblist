@@ -113,7 +113,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.failed should have size (2)
 
     // resubmit killed jobs with more walltime
-    jl.resubmitKilled(new DiffWalltime("00:05"))
+    jl.resubmit(new DiffWalltime("00:05"))
 
     jl.scheduler.getQueued should have size (2)
 

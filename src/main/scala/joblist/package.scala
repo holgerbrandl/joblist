@@ -1,4 +1,4 @@
-import java.io.{BufferedWriter, FileWriter}
+import java.io.{BufferedWriter, FileWriter, PrintWriter}
 import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -13,7 +13,7 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
-import scalautils.Bash
+import scalautils.{Bash, IOUtils}
 
 /**
   * Some generic utilities used to manipulate, create and manage joblists.
@@ -108,11 +108,15 @@ package object joblist {
     xStream
   }
 
+  // todo move to scalautils
   implicit class ImplFileUtils(file: File) {
     /** Workaround for https://github.com/pathikrit/better-files/issues/51 */
     def allLines = {
       Files.readAllLines(file.path).toList
     }
+
+
+    def saveAs: ((PrintWriter) => Unit) => Unit = IOUtils.saveAs(file.toJava)
   }
 
   /** Log files that might be of interest for the users. JL does not rely on them. */
