@@ -75,7 +75,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     failTagFile.delete(true)
     File("no_fail.dat").delete(true)
 
-    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ s"""if [ ! -f "${failTagFile.name}" ]; then exit 1; fi; touch no_fail.dat"""
+    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ s"""if [ ! -f "${failTagFile.fullPath}" ]; then exit 1; fi; touch no_fail.dat"""
     JobListCLI.main(cmd)
 
     JobListCLI.main(("wait " + jl.file.fullPath).split(" "))

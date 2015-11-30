@@ -157,6 +157,7 @@ object JobListCLI extends App {
 
     // val args = Array("jl", "wait")
     // val args = Array("jl", "wait", ".blastn")
+    // val args = ("wait --resubmit_retry " + jl.file.fullPath).split(" ")
     val doc =
       s"""
     Usage: jl wait [options] [<joblist_file>]
@@ -185,7 +186,7 @@ object JobListCLI extends App {
     if (resubChain.nonEmpty) assert(jl.jobs.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
 
 
-    def tbd = options.get("fail_type").get match {
+    def tbd = options.getOrElse("fail_type", "all") match {
       case "all" => jl.failed
       case "failed" => jl.failed.filterNot(_.wasKilled)
       case "killed" => jl.failed.filter(_.wasKilled)
@@ -262,7 +263,7 @@ object JobListCLI extends App {
 
     // create an html report
     if (options.get("report").get.toBoolean) {
-      jl.exportStatistics()
+      exportStatistics(jl)
       println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
 
       //todo load script from resource

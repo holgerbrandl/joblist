@@ -35,16 +35,21 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   private def ids = if (file.isRegularFile) file.allLines.map(_.toInt) else List()
 
 
-  def jobs = {
-    //    ids.map(Job(_))
+  def jobs: List[Job] = {
+    if (!cacheEnabled) {
+      return ids.map(Job(_))
+    }
 
     if (wasUpdated()) {
+      Console.err.println("refreshing jobs cache")
       _jobCache = ids.map(Job(_))
     }
 
     _jobCache
   }
 
+
+  var cacheEnabled = false
 
   private var lastUpdate: Instant = null
   private var _jobCache: List[Job] = List()
@@ -113,16 +118,19 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
+
     //// because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
       Console.err.print("Initializing LSF monitoring...")
-      Thread.sleep(3000)
+      Thread.sleep(5000)
       Console.err.println("Done")
     }
 
     requireListFile()
 
     updateNonFinalStats()
+
+    lastQueueStatus = List() //reset the queue history tracker
 
     while (isRunning) Thread.sleep(sleepInterval)
 
@@ -214,6 +222,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // keep track of which jobs have been resubmitted by writing a graph file
     prev2NewIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
 
+
+    lastUpdate = null // invalidate job cache
     require(jobs.map(_.config.name).distinct.size == jobs.size, "Inconsistent sate. Each job name should appear just once per joblist")
   }
 
@@ -221,6 +231,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def reset(): Unit = {
     file.delete(true)
     resubGraphFile.delete(true)
+    lastUpdate = null
 
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }
@@ -248,6 +259,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val pending = queuedJobs.size - numRunning
 
     assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
+    assert(jobs.size > 0)
 
     f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
   }
@@ -263,45 +275,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
       (Job(resubEvent(0)), Job(resubEvent(1)))
     }).toMap
   }
-
-
-  def exportStatistics(statsBaseFile: File = File(file.fullPath + ".stats")) = {
-    requireListFile()
-
-    val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
-
-    statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
-      "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
-    statsFile.appendNewLine()
-
-
-    val allIds: List[Int] = List.concat(jobs, resubGraph().keys).map(_.id)
-
-    allIds.map(Job(_).info).
-      map(ri => {
-        Seq(
-          ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-          ri.queueKilled, ri.execHost, ri.status, ri.user, Job(ri.jobId).resubOf.map(_.id).getOrElse("")
-        ).mkString("\t")
-      }).foreach(statsFile.appendLine)
-
-
-    // also write congig header where possible
-    val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
-    jcLogFile.write(
-      Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
-    )
-    jcLogFile.appendNewLine()
-
-
-    //noinspection ConvertibleToMethodValue
-    val allJC = allIds.map(Job(_)).filter(_.isRestoreable).map(job => job -> job.config).toMap
-
-    allJC.map({ case (job, jc) =>
-      Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
-    }).foreach(jcLogFile.appendLine)
-  }
-
 
   //
   // Internal helpers

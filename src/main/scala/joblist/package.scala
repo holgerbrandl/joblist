@@ -50,6 +50,48 @@ package object joblist {
   }
 
 
+  def exportStatistics(jl: JobList) = {
+    jl.requireListFile()
+
+    val statsBaseFile: File = File(jl.file.fullPath + ".stats")
+
+    val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
+
+    statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
+      "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
+    statsFile.appendNewLine()
+
+
+    val allJobs = List.concat(jl.jobs, jl.resubGraph().keys).map(_.id).map(Job(_)(jl))
+
+    allJobs.map(_.info).
+      map(ri => {
+        Seq(
+          ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
+          ri.queueKilled, ri.execHost, ri.status, ri.user, Job(ri.jobId)(jl).resubOf.map(_.id).getOrElse("")
+        ).mkString("\t")
+      }).foreach(statsFile.appendLine)
+
+
+    // also write congig header where possible
+    val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
+    jcLogFile.write(
+      Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
+    )
+    jcLogFile.appendNewLine()
+
+
+    //noinspection ConvertibleToMethodValue
+    val allJC = allJobs.filter(_.isRestoreable).map(job => job -> job.config).toMap
+
+    allJC.map({ case (job, jc) =>
+      Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
+    }).foreach(jcLogFile.appendLine)
+  }
+
+
+
+
   def buildJobName(directory: File, cmd: String) = {
     var nameElements: ListBuffer[String] = ListBuffer()
 
