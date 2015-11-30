@@ -34,10 +34,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def jobs: List[Job] = {
-    //    if (!cacheEnabled) {
-    //      return ids.map(Job(_))
-    //    }
-
     if (needsCacheUpdate()) {
       //      Console.err.println("refreshing jobs cache")
       cache = ids.map(Job(_))
@@ -47,15 +43,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  var cacheEnabled = true
-
   private var lastFileMD5: String = null
   private var cache: List[Job] = List()
 
 
   private def needsCacheUpdate(): Boolean = {
+    // neccessary to emtpy cache after .reset
     if (!file.isRegularFile) {
-      // neccessary to emtpy cache after .reset
       return true
     }
 
@@ -97,7 +91,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def inQueue = queueStatus.map(qs => Job(qs.jobId))
 
 
-  var lastQueueStatus: List[QueueStatus] = List()
+  private var lastQueueStatus: List[QueueStatus] = List()
 
 
   def isRunning: Boolean = {
@@ -238,11 +232,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def reset(): Unit = {
     file.delete(true)
     resubGraphFile.delete(true)
+    // todo glob and delete  all instance related file file.name* --> rm
 
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }
 
 
+  // todo btop and bkill are lsf only and should be refactored to become scheduler API
   def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval)
 
 
@@ -264,8 +260,9 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val numRunning = queueStatus.count(_.status == "RUN")
     val pending = queuedJobs.size - numRunning
 
+    // also do some internal consistenct checks
     assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
-    assert(jobs.size > 0)
+    assert(jobs.nonEmpty)
 
     f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
   }
@@ -282,11 +279,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     }).toMap
   }
 
+
   //
   // Internal helpers
   //
-
-  // todo require that we have stats for finished jobs
 
 
   def requireListFile() = require(file.isRegularFile && file.allLines.nonEmpty, s"job list '${file}'does not exist or is empty")
@@ -302,58 +298,4 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   /** Update the job statistics. This won't update data for final jobs. */
   private def updateStatsFile(job: Job) = if (!job.isFinal) scheduler.updateRunInfo(job.id, job.infoFile)
-}
-
-
-case class Job(id: Int)(implicit val jl: JobList) {
-
-
-  val infoFile = jl.logsDir / s"$id.runinfo"
-
-
-  def info = {
-    try {
-      jl.scheduler.parseRunInfo(infoFile)
-    } catch {
-      case t: Throwable => throw new RuntimeException(s"could not readinfo for $id", t)
-    }
-  }
-
-
-  def wasKilled = info.queueKilled
-
-
-  def hasFailed = info.status == "EXIT"
-
-
-  def isDone = info.status == "DONE"
-
-
-  def isFinal: Boolean = infoFile.isRegularFile && List("EXIT", "DONE").contains(info.status)
-
-
-  // todo actually this could be a collection of jobs because we escalate the base configuration
-  // furthermore not job-id are resubmitted but job configuration, so the whole concept is flawed
-  def resubAs() = {
-    jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
-  }
-
-
-  lazy val resubOf = {
-    jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._1)
-  }
-
-
-  // note just use lazy val for properties that do not change
-
-  lazy val isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
-
-
-  lazy val config = {
-    JobConfiguration.fromXML(id, jl.logsDir)
-  }
-
-  lazy val name = {
-    JobConfiguration.fromXML(id, jl.logsDir).name
-  }
 }

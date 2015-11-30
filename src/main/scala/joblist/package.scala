@@ -50,47 +50,6 @@ package object joblist {
   }
 
 
-  def exportStatistics(jl: JobList) = {
-    jl.requireListFile()
-
-    val statsBaseFile: File = File(jl.file.fullPath + ".stats")
-
-    val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
-
-    statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
-      "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
-    statsFile.appendNewLine()
-
-
-    val allJobs = List.concat(jl.jobs, jl.resubGraph().keys).map(_.id).map(Job(_)(jl))
-
-    allJobs.map(_.info).
-      map(ri => {
-        Seq(
-          ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-          ri.queueKilled, ri.execHost, ri.status, ri.user, Job(ri.jobId)(jl).resubOf.map(_.id).getOrElse("")
-        ).mkString("\t")
-      }).foreach(statsFile.appendLine)
-
-
-    // also write congig header where possible
-    val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
-    jcLogFile.write(
-      Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
-    )
-    jcLogFile.appendNewLine()
-
-
-    //noinspection ConvertibleToMethodValue
-    val allJC = allJobs.filter(_.isRestoreable).map(job => job -> job.config).toMap
-
-    allJC.map({ case (job, jc) =>
-      Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
-    }).foreach(jcLogFile.appendLine)
-  }
-
-
-
 
   def buildJobName(directory: File, cmd: String) = {
     var nameElements: ListBuffer[String] = ListBuffer()
@@ -172,4 +131,63 @@ package object joblist {
     val out = logsDir / s"$name.out.log"
   }
 
+  implicit class ImplJobListUtils(jl: JobList) {
+
+
+    def exportStatistics() = {
+      jl.requireListFile()
+
+      val statsBaseFile: File = File(jl.file.fullPath + ".stats")
+
+      val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
+
+      statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
+        "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
+      statsFile.appendNewLine()
+
+
+      val allJobs = List.concat(jl.jobs, jl.resubGraph().keys).map(_.id).map(Job(_)(jl))
+
+      allJobs.map(_.info).
+        map(ri => {
+          Seq(
+            ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
+            ri.queueKilled, ri.execHost, ri.status, ri.user, Job(ri.jobId)(jl).resubOf.map(_.id).getOrElse("")
+          ).mkString("\t")
+        }).foreach(statsFile.appendLine)
+
+
+      // also write congig header where possible
+      val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
+      jcLogFile.write(
+        Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
+      )
+      jcLogFile.appendNewLine()
+
+
+      //noinspection ConvertibleToMethodValue
+      val allJC = allJobs.filter(_.isRestoreable).map(job => job -> job.config).toMap
+
+      allJC.map({ case (job, jc) =>
+        Seq(job.id, jc.name, jc.numThreads, jc.otherQueueArgs, jc.queue, jc.wallTime, jc.wd).mkString("\t")
+      }).foreach(jcLogFile.appendLine)
+
+      //      new {val runLog=statsFile; val configLog=jcLogFile}
+    }
+
+
+    def createHtmlReport() = {
+      jl.exportStatistics()
+      println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
+
+      //todo load script from resource
+      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
+      //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
+
+      val reportFile = scalautils.r.rendrSnippet(jl.file.name + ".stats", reportScript, showCode = false, args = jl.file.fullPath, wd = jl.file.parent)
+      require(reportFile.isRegularFile, s"report generation failed for '$jl'")
+
+      println(s"${jl.file.name}: Created html report ${reportFile.name}")
+    }
+  }
 }

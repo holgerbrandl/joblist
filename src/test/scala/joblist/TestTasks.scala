@@ -159,7 +159,7 @@ class ReportingTest extends FlatSpec with Matchers {
     val jl = new JobList("test_data/reporting/.blastn")
     jl.jobs
 
-    exportStatistics(jl)
+    jl.exportStatistics()
   }
 
   it should "do a correct xor for QueueStatus" in {
