@@ -63,3 +63,7 @@ test in assembly := {}
 
 // to test just some follow http://stackoverflow.com/questions/6997730/how-to-execute-tests-that-match-a-regular-expression-only
 //sbt> testOnly com.example.*Spec
+
+
+//http://www.scala-sbt.org/0.12.4/docs/Detailed-Topics/Testing.html
+parallelExecution in Test := false

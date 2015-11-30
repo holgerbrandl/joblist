@@ -1,7 +1,5 @@
 package joblist
 
-import java.time.Instant
-
 import better.files.File
 import joblist.lsf.LsfScheduler
 
@@ -36,28 +34,35 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def jobs: List[Job] = {
-    if (!cacheEnabled) {
-      return ids.map(Job(_))
-    }
+    //    if (!cacheEnabled) {
+    //      return ids.map(Job(_))
+    //    }
 
-    if (wasUpdated()) {
+    if (needsCacheUpdate()) {
       Console.err.println("refreshing jobs cache")
-      _jobCache = ids.map(Job(_))
+      cache = ids.map(Job(_))
     }
 
-    _jobCache
+    cache
   }
 
 
-  var cacheEnabled = false
+  var cacheEnabled = true
 
-  private var lastUpdate: Instant = null
-  private var _jobCache: List[Job] = List()
+  private var lastFileMD5: String = null
+  private var cache: List[Job] = List()
 
 
-  private def wasUpdated() = {
-    if (file.isRegularFile && (lastUpdate == null || file.lastModifiedTime.isAfter(lastUpdate))) {
-      lastUpdate = file.lastModifiedTime
+  private def needsCacheUpdate(): Boolean = {
+    if (!file.isRegularFile) {
+      // neccessary to emtpy cache after .reset
+      return true
+    }
+
+    // not using modificated time seems broken since it does not update fast enough
+    val md5sum = file.md5
+    if (md5sum != lastFileMD5) {
+      lastFileMD5 = md5sum
       true
     } else {
       false
@@ -117,7 +122,11 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  def waitUntilDone(msg: String = "", sleepInterval: Long = 10000) = {
+  def waitUntilDone(msg: String = "", sleepInterval: Long = 10000): Any = {
+    if (jobs.forall(_.isFinal)) {
+      // stop if all jobs are final already
+      return
+    }
 
     //// because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
@@ -222,8 +231,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // keep track of which jobs have been resubmitted by writing a graph file
     prev2NewIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
 
-
-    lastUpdate = null // invalidate job cache
     require(jobs.map(_.config.name).distinct.size == jobs.size, "Inconsistent sate. Each job name should appear just once per joblist")
   }
 
@@ -231,7 +238,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def reset(): Unit = {
     file.delete(true)
     resubGraphFile.delete(true)
-    lastUpdate = null
 
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }
@@ -287,8 +293,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   override def toString: String = {
-    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.fullPath}) :,
-    $statusReport"""
+    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.fullPath})"""
   }
 
 

@@ -48,8 +48,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.jobs
 
     // did we fetch the correct runinfo
-    jl.jobs.head.info.jobId should equal(job)
-    jl.jobs.head.info.jobId should equal(job)
+    jl.jobs.head.info.jobId should equal(job.id)
 
     //    val jobLogs = jl.logs.filter(_.name == jobName)
     //    (wd / s".logs/$jobName.cmd").toJava should exist
@@ -139,7 +138,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
       """
     touch failjob_test.txt
     exit 1
-      """))
+      """, wd = wd))
 
     jl.waitUntilDone()
 

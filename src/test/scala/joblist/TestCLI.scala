@@ -6,6 +6,7 @@ import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.language.postfixOps
+import scalautils.Bash
 import scalautils.Bash.eval
 
 /**
@@ -22,6 +23,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   val jl = JobList(wd / ".cli_tests")
 
+  // note by default sbt is running tests in parallel which will fail like that
   before {
     wd.list.foreach(_.delete(true))
     jl.reset()
@@ -75,7 +77,8 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     failTagFile.delete(true)
     File("no_fail.dat").delete(true)
 
-    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ s"""if [ ! -f "${failTagFile.fullPath}" ]; then exit 1; fi; touch no_fail.dat"""
+    val bashCmd = s"""if [ ! -f "${failTagFile.fullPath}" ]; then exit 1; fi; touch no_fail.dat"""
+    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ bashCmd
     JobListCLI.main(cmd)
 
     JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
@@ -87,10 +90,18 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     // fix tag file to make job runnable and retry agin
     failTagFile.touch()
+    Thread.sleep(1000)
+
+    Bash.eval(s"ls -l ${failTagFile.fullPath}").exitCode should be(0)
+    //    Bash.eval(bashCmd)
+    //    System.gc()
 
     // wait with retry object to fix the failed one
     JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("status " + jl.file.fullPath).split(" "))
 
+    //    jl.jobs.head.info
+    //    jl.jobs.head.config.cmd
     jl.jobs.head.isDone should be(true)
   }
 

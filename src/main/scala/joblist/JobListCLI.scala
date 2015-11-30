@@ -259,6 +259,7 @@ object JobListCLI extends App {
     val jl = getJL(options)
 
     println(jl.toString)
+    println(jl.statusReport)
 
 
     // create an html report
