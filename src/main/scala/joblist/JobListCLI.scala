@@ -112,7 +112,7 @@ object JobListCLI extends App {
     val jl = getJL(options)
 
     val jc = JobConfiguration(
-      cmd = options.get("command").get,
+      cmd = options.get("command").get.alignLeft,
       name = options.getOrElse("name", ""),
       queue = options.get("queue").get,
       numThreads = options.get("num_threads").get.toInt,

@@ -4,10 +4,10 @@ package joblist
 import java.io.{File => JFile}
 
 import better.files.File
-import joblist.misc.Tasks
 import joblist.misc.Tasks.BashSnippet
 
 import scalautils.Bash._
+import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
 
 // todo convert into actual unit tests.
 /**
@@ -52,7 +52,7 @@ object BashPlayground {
   //R "1+1"
   R("1+1")
 
-  head(new JFile("/home/brandl/.bash_profile"))
+  File("/home/brandl/.bash_profile").head
 
   BashSnippet("touch").name
   BashSnippet("touch").withAutoName
