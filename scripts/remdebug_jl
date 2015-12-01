@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+## see http://www.tldp.org/LDP/abs/html/internalvariables.html#ARGLIST
+## http://stackoverflow.com/questions/3811345/how-to-pass-all-arguments-passed-to-my-bash-script-to-a-function-of-mine
+
+java  -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005 -cp $(ls $(dirname $0)/../target/scala-2.11/joblist-assembly*jar) joblist.JobListCLI "$@"

@@ -7,8 +7,9 @@ import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scalautils.ShellUtils
+import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
 import scalautils.StringUtils._
+import scalautils.{Bash, ShellUtils}
 
 
 /**
@@ -93,18 +94,21 @@ object JobListCLI extends App {
   }
 
 
-  def submit() = {
+  def submit(): Any = {
 
     val options = parseArgs(args,
-      """
+      s"""
     Usage: jl submit [options] <command>
 
     Options:
-     -j --joblist_file <joblist_file> Joblist name [default: .jobs]
-     -n --name <job_name>             Name of the job
-     -t --num_threads <threads>       Number of threads [default: 1]
-     -q --queue <queue>               Used queue [default: short]
-     -O --other_queue_args <queue_args>  Additional queue parameters
+     -j --joblist_file <joblist_file>     Joblist name [default: .jobs]
+     -n --name <job_name>                 Name of the job
+     -t --num_threads <threads>           Number of threads [default: 1]
+     -q --queue <queue>                   Used queue [default: short]
+     -O --other_queue_args <queue_args>   Additional queue parameters
+     --debug                              Debug mode which will execute the first submission in the local shell and
+                                          will ignore additional submissions. Creates a $${jl.name}.debug to track
+                                          execution state
       """.alignLeft.trim)
 
     // todo add option to disable automatic stream redirection
@@ -118,6 +122,22 @@ object JobListCLI extends App {
       numThreads = options.get("num_threads").get.toInt,
       otherQueueArgs = options.getOrElse("other_queue_args", "")
     )
+
+    // debug mode. Eval first submission in local shell and ignore subsequent ones until tag file is removed
+    if (options.get("debug").get.toBoolean) {
+      val debugTag = jl.file.withExt(".debug")
+
+      if (!debugTag.exists) {
+        debugTag.touch()
+
+        Console.err.println(s"${jl.file.name}: debug head with command:\n${jc.cmd}")
+        Bash.eval(jc.cmd, showOutput = true)
+      } else {
+        Console.err.println(s"${jl.file.name}: ignoring debug job submission. Remove ${debugTag.name} to debug again")
+      }
+
+      return
+    }
 
     // save for later in case we need to restore it
     jl.run(jc)

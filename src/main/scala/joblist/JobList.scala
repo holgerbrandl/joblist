@@ -248,10 +248,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   // todo btop and bkill are lsf only and should be refactored to become scheduler API
-  def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval)
+  def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval(_))
 
 
-  def kill() = jobs.map(job => s"bkill ${job.id}").foreach(Bash.eval)
+  def kill() = jobs.map(job => s"bkill ${job.id}").foreach(Bash.eval(_))
 
 
   //
