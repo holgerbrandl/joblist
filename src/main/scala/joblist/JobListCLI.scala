@@ -281,21 +281,22 @@ object JobListCLI extends App {
   def shortcuts() = {
     println(
       """
-      joblist(){
+      jladd(){
         jl add $*
       }
-      export -f joblist
+      export -f jladd
 
-      wait4jobs(){
+      jlwait(){
         jl wait $*
       }
       export -f wait4jobs
 
-
-      ##note: mysb replacement
-      jsub(){
+      ##note: mysb jlwait
+      jlsub(){
         jl submit $*
       }
+      export -f jlsub
+
       """.alignLeft)
   }
 }
