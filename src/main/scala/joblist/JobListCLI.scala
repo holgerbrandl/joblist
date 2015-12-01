@@ -195,6 +195,9 @@ object JobListCLI extends App {
 
     // wait until all jobs have finishedsl
     val jl = getJL(options)
+
+    jl.requireListFile()
+
     jl.waitUntilDone()
 
     // in case jl.submit was used to launch the jobs retry in case they've failed
