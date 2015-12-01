@@ -15,6 +15,6 @@ val killedInfo: List[RunInfo] = jl.killed.map(_.info)
 
 
 // resubmit to other queue
-jl.resubmit(new BetterQueue("long"))
+jl.resubmitFailed(new BetterQueue("long"))
 
 //failedConfigs.map(_.copy(numThreads = 10)).foreach(jl.run)

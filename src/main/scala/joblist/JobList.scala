@@ -189,13 +189,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   /** Waits for current jl to finish, resubmit failed jobs, wait again */
   def waitResubWait(resubmitStrategy: ResubmitStrategy = new TryAgain()) = {
     waitUntilDone()
-    resubmit(resubmitStrategy)
+    resubmitFailed(resubmitStrategy)
     waitUntilDone()
   }
 
 
-  def resubmit(resubStrategy: ResubmitStrategy = new TryAgain(),
-               resubJobs: List[Job] = getConfigRoots(failed)): Unit = {
+  def resubmitFailed(resubStrategy: ResubmitStrategy = new TryAgain(),
+                     resubJobs: List[Job] = getConfigRoots(failed)): Unit = {
 
     // tbd consider to move/rename user-logs
 
