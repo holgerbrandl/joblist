@@ -48,7 +48,6 @@ object JobListCLI extends App {
     case "wait" => wait4jl()
     case "up" => btop()
     case "kill" => kill()
-    case "chill" => ???
     case "shortcuts" => shortcuts()
     case "status" => status()
     case "failed" => printFailed()
@@ -77,8 +76,8 @@ object JobListCLI extends App {
   }
 
 
-  def getJL(options: Map[String, String]) = {
-    new JobList(File(Option(options("joblist_file")).getOrElse(DEFAULT_JL)))
+  def getJL(options: Map[String, String], jlArgName: String = "joblist_file") = {
+    new JobList(File(Option(options(jlArgName)).getOrElse(DEFAULT_JL)))
   }
 
 
@@ -101,7 +100,7 @@ object JobListCLI extends App {
     Usage: jl submit [options] <command>
 
     Options:
-     -j --joblist_file <joblist_file>     Joblist name [default: .jobs]
+     -j --jl <joblist_file>     Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job
      -t --num_threads <threads>           Number of threads [default: 1]
      -q --queue <queue>                   Used queue [default: short]
@@ -109,11 +108,12 @@ object JobListCLI extends App {
      --debug                              Debug mode which will execute the first submission in the local shell and
                                           will ignore additional submissions. Creates a $${jl.name}.debug to track
                                           execution state
+     --wait                               Wait until the job is done. Useful for single clusterized tasks
       """.alignLeft.trim)
 
     // todo add option to disable automatic stream redirection
 
-    val jl = getJL(options)
+    val jl = getJL(options, "jl")
 
     val jc = JobConfiguration(
       cmd = options.get("command").get.alignLeft,
@@ -141,6 +141,10 @@ object JobListCLI extends App {
 
     // save for later in case we need to restore it
     jl.run(jc)
+
+    if (options.get("wait").get.toBoolean) {
+      jl.waitUntilDone()
+    }
   }
 
 

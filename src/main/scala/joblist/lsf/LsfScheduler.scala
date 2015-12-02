@@ -47,7 +47,7 @@ class LsfScheduler extends JobScheduler {
 
     // TBD Could be avoided if we would call bsub directly (because ProcessIO
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
-    require(!cmd.contains("'"))
+    require(!cmd.contains("'"), "Commands must not contain single quotes. See and vote for https://github.com/holgerbrandl/joblist/issues/11")
 
     // create hidden log directory and log cmd as well as queuing args
     require(wd.isDirectory)
