@@ -119,12 +119,12 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def waitUntilDone(msg: String = "", sleepInterval: Long = 10000): Any = {
+    // stop if all jobs are final already
     if (jobs.forall(_.isFinal)) {
-      // stop if all jobs are final already
       return
     }
 
-    //// because sometimes it takes a few seconds until jobs show up in bjobs
+    // add delay because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
       Console.err.print("Initializing LSF monitoring...")
       Thread.sleep(5000)

@@ -17,3 +17,7 @@ Result is
 
 ## Job Status Reporting
 
+
+## Links
+
+https://computing.llnl.gov/linux/slurm/faq.html
