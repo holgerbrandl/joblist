@@ -7,10 +7,10 @@ import scalautils.Bash
 import scalautils.CollectionUtils.StrictSetOps
 
 /**
-  * A stateless wrapper around a list of cluster jobs. The actual data is stoed in a plain text-file containing
+  * A stateless wrapper around a list of cluster jobs. The actual data is stored in a plain text-file containing
   * the job-IDs (one per line).
   *
-  * By design JobList are invalid until a job is added to them (see <code>.requireListFile</code>)
+  * By design JobList instances are invalid until a job is added to them (see <code>.requireListFile</code>)
   *
   * @author Holger Brandl
   */
@@ -109,7 +109,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // update runinfo for all jobs for which the queuing status has changed
     changedQS.foreach(updateStatsFile)
 
-    println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
+    //      println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
+    // workaround (fix?) for https://github.com/holgerbrandl/joblist/issues/5
+    if (changedQS.nonEmpty) {
+      println(file.name + ":" + statusReport)
+      //todo  print estimated runtime here (see https://github.com/holgerbrandl/joblist/issues/9)
+      // maybe check stdin and reprint report on user input???
+    }
+
 
     // update last status to prepare for next iteration
     lastQueueStatus = nowInQueue
