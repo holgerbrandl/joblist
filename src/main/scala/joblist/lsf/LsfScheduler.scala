@@ -91,7 +91,8 @@ class LsfScheduler extends JobScheduler {
     Bash.eval("bjobs").stdout.drop(1).
       filter(!_.isEmpty).
       map(bjLine => {
-        val bjLineSplit = bjLine.split(" ")
+        // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
+        val bjLineSplit = bjLine.split(" +")
         QueueStatus(bjLineSplit(0).toInt, bjLineSplit(2))
       }).toList
   }
