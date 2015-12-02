@@ -1,0 +1,36 @@
+
+/projects/genome/bin/scripts/para
+Parameters missing!!
+
+/projects/genome/bin/scripts/para action jobListName [jobListFile] [-q queue] [-p bsubParameters] [-v|verbose] [-maxNumResubmission int] [-noResubmitIfQueueMaxTimeExceeded] [-resubmitToSameQueueIfQueueMaxTimeExceeded] [-keepBackupFiles]
+where action can be:    make, push, pushCrashed, check, wait, stop, chill, time, crashed, clean
+
+   make          pushes the joblist, monitors progress, pushes failed jobs again a maximum of 3 times, waits until all jobs are done or jobs crashed >3 times
+   push          pushes the joblist
+   pushCrashed   determines which jobs crashed and pushes those jobs again unless they failed 3 times already. It uses the same bsub parameters. Queue is the same, unless a job failed with exceeding the runtime limit.
+   check         checks how many jobs in the current joblist are done. Exit code 0 if all succeeded. Otherwise exit code 255.
+   wait          'connects' to a running jobList and waits until the running and pending jobs are done, pushes failed jobs again a max of 3 times.
+   stop          stops all running and pending jobs in the jobList --> You can recover all stopped and crashed jobs with 'crashed'
+   chill         stops all pending jobs only. Lets the running jobs continue to run. --> You can recover all stopped and crashed jobs with 'crashed'
+   time          outputs runtime statistics and an estimation when all jobs are finished
+   crashed       outputs all crashed jobs into the given output filename
+   clean         remove all internal para files and LSF output files for the given jobListName
+The number of input parameters depends on the action:
+   /projects/genome/bin/scripts/para make          jobListName jobListFile  [-q|queue short|medium|long] [-p|parameters "additional parameters for bsub"] [-maxNumResubmission int] [-noResubmitIfQueueMaxTimeExceeded] [-resubmitToSameQueueIfQueueMaxTimeExceeded]
+   /projects/genome/bin/scripts/para push          jobListName jobListFile  [-q|queue short|medium|long] [-p|parameters "additional parameters for bsub"] [-maxNumResubmission int] [-noResubmitIfQueueMaxTimeExceeded] [-resubmitToSameQueueIfQueueMaxTimeExceeded]
+   /projects/genome/bin/scripts/para pushCrashed   jobListName
+   /projects/genome/bin/scripts/para check         jobListName
+   /projects/genome/bin/scripts/para wait          jobListName
+   /projects/genome/bin/scripts/para stop          jobListName
+   /projects/genome/bin/scripts/para chill         jobListName
+   /projects/genome/bin/scripts/para time          jobListName
+   /projects/genome/bin/scripts/para crashed       jobListName outputJobListFile
+   /projects/genome/bin/scripts/para clean         jobListName
+
+General parameters
+   -v|--verbose                                 enable verbose output
+   -maxNumResubmission int                      set the max number of times a crashed job will be pushed again (default 3). NOTE: has only an effect when doing para make
+   -noResubmitIfQueueMaxTimeExceeded            do not resubmit the jobs that failed because they exceeded the runtime limit of the queue (default is do resubmit)
+   -resubmitToSameQueueIfQueueMaxTimeExceeded   resubmit the jobs that failed because they exceeded the runtime limit of the queue, but resubmit to the same (rather than the next longest) queue.
+                                                Only useful, if your job checks which preliminary results exist (e.g. for input elements the output file already exist).
+   -keepBackupFiles                             if set, keep a backup of every internal para file in a dir .para/backup/ (backup files will be produced everytime the internal files are updated)
