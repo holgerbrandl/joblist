@@ -210,7 +210,7 @@ object JobListCLI extends App {
     // val args = Array("jl", "wait", ".blastn")
     // val args = ("wait --resubmit_retry " + jl.file.fullPath).split(" ")
     val doc =
-      s"""
+      """
     Usage: jl wait [options] [<joblist_file>]
 
     Options:
@@ -219,8 +219,8 @@ object JobListCLI extends App {
      --resubmit_wall <walltime>       Resubmit with different walltime limit
      --resubmit_threads <num_threads> Resubmit with more threads
      --resubmit_type <fail_type>      Defines which failed jobs are beeing resubmitted. Possible values are all,killed,failed [default: all]
-     --email                          Send an email report to `` once this joblist has finished
-     --report                         Create an html report for this joblist once the list has finished
+     --email                          Send an email report to the current user once this joblist has finished
+     --report                         Create an html report for this joblist once the joblist has finished
      """.alignLeft.trim
 
     val options = parseArgs(args, doc)
@@ -258,7 +258,10 @@ object JobListCLI extends App {
 
     // reporting
     if (options.get("email").get.toBoolean) {
-      ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"status: ${jl.statusReport}")
+      ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"""
+      joblist: ${jl.toString}
+      status: ${jl.statusReport}"
+      """.alignLeft.trim)
       //todo include html report into email
     }
 
