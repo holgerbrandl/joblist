@@ -1,7 +1,5 @@
 import java.io.{BufferedWriter, FileWriter, PrintWriter}
 import java.nio.file.Files
-import java.text.SimpleDateFormat
-import java.util.Date
 
 import better.files.File
 import com.thoughtworks.xstream.XStream
@@ -13,6 +11,7 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 import scalautils.{Bash, IOUtils}
 
 /**
@@ -63,7 +62,9 @@ package object joblist {
       nameElements += directory.parent.name
     }
 
-    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
+    //    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
+    //    val timestamp = System.nanoTime().toString
+    val timestamp = new Random().nextInt().toString
     nameElements +=(Math.abs(cmd.hashCode).toString, timestamp)
 
     nameElements.mkString("__")
