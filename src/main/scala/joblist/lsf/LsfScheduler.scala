@@ -8,9 +8,9 @@ import org.joda.time.format.DateTimeFormat
 import scalautils.Bash
 import scalautils.Bash.BashResult
 
+
 /**
   * A scala reimplemenation of  https://raw.githubusercontent.com/holgerbrandl/datautils/master/bash/lsf_utils.sh
-  *
   *
   * @author Holger Brandl
   */
@@ -18,7 +18,7 @@ class LsfScheduler extends JobScheduler {
 
 
   override def readIdsFromStdin(): List[Int] = {
-    io.Source.stdin.getLines().take(1).
+    io.Source.stdin.getLines().
       filter(_.startsWith("Job <")).
       map(_.split(" ")(1).replaceAll("[<>]", "").toInt).
       toList
@@ -26,7 +26,6 @@ class LsfScheduler extends JobScheduler {
 
 
   /** Submits a task to the LSF. */
-  // http://stackoverflow.com/questions/4652095/why-does-the-scala-compiler-disallow-overloaded-methods-with-default-arguments
   override def submit(jc: JobConfiguration): Int = {
 
     val numCores = jc.numThreads
@@ -41,9 +40,10 @@ class LsfScheduler extends JobScheduler {
     val wallTime = if (!jc.wallTime.isEmpty) s"-W ${jc.wallTime}" else ""
     val queue = if (!jc.queue.isEmpty) s"-q ${jc.queue}" else ""
 
+    val otherSubmitArgs = Option(jc.otherQueueArgs).getOrElse("")
+
     // compile all args into cluster configuration
-    val lsfArgs =
-      s"""$queue $wallTime $threadArg ${Option(jc.otherQueueArgs).getOrElse("")}""".trim
+    val submitArgs = s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
 
     // TBD Could be avoided if we would call bsub directly (because ProcessIO
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
@@ -56,27 +56,26 @@ class LsfScheduler extends JobScheduler {
     jobLogs.createParent
 
     // submit the job to the lsf
-    var bsubCmd =
+    var submitCmd =
       s"""
-    bsub  -J $jobName $lsfArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
+    bsub   $submitArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
     """.trim
 
     // optionally prefix with working directory
     if (File(".") != wd) {
-      bsubCmd = s"cd '${wd.fullPath}'\n" + bsubCmd
-
+      submitCmd = s"cd '${wd.fullPath}'\n" + submitCmd
     }
 
-    val bashResult: BashResult = Bash.eval(bsubCmd)
+    val bashResult: BashResult = Bash.eval(submitCmd)
     // run
-    val bsubStatus = bashResult.stdout
+    val submitStatus = bashResult.stdout
 
 
     // extract job id
-    val jobSubConfirmation = bsubStatus.filter(_.startsWith("Job <"))
-    require(jobSubConfirmation.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
+    val submitConfirmMsg = submitStatus.filter(_.startsWith("Job <"))
+    require(submitConfirmMsg.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
 
-    val jobId = jobSubConfirmation.head.split(" ")(1).drop(1).dropRight(1).toInt
+    val jobId = submitConfirmMsg.head.split(" ")(1).drop(1).dropRight(1).toInt
 
     // save user logs
     //    require(jobLogs.cmd.notExists) // really?
