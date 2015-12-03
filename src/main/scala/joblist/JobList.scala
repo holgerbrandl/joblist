@@ -280,7 +280,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
     assert(jobs.nonEmpty)
 
-    f" ${jobs.size}%4s jobs in total; ${jobs.size - failed.size}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
+    f" ${jobs.size}%4s jobs in total; ${jobs.count(_.isDone)}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
   }
 
 
