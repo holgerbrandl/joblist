@@ -101,7 +101,7 @@ object JobListCLI extends App {
     Usage: jl submit [options] ( --batch <cmds_file> | <command> )
 
     Options:
-     -j --jl <joblist_file>     Joblist name [default: .jobs]
+     -j --jl <joblist_file>               Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job
      -t --num_threads <threads>           Number of threads [default: 1]
      -q --queue <queue>                   Used queue [default: short]
