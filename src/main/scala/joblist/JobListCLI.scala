@@ -260,7 +260,7 @@ object JobListCLI extends App {
     if (options.get("email").get.toBoolean) {
       ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"""
       joblist: ${jl.toString}
-      status: ${jl.statusReport}"
+      status: ${jl.statusReport}
       """.alignLeft.trim)
       //todo include html report into email
     }

@@ -64,7 +64,7 @@ package object joblist {
 
     //    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
     //    val timestamp = System.nanoTime().toString
-    val timestamp = new Random().nextInt().toString
+    val timestamp = new Random().nextInt(Integer.MAX_VALUE).toString
     nameElements +=(Math.abs(cmd.hashCode).toString, timestamp)
 
     nameElements.mkString("__")
