@@ -123,7 +123,10 @@ ggplot(jobs, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pen
 # jobs <- read.delim("jobs.txt")
 
 #require_auto(knitr)
-jobs %>% mutate(pending_time_hours=pending_time_min/60) %>% select(job_id, exec_host, job_name, pending_time_hours, exec_time_hours) %>% datatable()
+jobs %>%
+    mutate(pending_time_hours=pending_time_min/60) %>%
+    select(job_id, status, exec_host, job_name, exec_time_hours) %>%
+    datatable()
 
 
 #######################################################################################################################
