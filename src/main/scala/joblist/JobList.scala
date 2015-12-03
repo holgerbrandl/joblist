@@ -134,7 +134,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // add delay because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
       Console.err.print("Initializing LSF monitoring...")
-      Thread.sleep(5000)
+      Thread.sleep(3000)
       Console.err.println("Done")
     }
 
@@ -187,7 +187,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     */
   def add(jobId: Int) = {
     file.appendLine(jobId + "")
-    updateStatsFile(Job(jobId))
+    //    updateStatsFile(Job(jobId))
 
     Console.err.println(s"${file.name}: Added job '${jobId}'")
   }

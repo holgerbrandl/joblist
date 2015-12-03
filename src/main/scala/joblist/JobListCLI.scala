@@ -7,6 +7,7 @@ import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
 import scalautils.StringUtils._
 import scalautils.{Bash, ShellUtils}
@@ -97,7 +98,7 @@ object JobListCLI extends App {
 
     val options = parseArgs(args,
       s"""
-    Usage: jl submit [options] <command>
+    Usage: jl submit [options] ( --batch <cmds_file> | <command> )
 
     Options:
      -j --jl <joblist_file>     Joblist name [default: .jobs]
@@ -115,16 +116,41 @@ object JobListCLI extends App {
 
     val jl = getJL(options, "jl")
 
-    val jc = JobConfiguration(
-      cmd = options.get("command").get.alignLeft,
-      name = options.getOrElse("name", ""),
+    val baseConfig = JobConfiguration(null,
       queue = options.get("queue").get,
       numThreads = options.get("num_threads").get.toInt,
       otherQueueArgs = options.getOrElse("other_queue_args", "")
     )
 
+    val jobConfigs = ListBuffer.empty[JobConfiguration]
+
+
+    if (options.get("batch").get.toBoolean) {
+      //      var jobNr=1
+      val batchFile = File(options.get("cmds_file").get)
+      require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
+
+      val baseName = options.getOrElse("name", "")
+
+      batchFile.allLines.map(batchCmd => {
+
+        jobConfigs += baseConfig.copy(
+          cmd = batchCmd,
+          name = baseName + "_" + Math.abs(batchCmd.hashCode())
+        )
+      })
+
+    } else {
+      jobConfigs += baseConfig.copy(
+        cmd = options.get("command").get.alignLeft,
+        name = options.getOrElse("name", "")
+      )
+    }
+
+
     // debug mode. Eval first submission in local shell and ignore subsequent ones until tag file is removed
     if (options.get("debug").get.toBoolean) {
+      val jc = jobConfigs.head
       val debugTag = jl.file.withExt(".debug")
 
       if (!debugTag.exists) {
@@ -140,7 +166,8 @@ object JobListCLI extends App {
     }
 
     // save for later in case we need to restore it
-    jl.run(jc)
+    jobConfigs.foreach(jl.run)
+    //    jl.run(jc)
 
     if (options.get("wait").get.toBoolean) {
       jl.waitUntilDone()
@@ -193,6 +220,7 @@ object JobListCLI extends App {
      --resubmit_threads <num_threads> Resubmit with more threads
      --resubmit_type <fail_type>      Defines which failed jobs are beeing resubmitted. Possible values are all,killed,failed [default: all]
      --email                          Send an email report to `` once this joblist has finished
+     --report                         Create an html report for this joblist once the list has finished
      """.alignLeft.trim
 
     val options = parseArgs(args, doc)
@@ -232,6 +260,10 @@ object JobListCLI extends App {
     if (options.get("email").get.toBoolean) {
       ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"status: ${jl.statusReport}")
       //todo include html report into email
+    }
+
+    if (options.get("report").get.toBoolean) {
+      val reportFile = jl.createHtmlReport()
     }
   }
 

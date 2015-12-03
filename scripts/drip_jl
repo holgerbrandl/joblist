@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+#https://github.com/flatland/drip## http://stackoverflow.com/questions/3811345/how-to-pass-all-arguments-passed-to-my-bash-script-to-a-function-of-mine
+#http://martiansoftware.com/nailgun/quickstart.html
+#http://stackoverflow.com/questions/1491325/how-to-speed-up-java-vm-jvm-startup-time
+
+~/bin/drip/drip -cp $(ls $(dirname $0)/../target/scala-2.11/joblist-assembly*jar) joblist.JobListCLI "$@"
