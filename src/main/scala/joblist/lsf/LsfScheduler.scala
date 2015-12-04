@@ -100,29 +100,27 @@ class LsfScheduler extends JobScheduler {
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
     // todo write more structured/parse data here (json,xml) to ease later use
 
-    val runLog = Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n")
-    require(runLog.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
+    val sb = new StringBuilder()
+    sb.append(Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n"))
 
-    logFile.write(runLog)
-
-    logFile.appendNewLine()
-    logFile.appendLine("-----")
-    logFile.appendNewLine()
-    logFile.append(Bash.eval(s"bjobs -l ${jobId}").stdout.mkString("\n"))
-  }
+    require(sb.toString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 
 
-  override def parseRunInfo(runinfoFile: File) = {
-    // todo use a lazy init approach to parse the
-    val logData = runinfoFile.allLines
+    sb.append("\n-----\n\n")
+    sb.append(Bash.eval(s"bjobs -l ${jobId}").stdout.mkString("\n"))
 
+    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
+    rawLogFile.clear().write(sb.toString())
+
+
+    val logData = sb.toString().split("\n")
 
     val runData = Seq(logData.take(2). //map(_.replace("\"", "")).
       map(_.split("[ ]+").map(_.trim)).
       toSeq: _*)
 
     //digest from start and end
-    val header = runData(0).toList
+    val header = runData.head.toList
     val values = runData(1)
 
 
@@ -140,29 +138,49 @@ class LsfScheduler extends JobScheduler {
       }
     }
 
+
+    val lsf2slurmStatus = Map(
+      "DONE" -> "COMPLETED",
+      "RUN" -> "RUNNING",
+      "PEND" -> "PENDING",
+      //      "EXIT" -> "CANCELED", // actually sacct seems to return a CANCELED+
+      "EXIT" -> "FAILED" // lsf reports canceld jobs as EXIT and details it out in bjobs -l (killed by term owner)
+      //      "EXIT" -> "TIMEOUT"
+    )
+
     val killCause = logData.drop(3).mkString("\n")
-    // extract additional info from the long data
-    val hitRunLimit = killCause.contains("TERM_RUNLIMIT: job killed") || killCause.contains("TERM_OWNER: job killed by owner")
+
+    val approxState = lsf2slurmStatus(slimValues(2))
+    val state = if (killCause.contains("TERM_RUNLIMIT: job killed")) {
+      JobState.KILLED
+    } else if (killCause.contains("TERM_OWNER: job killed by owner")) {
+      JobState.CANCELED
+    } else {
+      JobState.valueOf(approxState)
+    }
 
     // note if a user kills the jobs with bkill, log would rather state that:
     // Mon Nov 23 14:00:39: Completed <exit>; TERM_OWNER: job killed by owner.
 
 
     val runLog = RunInfo(
-      jobId = slimValues(0).toInt,
+      jobId = slimValues.head.toInt,
       user = slimValues(1),
-      status = slimValues(2),
+      state = state,
       queue = slimValues(3),
       execHost = slimValues(5),
       jobName = jobName,
       submitTime = parseDate(slimValues(6)),
       startTime = parseDate(slimValues(12)),
       finishTime = parseDate(slimValues(13)),
-      queueKilled = hitRunLimit
+      exitCode = if (state == JobState.COMPLETED) 0 else 1 // todo report actual exit code here
     )
 
-    toXml(runLog, File(runinfoFile.fullPath + ".xml"))
+    toXml(runLog, logFile)
+  }
 
-    runLog
+
+  override def getRunInfo(runinfoFile: File) = {
+    fromXml(runinfoFile).asInstanceOf[RunInfo]
   }
 }

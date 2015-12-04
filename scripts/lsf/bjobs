@@ -5,5 +5,5 @@ if [ $# -eq 0 ]; then echo "Usage: bjobs [fake args]* <job_id>"; exit -1; fi
 jobId=${@: -1}
 
 echo "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME  PROJ_NAME CPU_USED MEM SWAP PIDS START_TIME FINISH_TIME
-$jobId  brandl  DONE  short      falcon      n01         echo test; sleep 1 11/17-18:10:50 default    000:00:00.01 2648   33112   -  11/17-18:10:56 11/17-18:10:57"
+$jobId  brandl  DONE  short      falcon      n01         dummy_job 11/17-18:10:50 default    000:00:00.01 2648   33112   -  11/17-18:10:56 11/17-18:10:57"
 

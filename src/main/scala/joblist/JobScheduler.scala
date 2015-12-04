@@ -22,10 +22,10 @@ abstract class JobScheduler {
   def getQueued: List[QueueStatus]
 
 
-  def parseRunInfo(runinfoFile: File): RunInfo
+  def getRunInfo(runinfoFile: File): RunInfo
 
 
-  def updateRunInfo(id: Int, runinfoFile: File): Unit
+  def updateRunInfo(jobId: Int, logFile: File): Unit
 }
 
 case class QueueStatus(jobId: Int, status: String)

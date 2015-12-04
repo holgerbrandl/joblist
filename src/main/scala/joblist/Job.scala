@@ -6,28 +6,32 @@ package joblist
 case class Job(id: Int)(implicit val jl: JobList) {
 
 
-  val infoFile = jl.logsDir / s"$id.runinfo"
+  val infoFile = jl.logsDir / s"$id.runinfo.xml"
 
 
   def info = {
     try {
-      jl.scheduler.parseRunInfo(infoFile)
+      val _info = jl.scheduler.getRunInfo(infoFile)
+
+      require(_info.jobId == id, "Inconsistent run information")
+
+      _info
     } catch {
       case t: Throwable => throw new RuntimeException(s"could not readinfo for $id", t)
     }
   }
 
 
-  def wasKilled = info.queueKilled
+  def wasKilled = info.state == JobState.KILLED
 
 
-  def hasFailed = info.status == "EXIT"
+  def hasFailed = info.state == JobState.FAILED
 
 
-  def isDone = info.status == "DONE"
+  def isDone = info.state == JobState.COMPLETED
 
 
-  def isFinal: Boolean = infoFile.isRegularFile && List("EXIT", "DONE").contains(info.status)
+  def isFinal = infoFile.isRegularFile && JobState.finalStates.contains(info.state)
 
 
   // todo actually this could be a collection of jobs because we escalate the base configuration
@@ -55,3 +59,32 @@ case class Job(id: Int)(implicit val jl: JobList) {
     JobConfiguration.fromXML(id, jl.logsDir).name
   }
 }
+
+
+object JobState {
+
+
+  sealed trait JobState
+
+  case object RUNNING extends JobState
+
+  case object PENDING extends JobState
+
+  case object CANCELED extends JobState
+
+  case object FAILED extends JobState
+
+  case object KILLED extends JobState
+
+  case object COMPLETED extends JobState
+
+  case object UNKNOWN extends JobState
+
+  val allStates = Seq(RUNNING, PENDING, CANCELED, FAILED, COMPLETED)
+  val finalStates = List(CANCELED, FAILED, KILLED, COMPLETED)
+
+
+  def valueOf(status: String) = allStates.find(_.toString == status).getOrElse(UNKNOWN)
+
+}
+

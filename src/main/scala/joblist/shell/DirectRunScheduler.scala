@@ -15,7 +15,7 @@ class DirectRunScheduler extends JobScheduler {
   override def submit(jc: JobConfiguration): Int = ???
 
 
-  override def parseRunInfo(runinfoFile: File): RunInfo = ???
+  override def getRunInfo(runinfoFile: File): RunInfo = ???
 
 
   override def updateRunInfo(id: Int, runinfoFile: File): Unit = ???

@@ -3,6 +3,7 @@ package joblist.slurm
 import better.files.File
 import joblist._
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
 import scalautils.Bash.BashResult
@@ -114,31 +115,31 @@ class SlurmScheduler extends JobScheduler {
   }
 
 
-  override def updateRunInfo(id: Int, runinfoFile: File): Unit = {
-    // sacct -j <jobid> --format=JobID,JobName,MaxRSS,Elapsed
+  override def updateRunInfo(jobId: Int, logFile: File): Unit = {
+    // more details sacct -j <jobid> --format=JobID,JobName,MaxRSS,Elapsed
+    // sacct -j 1641430 --format=JobID,JobName,MaxRSS,Elapsed
+    // scontrol show jobid -dd <jobid>
+    // todo write more structured/parse data here (json,xml) to ease later use
+
+    val logData = Bash.eval(s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit ").stdout.toSeq
+    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
+    rawLogFile.write(logData.mkString("\n"))
 
 
-  }
+    //    val logData ="""
+    //JobID    JobName    Elapsed                 End              Submit               Start      State ExitCode  Timelimit
+    //------------ ---------- ---------- ------------------- ------------------- ------------------- ---------- -------- ----------
+    //1650630        test_job   00:00:36 2015-12-04T11:39:27 2015-12-04T11:38:31 2015-12-04T11:38:51  COMPLETED      0:0   00:01:00
+    //""".trim.split("\n")
+
+    require(logData.mkString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 
 
-  override def parseRunInfo(runinfoFile: File) = {
-    // todo use a lazy init approach to parse the
-    val logData = runinfoFile.allLines
+    // second line indicates the column borders
+    //    val data = logData(1).indexOf(" ")
 
-
-    val runData = Seq(logData.take(2). //map(_.replace("\"", "")).
-      map(_.split("[ ]+").map(_.trim)).
-      toSeq: _*)
-
-    //digest from start and end
-    val header = runData(0).toList
-    val values = runData(1)
-
-
-    val slimHeader = List(header.take(6), header.takeRight(8)).flatten
-    val slimValues = List(values.take(6), values.takeRight(8)).flatten
-
-    val jobName = values.drop(6).dropRight(8).mkString(" ") ///todo continue here
+    val header = logData.head.split(" +").map(_.trim)
+    val vals = logData(2).split(" +").map(_.trim)
 
 
     def parseDate(stringifiedDate: String): DateTime = {
@@ -149,29 +150,45 @@ class SlurmScheduler extends JobScheduler {
       }
     }
 
-    val killCause = logData.drop(3).mkString("\n")
-    // extract additional info from the long data
-    val hitRunLimit = killCause.contains("TERM_RUNLIMIT: job killed") || killCause.contains("TERM_OWNER: job killed by owner")
+    def extractValue(prefix: String, logData: Seq[String]) = {
+      val myPattern = (prefix + "=([A-z]*) ").r.unanchored
+      logData.flatMap(Option(_) collect { case myPattern(group) => group }).head
+    }
 
-    // note if a user kills the jobs with bkill, log would rather state that:
-    // Mon Nov 23 14:00:39: Completed <exit>; TERM_OWNER: job killed by owner.
+    // http://www.tutorialspoint.com/scala/scala_regular_expressions.htm
 
+    val slurmState = vals(header.indexOf("State"))
+    var killReason = null
 
-    val runLog = RunInfo(
-      jobId = slimValues(0).toInt,
-      user = slimValues(1),
-      status = slimValues(2),
-      queue = slimValues(3),
-      execHost = slimValues(5),
-      jobName = jobName,
-      submitTime = parseDate(slimValues(6)),
-      startTime = parseDate(slimValues(12)),
-      finishTime = parseDate(slimValues(13)),
-      queueKilled = hitRunLimit
+    // tbd add other kill reasons here
+    val slurmStateRemapping = Map(
+      "TIMEOUT" -> "KILLED"
     )
 
-    toXml(runLog, File(runinfoFile.fullPath + ".xml"))
+    val state = JobState.valueOf(slurmStateRemapping(slurmState))
 
-    runLog
+    val runLog = RunInfo(
+      jobId = vals(header.indexOf("JobID")).toInt,
+      user = vals(header.indexOf("JobName")),
+      state = state,
+      queue = vals(header.indexOf("ExitCode")),
+      execHost = vals(header.indexOf("ExitCode")),
+      jobName = vals(header.indexOf("ExitCode")),
+      submitTime = parseDate(vals(header.indexOf("Submit"))),
+      startTime = parseDate(vals(header.indexOf("Start"))),
+      finishTime = parseDate(vals(header.indexOf("End"))),
+      exitCode = vals(header.indexOf("ExitCode")).split("[:]")(0).toInt,
+      killCause = if (state.toString != slurmState) slurmState else null
+    )
+
+    toXml(runLog, logFile)
   }
+
+
+  override def getRunInfo(runInfoFile: File) = fromXml(runInfoFile).asInstanceOf[RunInfo]
+}
+
+// todo convert to unit test
+object ParseTest extends App {
+  new SlurmScheduler().getRunInfo(File("test_data/schedulers/slurm_scontrol_show_example_incomplete.txt"))
 }

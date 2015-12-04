@@ -102,7 +102,7 @@ object JobListCLI extends App {
 
     Options:
      -j --jl <joblist_file>               Joblist name [default: .jobs]
-     -n --name <job_name>                 Name of the job
+     -n --name <job_name>                 Name of the job. Must be unique within this joblist
      -t --num_threads <threads>           Number of threads [default: 1]
      -q --queue <queue>                   Used queue [default: short]
      -O --other_queue_args <queue_args>   Additional queue parameters

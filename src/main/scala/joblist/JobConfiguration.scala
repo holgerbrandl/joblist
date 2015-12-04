@@ -1,14 +1,9 @@
 package joblist
 
-import java.net.URI
-import java.util.Date
-
 import better.files.File
-import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
-import org.joda.time.DateTime
 
 /**
-  * Document me!
+  * Defines a job and how it should be run
   *
   * @author Holger Brandl
   */
@@ -32,7 +27,7 @@ case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "
 }
 
 
-// utility method for JC
+// companion object method for JC
 object JobConfiguration {
 
   def jcXML(jobId: Int, inDir: File = File(".")): File = {
@@ -45,32 +40,3 @@ object JobConfiguration {
     fromXml(xmlFile).asInstanceOf[JobConfiguration]
   }
 }
-
-
-// see http://x-stream.github.io/converter-tutorial.html
-class BetterFilerConverter extends AbstractSingleValueConverter {
-
-  def canConvert(o: Class[_]): Boolean = {
-    o == classOf[File]
-  }
-
-
-  def fromString(str: String): AnyRef = {
-    File(new URI(str).toURL.getFile)
-  }
-}
-
-
-// see http://x-stream.github.io/converter-tutorial.html
-class JodaConverter extends AbstractSingleValueConverter {
-
-  def canConvert(o: Class[_]): Boolean = {
-    o == classOf[DateTime]
-  }
-
-
-  def fromString(str: String): AnyRef = {
-    new DateTime(new Date(str))
-  }
-}
-

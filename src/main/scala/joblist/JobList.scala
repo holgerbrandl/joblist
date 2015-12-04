@@ -67,7 +67,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   //
-  // Monitoring and stats
+  // Monitoring and Stats
   //
 
 
@@ -125,7 +125,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  def waitUntilDone(msg: String = "", sleepInterval: Long = 10000): Any = {
+  def waitUntilDone(sleepInterval: Long = 10000): Any = {
     // stop if all jobs are final already
     if (jobs.forall(_.isFinal)) {
       return

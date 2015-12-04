@@ -7,7 +7,7 @@ import better.files.File
   *
   * @author Holger Brandl
   */
-class TestScheduler extends JobScheduler {
+class MockScheduler extends JobScheduler {
 
   var configs: List[JobConfiguration] = List()
   var queue: List[QueueStatus] = List()
@@ -16,7 +16,7 @@ class TestScheduler extends JobScheduler {
   override def readIdsFromStdin(): List[Int] = ???
 
 
-  override def parseRunInfo(runinfoFile: File): RunInfo = ???
+  override def getRunInfo(runinfoFile: File): RunInfo = ???
 
 
   override def getQueued: List[QueueStatus] = queue
