@@ -7,6 +7,7 @@ import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
 import scalautils.Bash.BashResult
+import scalautils.StringUtils.ImplStringUtils
 
 
 /**
@@ -67,8 +68,11 @@ class SlurmScheduler extends JobScheduler {
     // submit the job to the lsf
     var submitCmd =
       s"""
-    sbatch  -J $jobName --ntasks=1 $submitArgs -e ${jobLogs.err.fullPath} -o ${jobLogs.out.fullPath} ${jobLogs.cmd}'
-    """.trim
+    echo '#!/bin/bash
+    $cmd' | sbatch  -J $jobName --ntasks=1 $submitArgs -e ${jobLogs.err.fullPath} -o ${jobLogs.out.fullPath}
+    """.alignLeft.trim
+
+    Console.err.println("submission cmd is:\n" + submitCmd)
 
     // optionally prefix with working directory
     if (File(".") != wd) {
@@ -95,17 +99,16 @@ class SlurmScheduler extends JobScheduler {
 
 
   override def getQueued: List[QueueStatus] = {
-    // todo debug with ammo
+    //    val queueStatus ="""             JOBID PARTITION     NAME     USER    STATE       TIME TIME_LIMI  NODES NODELIST(REASON)
+    //           1664292 haswell64 test_job   brandl  PENDING       0:00   8:00:00      1 (None)
+    //""".split("\n")
+
     val queueStatus = Bash.eval("squeue -lu $(whoami)").stdout
 
-    //val queueStatus = """
-    //             JOBID PARTITION     NAME     USER    STATE       TIME TIME_LIMI  NODES NODELIST(REASON)
-    //           1641428 haswell64 test_job   brandl  RUNNING       0:02   8:00:00      1 taurusi6609
-    //"""
-
-    // States of interest seem RUNNING and PENDING
-
-    queueStatus. //drop(1).
+    queueStatus.
+      // we drop the first 2 lines (header and date) and use span to also remove custom header elements
+      span(!_.trim.startsWith("JOBID"))._2.
+      drop(1).
       filter(!_.isEmpty).
       map(slLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces

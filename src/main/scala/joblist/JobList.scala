@@ -112,7 +112,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     //      println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
     // workaround (fix?) for https://github.com/holgerbrandl/joblist/issues/5
     if (changedQS.nonEmpty) {
-      println(file.name + ":" + statusReport)
+      println(file.name + ":" + status)
       //todo  print estimated runtime here (see https://github.com/holgerbrandl/joblist/issues/9)
       // maybe check stdin and reprint report on user input???
     }
@@ -147,7 +147,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     while (isRunning) Thread.sleep(sleepInterval)
 
     // print a short report
-    Console.err.println(file.name + ":" + statusReport)
+    Console.err.println(file.name + ":" + status)
   }
 
 
@@ -265,11 +265,12 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //  Reporting
   //
 
-  def statusReport: String = {
+  def status: String = {
     if (!file.isRegularFile) {
       return s"${file.name} has not been initialized by adding a job to it"
     }
 
+    updateNonFinalStats()
     // todo maybe we should refresh stats since some jobs might still be in the queue and it's not clear if jl is running
 
     val queuedJobs = queueStatus

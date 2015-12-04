@@ -26,14 +26,15 @@ import scalautils.{Bash, IOUtils}
 package object joblist {
 
   def guessQueue(): JobScheduler = {
-    if (Bash.eval("which bsub").stdout.headOption.nonEmpty) {
+    if (Bash.eval("which bsub").sout.nonEmpty) {
       return new LsfScheduler()
     }
 
-    if (Bash.eval("which squeue").stdout.headOption.nonEmpty) {
+    if (Bash.eval("which squeue").sout.nonEmpty) {
       return new SlurmScheduler()
     }
 
+    Console.err.println("Could not detect queuing system. Using multi-threaded local dummy scheduler...")
     new ShellScheduler
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }

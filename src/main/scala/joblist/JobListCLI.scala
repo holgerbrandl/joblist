@@ -260,7 +260,7 @@ object JobListCLI extends App {
     if (options.get("email").get.toBoolean) {
       ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"""
       joblist: ${jl.toString}
-      status: ${jl.statusReport}
+      status: ${jl.status}
       """.alignLeft.trim)
       //todo include html report into email
     }
@@ -321,7 +321,7 @@ object JobListCLI extends App {
     val jl = getJL(options)
 
     println(jl.toString)
-    println(jl.statusReport)
+    println(jl.status)
 
 
     // create an html report

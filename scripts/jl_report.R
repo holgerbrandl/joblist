@@ -25,7 +25,7 @@ if(!exists("reportName")){
 # setwd("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
 
 reportNiceName <- reportName %>% basename() %>% str_replace_all("^[.]", "")
-#' # Job Report:  `r reportNiceName`
+#' # JobList Report:  `r reportNiceName`
 
 #' Working Directory: `r normalizePath(reportName)`
 
@@ -106,7 +106,7 @@ if(nrow(jobs)==0){
 if(nrow(jobs)<50){
     ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), pending_time_min/60)) + geom_bar(stat="identity") + ggtitle("pending times") + coord_flip() + xlab("job id")
 }else{
-    ggplot(jobs, aes(as.numeric(job_id), pending_time_min/60)) + geom_area() + ggtitle("pending times")+xlab("job_nr") + ylab("pending time [h]")
+    ggplot(jobs, aes(as.numeric(job_id), pending_time_min/60)) + geom_area() + ggtitle("pending times")+xlabre("job_nr") + ylab("pending time [h]")
 }
 #ggsave2(p=reportName)
 
@@ -142,3 +142,5 @@ resubmissions <- allJobs %>%
 resubmissions %>% datatable()
 
 ## todo link log files and configuration xmls into tables where possible
+
+#' Made with [jl](https://github.com/holgerbrandl/joblist)

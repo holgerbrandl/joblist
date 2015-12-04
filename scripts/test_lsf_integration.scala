@@ -4,7 +4,8 @@ import joblist._
 
 val jl = JobList()
 
-jl.run(JobConfiguration("echo foo"))
+jl.run(JobConfiguration("echo foo", queue = "haswell"))
+jl.status
 jl.run(JobConfiguration("echo bar"))
 
 // block execution until are jobs are done

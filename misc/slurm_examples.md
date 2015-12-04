@@ -1,4 +1,24 @@
+
+## Job Cmd Piping
+
+```
+echo '#!/bin/bash
+touch test.txt
+' | sbatch -p haswell -J test_job --time=00:20
+```
+
+```
+echo '#!/bin/bash
+sleep 240
+' | sbatch -p haswell -J test_job
+
+squeue -lu $(whoami)
+
+```
+
 ## Job Monitoring
+
+
 
 ```
 jobFile=test_job.sh

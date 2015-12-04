@@ -87,7 +87,13 @@ class LsfScheduler extends JobScheduler {
 
 
   override def getQueued: List[QueueStatus] = {
-    Bash.eval("bjobs").stdout.drop(1).
+    val queueStatus = Bash.eval("bjobs").stdout
+
+    // add some debug examples here for repl dev
+
+    queueStatus.
+      // we drop 1 because it's the header
+      drop(1).
       filter(!_.isEmpty).
       map(bjLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
