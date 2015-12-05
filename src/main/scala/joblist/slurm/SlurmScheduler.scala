@@ -186,9 +186,6 @@ class SlurmScheduler extends JobScheduler {
 
     toXml(runLog, logFile)
   }
-
-
-  override def getRunInfo(runInfoFile: File) = fromXml(runInfoFile).asInstanceOf[RunInfo]
 }
 
 // todo convert to unit test

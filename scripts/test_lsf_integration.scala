@@ -3,10 +3,12 @@ import joblist._
 
 
 val jl = JobList()
+jl.reset()
 
 jl.run(JobConfiguration("echo foo", queue = "haswell"))
 jl.status
 jl.run(JobConfiguration("echo bar"))
+jl.status
 
 // block execution until are jobs are done
 jl.waitUntilDone()

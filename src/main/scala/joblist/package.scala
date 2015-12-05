@@ -8,7 +8,7 @@ import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
 import com.thoughtworks.xstream.io.xml.StaxDriver
 import joblist.JobState.JobState
 import joblist.lsf.LsfScheduler
-import joblist.shell.ShellScheduler
+import joblist.shell.LocalScheduler
 import joblist.slurm.SlurmScheduler
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -35,7 +35,7 @@ package object joblist {
     }
 
     Console.err.println("Could not detect queuing system. Using multi-threaded local dummy scheduler...")
-    new ShellScheduler
+    new LocalScheduler
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }
 

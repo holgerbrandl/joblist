@@ -1,7 +1,7 @@
 package joblist.shell
 
 import better.files.File
-import joblist.{JobConfiguration, JobScheduler, QueueStatus, RunInfo}
+import joblist.{JobConfiguration, JobScheduler, QueueStatus}
 
 
 /**
@@ -13,9 +13,6 @@ class DirectRunScheduler extends JobScheduler {
 
   /** Submits a job and returns its jobID. */
   override def submit(jc: JobConfiguration): Int = ???
-
-
-  override def getRunInfo(runinfoFile: File): RunInfo = ???
 
 
   override def updateRunInfo(id: Int, runinfoFile: File): Unit = ???

@@ -12,6 +12,7 @@ abstract class JobScheduler {
   def readIdsFromStdin(): List[Int]
 
 
+  // Convenience method //tdb needed?
   def submit(cmd: String, name: String): Int = submit(JobConfiguration(cmd, name))
 
 
@@ -19,11 +20,13 @@ abstract class JobScheduler {
   def submit(jc: JobConfiguration): Int
 
 
+  /** Returns currently queued jobs of the users. */
   def getQueued: List[QueueStatus]
 
 
-  def getRunInfo(runinfoFile: File): RunInfo
-
+  def getRunInfo(runinfoFile: File) = {
+    fromXml(runinfoFile).asInstanceOf[RunInfo]
+  }
 
   def updateRunInfo(jobId: Int, logFile: File): Unit
 }

@@ -151,8 +151,9 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  /** Update runinfo for all jobs for which are not queued anylonger buthave not yet reached a final state */
-
+  /** Update runinfo for all jobs for which are not queued anymore, but have not yet reached a final state.
+    * This could happen for jobs which died too quickly  before we could gather stats about them
+    */
   private def updateNonFinalStats(): Unit = {
     val queueIds = queueStatus.map(_.jobId)
     val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))

@@ -185,8 +185,4 @@ class LsfScheduler extends JobScheduler {
     toXml(runLog, logFile)
   }
 
-
-  override def getRunInfo(runinfoFile: File) = {
-    fromXml(runinfoFile).asInstanceOf[RunInfo]
-  }
 }

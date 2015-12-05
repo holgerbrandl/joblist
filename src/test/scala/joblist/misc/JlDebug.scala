@@ -13,8 +13,15 @@ object JlDebug extends App {
   import joblist._
 
   //  implicit val jl = new JobList("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
-  implicit val jl = new JobList("/lustre/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination/.blastn")
-  jl.jobs
+  implicit val jl = new JobList()
+  jl.reset()
+  jl.status
+  jl.run(JobConfiguration("sleep 10", "test_job"))
+
+  jl.waitUntilDone()
+
+  jl.status
+
 
 
   //  jl.waitUntilDone()

@@ -16,9 +16,6 @@ class MockScheduler extends JobScheduler {
   override def readIdsFromStdin(): List[Int] = ???
 
 
-  override def getRunInfo(runinfoFile: File): RunInfo = ???
-
-
   override def getQueued: List[QueueStatus] = queue
 
 
