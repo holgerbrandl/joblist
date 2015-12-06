@@ -167,7 +167,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //
 
 
-  def run(jc: JobConfiguration) = {
+  /** Simple convenience wrapper around .run to submit multiple jobs. */
+  def run(jobConfigs: Seq[JobConfiguration]): Seq[Job] = {
+    jobConfigs.map(run)
+  }
+
+
+  def run(jc: JobConfiguration): Job = {
     val namedJC = jc.withName() // // fix auto-build a job configuration names if empty
 
     // create hidden log directory and log cmd as well as queuing args
@@ -262,15 +268,21 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     resubGraphFile.delete(true)
     // todo glob and delete  all instance related file file.name* --> rm
 
+    file.parent.glob(s"${file.name}*").foreach(_.delete())
+
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }
 
 
-  // todo btop and bkill are lsf only and should be refactored to become scheduler API
-  def btop() = jobs.map(job => s"btop ${job.id}").foreach(Bash.eval(_))
+  def btop() = {
+    require(scheduler.isInstanceOf[LsfScheduler], "btop is currently just supported for lsf")
+    jobs.map(job => s"btop ${job.id}").foreach(Bash.eval(_))
+  }
 
 
-  def kill() = jobs.map(job => s"bkill ${job.id}").foreach(Bash.eval(_))
+  def kill() = jobs.map(job => {
+    scheduler.cancel(jobs.map(_.id))
+  }
 
 
   //

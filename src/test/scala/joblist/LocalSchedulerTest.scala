@@ -19,7 +19,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "submit some multi-threaded jobs " +
-    "of which some are expectedt to fail, " +
+    "of which some are expected to fail, " +
     "adjust job settings and resubmit them, " +
     "and wait for completion" in {
 

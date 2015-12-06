@@ -1,6 +1,6 @@
 package joblist.local
 
-import java.util.concurrent.{Executor, Executors, TimeUnit, _}
+import java.util.concurrent.{Executors, TimeUnit, _}
 
 import better.files.File
 import joblist._
@@ -32,11 +32,9 @@ class LocalScheduler extends JobScheduler {
   private val dummies = mutable.HashMap.empty[Int, Seq[ThreadPlaceHolder]]
 
 
-  //  val executorService = new ThreadPoolExecutor(numCores, numCores, 0L, TimeUnit.MILLISECONDS, queue)
+  // http://stackoverflow.com/questions/16161941/exectuorservice-vs-threadpoolexecutor-which-is-using-linkedblockingqueue
   //  val executorService = Executors.newFixedThreadPool(numCores)
-
-
-  private val executor: Executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS, taskQueue, Executors.defaultThreadFactory) {
+  private val executor: ExecutorService = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS, taskQueue, Executors.defaultThreadFactory) {
 
     //    protected override def newTaskFor[T](runnable: Runnable, value: T): FutureTask[String] = {
     //
@@ -116,7 +114,6 @@ class LocalScheduler extends JobScheduler {
 
 
     def hasFailed: Boolean = evalStatus.exitCode != 0
-
   }
 
 
@@ -149,6 +146,13 @@ class LocalScheduler extends JobScheduler {
       }
       //      Console.err.println("placeholder is done "+this)
     }
+  }
+
+
+  /** Cancel a list of jobs */
+  override def cancel(jobIds: Seq[Int]): Unit = {
+    // http://stackoverflow.com/questions/1562079/how-to-stop-the-execution-of-executor-threadpool-in-java
+    executor.shutdownNow()
   }
 }
 

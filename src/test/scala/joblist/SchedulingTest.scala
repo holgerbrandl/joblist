@@ -12,7 +12,7 @@ import scalautils.StringUtils.ImplStringUtils
   * @author Holger Brandl
   */
 // note change to object to disable test
-class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
+class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   //  import Matchers._; import joblist._
 
@@ -61,19 +61,21 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
       JobConfiguration(s"""sleep 2; echo "this is task $i" > task_$i.txt """, wd = wd)
     }
 
-    tasks.foreach(jl.run)
+    jl.run(tasks)
 
     // http://www.scalatest.org/user_guide/matchers_quick_reference
 
     // make sure that outputs have been created
     (wd / ".logs").toJava should exist
 
+    jl.waitUntilDone()
+
     // relative globbing broken in b-f --> fixed for new version
     //    (wd / ".logs").glob("*").toList.head.lines.next should include ("medium")
     //    (wd / ".logs").list.filter(_.name.contains("args")).next().lines.next should include("medium")
 
     //    val wd = File("/Volumes/home/brandl/unit_tests")
-    (wd / ".test_tasks").toJava should exist
+    (wd / ".run_and_wait").toJava should exist
 
 
     (wd / "task_1.txt").toJava should exist
@@ -98,7 +100,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
       """.alignLeft
     }
 
-    cmds.foreach(cmd => jl.run(JobConfiguration(cmd, wallTime = "00:01")))
+    jl.run(cmds.map(JobConfiguration(_, wallTime = "00:01", wd = wd)))
 
     jl.waitUntilDone()
 
@@ -108,11 +110,9 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
     // resubmit killed jobs with more walltime
     jl.resubmitFailed(new DiffWalltime("00:05"))
-
     jl.scheduler.getQueued should have size (2)
 
     jl.waitUntilDone()
-
     jl.killed should be('empty)
   }
 
@@ -144,18 +144,6 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     jl.failed should have size (1)
   }
 
-}
-
-class ReportingTest extends FlatSpec with Matchers {
-
-  ignore should "take run log data and do some reporting" in {
-    //    import Matchers._; import joblist._
-    val jl = new JobList("test_data/reporting/.blastn")
-    jl.jobs
-
-    jl.exportStatistics()
-  }
-
   it should "do a correct xor for QueueStatus" in {
     val someQS = List(QueueStatus(1, "RUN"), QueueStatus(2, "PEND"), QueueStatus(3, "RUN"))
     // one still running(1), one new(4), one change status and onne done(3)
@@ -169,7 +157,6 @@ class ReportingTest extends FlatSpec with Matchers {
     xor should contain(4)
   }
 }
-
 
 
 

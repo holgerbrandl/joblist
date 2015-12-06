@@ -176,4 +176,8 @@ class SlurmScheduler extends JobScheduler {
 
     toXml(runLog, logFile)
   }
+
+
+  /** Cancel a list of jobs */
+  override def cancel(jobIds: Seq[Int]): Unit = jobIds.foreach(id => Bash.eval(s"bkill ${id}"))
 }

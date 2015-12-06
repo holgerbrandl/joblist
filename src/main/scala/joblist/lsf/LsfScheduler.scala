@@ -174,4 +174,7 @@ class LsfScheduler extends JobScheduler {
 
     toXml(runLog, logFile)
   }
+
+
+  override def cancel(jobIds: Seq[Int]) = jobIds.foreach(id => Bash.eval(s"bkill ${id}"))
 }
