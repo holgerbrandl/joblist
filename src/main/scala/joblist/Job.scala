@@ -11,7 +11,7 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
   def info = {
     try {
-      val _info = jl.scheduler.getRunInfo(infoFile)
+      val _info = fromXml(infoFile).asInstanceOf[RunInfo]
 
       require(_info.jobId == id, "Inconsistent run information")
 

@@ -13,17 +13,14 @@
 import java.io.File
 
 import joblist._
-import joblist.misc.Tasks
-import joblist.misc.Tasks.BashSnippet
 
 
 new File(".").getAbsoluteFile
 
-val jobId = guessQueue().submit("""
+val jobId = guessQueue().submit(JobConfiguration("""
 echo test
 echo test >&2
 touch test_lsf.txt
-""", "my_job")
+""", "my_job"))
 
 JobList().waitUntilDone()
-val snippter = new BashSnippet("touch test_lsf.txt")

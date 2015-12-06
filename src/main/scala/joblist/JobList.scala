@@ -275,7 +275,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // todo maybe we should refresh stats since some jobs might still be in the queue and it's not clear if jl is running
 
     val queuedJobs = queueStatus
-    val numRunning = queueStatus.count(_.status == "RUN")
+    val numRunning = queueStatus.count(_.status == JobState.RUNNING.toString)
     val pending = queuedJobs.size - numRunning
 
     // also do some internal consistenct checks

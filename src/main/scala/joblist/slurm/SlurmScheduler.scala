@@ -187,8 +187,3 @@ class SlurmScheduler extends JobScheduler {
     toXml(runLog, logFile)
   }
 }
-
-// todo convert to unit test
-object SlurmParseTest extends App {
-  new SlurmScheduler().getRunInfo(File("test_data/schedulers/slurm_scontrol_show_example_incomplete.txt"))
-}
