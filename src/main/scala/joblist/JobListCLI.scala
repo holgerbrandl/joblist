@@ -3,6 +3,7 @@ package joblist
 import java.util.Objects
 
 import better.files.File
+import joblist.local.LocalScheduler
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
@@ -169,7 +170,8 @@ object JobListCLI extends App {
     jobConfigs.foreach(jl.run)
     //    jl.run(jc)
 
-    if (options.get("wait").get.toBoolean) {
+    // we either block here if the user asked for it. or if a local scheduler is being used
+    if (options.get("wait").get.toBoolean || jl.scheduler.isInstanceOf[LocalScheduler]) {
       jl.waitUntilDone()
     }
   }

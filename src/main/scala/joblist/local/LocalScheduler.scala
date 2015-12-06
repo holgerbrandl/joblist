@@ -1,4 +1,4 @@
-package joblist.shell
+package joblist.local
 
 import java.util.concurrent.{Executor, Executors, TimeUnit, _}
 
@@ -71,7 +71,7 @@ class LocalScheduler extends JobScheduler {
 
         val finalState = if (jobRunnable.hasFailed) JobState.FAILED else JobState.COMPLETED
 
-        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING))
+        jobstats += (jobId -> jobstats(jobId).copy(state = finalState))
 
         // stop dummy threads
         dummies(jobId).foreach(_.asInstanceOf[ThreadPlaceHolder].shutdown = true)
@@ -109,6 +109,7 @@ class LocalScheduler extends JobScheduler {
 
     override def run(): Unit = {
       evalStatus = Bash.eval(jc.cmd)
+      //      println(s"status is $evalStatus")
     }
 
 
@@ -135,6 +136,7 @@ class LocalScheduler extends JobScheduler {
 
   class ThreadPlaceHolder extends Runnable {
 
+    // http://stackoverflow.com/questions/10630737/how-to-stop-a-thread-created-by-implementing-runnable-interface
     var shutdown = false
 
 

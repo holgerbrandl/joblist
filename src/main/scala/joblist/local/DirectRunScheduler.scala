@@ -1,4 +1,4 @@
-package joblist.shell
+package joblist.local
 
 import better.files.File
 import joblist.{JobConfiguration, JobScheduler, QueueStatus}

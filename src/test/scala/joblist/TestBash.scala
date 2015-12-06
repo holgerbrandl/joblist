@@ -4,7 +4,6 @@ package joblist
 import java.io.{File => JFile}
 
 import better.files.File
-import joblist.misc.Tasks.BashSnippet
 
 import scalautils.Bash._
 import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
@@ -53,11 +52,6 @@ object BashPlayground {
   R("1+1")
 
   File("/home/brandl/.bash_profile").head
-
-  BashSnippet("touch").name
-  BashSnippet("touch").withAutoName
-  BashSnippet("touch").inDir(File("test")).cmd
-
 
   //import scala.sys.process._
   //val cmd = "uname -a" // Your command

@@ -7,8 +7,8 @@ import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
 import com.thoughtworks.xstream.io.xml.StaxDriver
 import joblist.JobState.JobState
+import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
-import joblist.shell.LocalScheduler
 import joblist.slurm.SlurmScheduler
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

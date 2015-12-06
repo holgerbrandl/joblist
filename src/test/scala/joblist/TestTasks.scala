@@ -1,7 +1,6 @@
 package joblist
 
 import better.files._
-import joblist.misc.Tasks.{BashSnippet, LsfExecutor}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.CollectionUtils.StrictSetOps
@@ -56,18 +55,13 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "submit some jobs and wait until they are done " in {
+    val jl = new JobList(".run_and_wait")
 
     val tasks = for (i <- 1 to 3) yield {
-      BashSnippet(s"""sleep 2; echo "this is task $i" > task_$i.txt """).inDir(wd).withAutoName
+      JobConfiguration(s"""sleep 2; echo "this is task $i" > task_$i.txt """, wd = wd)
     }
 
-    val runner = new LsfExecutor(joblist = JobList(wd / ".test_tasks"), queue = "medium", wd = wd)
-    runner.joblist.reset()
-
-    runner.eval(tasks)
-    // tasks.foreach(_.eval(runner))
-    // tasks.head.eval(runner)
-    //    runner.joblist.waitUntilDone()
+    tasks.foreach(jl.run)
 
     // http://www.scalatest.org/user_guide/matchers_quick_reference
 
@@ -88,7 +82,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
     (wd / "task_3.txt").lines.next shouldBe "this is task 3"
 
     // make sure that we can still access the job configurations
-    val restoredJC = runner.joblist.jobs.map(_.config).head
+    val restoredJC = jl.jobs.map(_.config).head
     restoredJC.queue should equal("medium")
   }
 
