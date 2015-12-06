@@ -35,7 +35,7 @@ package object joblist {
     }
 
     Console.err.println("Could not detect queuing system. Using multi-threaded local dummy scheduler...")
-    new LocalScheduler
+    new LocalScheduler()
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }
 

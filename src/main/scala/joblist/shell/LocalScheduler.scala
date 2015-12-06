@@ -20,14 +20,16 @@ import scalautils.Bash.BashResult
   *
   * @author Holger Brandl
   */
+//noinspection TypeCheckCanBeMatch
 class LocalScheduler extends JobScheduler {
 
 
   // from http://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
-  val NUM_THREADS = Runtime.getRuntime.availableProcessors()
+  val NUM_THREADS = Runtime.getRuntime.availableProcessors() - 2
   private val taskQueue: LinkedBlockingQueue[Runnable] = new LinkedBlockingQueue[Runnable]
 
   private val jobstats = mutable.HashMap.empty[Int, RunInfo]
+  private val dummies = mutable.HashMap.empty[Int, Seq[ThreadPlaceHolder]]
 
 
   //  val executorService = new ThreadPoolExecutor(numCores, numCores, 0L, TimeUnit.MILLISECONDS, queue)
@@ -52,20 +54,28 @@ class LocalScheduler extends JobScheduler {
     protected override def beforeExecute(t: Thread, r: Runnable) {
       super.beforeExecute(t, r)
 
-      val jobId = r.asInstanceOf[JobRunnable].jobId
-      jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
+      if (r.isInstanceOf[JobRunnable]) {
+        val jobId = r.asInstanceOf[JobRunnable].jobId
+        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
+      }
     }
 
 
     protected override def afterExecute(r: Runnable, t: Throwable) {
       super.afterExecute(r, t)
 
-      val jobRunnable = r.asInstanceOf[JobRunnable]
-      val jobId = jobRunnable.jobId
+      if (r.isInstanceOf[JobRunnable]) {
 
-      val finalState = if (jobRunnable.hasFailed) JobState.FAILED else JobState.COMPLETED
+        val jobRunnable = r.asInstanceOf[JobRunnable]
+        val jobId = jobRunnable.jobId
 
-      jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING))
+        val finalState = if (jobRunnable.hasFailed) JobState.FAILED else JobState.COMPLETED
+
+        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING))
+
+        // stop dummy threads
+        dummies(jobId).foreach(_.asInstanceOf[ThreadPlaceHolder].shutdown = true)
+      }
     }
   }
 
@@ -80,6 +90,14 @@ class LocalScheduler extends JobScheduler {
     val runInfo = new RunInfo(jobId, "user", JobState.PENDING, jc.queue, "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
     jobstats += (jobId -> runInfo)
 
+    // also create placeholder threads to respect thread settings
+    // http://stackoverflow.com/questions/7530194/how-to-call-a-method-n-times-in-scala
+    val threadPlacholders = (2 to jc.numThreads) map (x => new ThreadPlaceHolder())
+    dummies += (jobId -> threadPlacholders)
+
+
+    // schedule job and (optional) placeholders
+    threadPlacholders.foreach(executor.execute(_))
     executor.execute(new JobRunnable(jc, jobId))
 
     jobId
@@ -114,5 +132,21 @@ class LocalScheduler extends JobScheduler {
   // not implemented because not applicable for local shell
   // todo throw more meaningful exception}
   override def readIdsFromStdin(): List[Int] = ???
+
+  class ThreadPlaceHolder extends Runnable {
+
+    var shutdown = false
+
+
+    override def run(): Unit = {
+      while (!shutdown) {
+        Thread.sleep(1000)
+      }
+      // sleep forever
+      //      scala.util.control.Exception.ignoring(classOf[InterruptedException]){
+      //        Thread.sleep(Int.MaxValue)
+      //      }
+    }
+  }
 }
 
