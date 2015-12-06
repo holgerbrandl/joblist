@@ -62,15 +62,17 @@ object JobListCLI extends App {
       Usage: jl <command> [options] [<joblist_file>]
 
       Supported commands are
-        submit    Submits a named job including automatic stream redirection and adds it to a joblist
+        submit    Submits a named job including automatic stream redirection and adds it to the list
         add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
         wait      Wait for a list of tasks to finish
-        up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
-        shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
-        status    Print a short summary of the processing status of a joblist
+        kill      Removes all still queued jobs of this list from the scheduler
+        up        Moves a list of jobs to the top of a queue
+        status    Print various statistics and allows to create an html report for the list
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
+
+    //    shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
 
     System.exit(0)
   }
