@@ -79,3 +79,9 @@ cat cmds.txt
 jl submit --jl .qs_test -n batch_test --batch cmds.txt
 jl wait --report .qs_test
 jl submit --batch "echo test"
+
+
+## simply reporting
+
+rm .jobs*
+jl submit "sleep 10"

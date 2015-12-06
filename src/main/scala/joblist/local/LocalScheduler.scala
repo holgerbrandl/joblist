@@ -67,7 +67,7 @@ class LocalScheduler extends JobScheduler {
 
         val finalState = if (jobRunnable.hasFailed) JobState.FAILED else JobState.COMPLETED
 
-        jobstats += (jobId -> jobstats(jobId).copy(state = finalState))
+        jobstats += (jobId -> jobstats(jobId).copy(state = finalState, finishTime = new DateTime()))
 
         // stop dummy threads
         dummies(jobId).foreach(_.asInstanceOf[ThreadPlaceHolder].shutdown = true)

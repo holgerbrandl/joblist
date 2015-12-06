@@ -26,7 +26,7 @@ import scalautils.{Bash, IOUtils}
 package object joblist {
 
   def guessQueue(): JobScheduler = {
-    if (Bash.eval("which bsub").sout.nonEmpty) {
+    if (isLSF) {
       return new LsfScheduler()
     }
 
@@ -37,6 +37,11 @@ package object joblist {
     Console.err.println("Could not auto-detect queuing system. Using multi-threaded local job-scheduler...")
     new LocalScheduler()
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
+  }
+
+
+  def isLSF: Boolean = {
+    Bash.eval("which bkill").sout.nonEmpty || Option(System.getenv("USE_FAKE_LSF")).isDefined
   }
 
 

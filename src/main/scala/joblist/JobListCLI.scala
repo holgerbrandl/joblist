@@ -36,6 +36,7 @@ object JobListCLI extends App {
     License       Simplified BSD
     Website       https://github.com/holgerbrandl/joblist
     """.alignLeft.trim)
+
     System.exit(0)
   }
 
@@ -55,6 +56,12 @@ object JobListCLI extends App {
     case _ => printUsageAndExit()
   }
 
+  private val shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
+
+  if (shouldExit) {
+    System.exit(0)
+  }
+
 
   def printUsageAndExit(): Unit = {
     Console.err.println(
@@ -67,7 +74,7 @@ object JobListCLI extends App {
         wait      Wait for a list of tasks to finish
         kill      Removes all still queued jobs of this list from the scheduler
         up        Moves a list of jobs to the top of a queue
-        status    Print various statistics and allows to create an html report for the list
+        status    Prints various statistics and allows to create an html report for the list
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
@@ -96,6 +103,9 @@ object JobListCLI extends App {
 
 
   def submit(): Any = {
+
+    // todo add stdin support for batch input
+    // see http://stackoverflow.com/questions/18612603/redirecting-output-of-bash-for-loop
 
     val options = parseArgs(args,
       s"""
@@ -170,7 +180,9 @@ object JobListCLI extends App {
     jobConfigs.foreach(jl.run)
     //    jl.run(jc)
 
-    // we either block here if the user asked for it. or if a local scheduler is being used
+    // we  block here in 2 situations
+    // a) the user asked for it.
+    // b) if a local scheduler is being used, which is suboptimal since the multithreading does not kick in
     if (options.get("wait").get.toBoolean || jl.scheduler.isInstanceOf[LocalScheduler]) {
       jl.waitUntilDone()
     }

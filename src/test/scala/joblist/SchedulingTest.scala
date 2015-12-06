@@ -55,7 +55,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "submit some jobs and wait until they are done " in {
-    val jl = new JobList(".run_and_wait")
+    val jl = new JobList(wd / ".run_and_wait")
 
     val tasks = for (i <- 1 to 3) yield {
       JobConfiguration(s"""sleep 2; echo "this is task $i" > task_$i.txt """, wd = wd)

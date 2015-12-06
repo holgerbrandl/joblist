@@ -24,6 +24,7 @@ class ReportingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.createHtmlReport()
   }
 
+
   it should "create a report when all jobs have failed" in {
     val jl = new JobList(wd / ".all_failed_report")
 
@@ -33,7 +34,7 @@ class ReportingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.createHtmlReport()
   }
 
-  it should "include the complete resubmission history a report" in {
+  ignore should "include the complete resubmission history a report" in {
     val jl = new JobList(wd / ".resub_report")
 
     jl.createHtmlReport()

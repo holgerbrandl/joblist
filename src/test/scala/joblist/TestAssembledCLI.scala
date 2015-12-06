@@ -25,13 +25,17 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
   it should "use the shell launcher to trigger, monitor and resubmit jobs" in {
     val jl = JobList(wd / ".whit")
 
-    Bash.eval(s"""
-    cd $wd
+    val cmdSeq = s"""
+    cd ${wd.fullPath}
     jl submit -j ${jl.file.fullPath} "echo foo"
     jl submit -j ${jl.file.fullPath} "echo bar"
     jl submit -j ${jl.file.fullPath} -O "-W 00:01" "sleep 120; touch whit.txt"
     jl wait --resubmit_wall "00:10" ${jl.file.fullPath}
-    """.alignLeft)
+    """.alignLeft
+
+    println(cmdSeq)
+
+    Bash.eval(cmdSeq, showOutput = true)
 
     jl.file.toJava should exist
     jl.jobs should have size (3)

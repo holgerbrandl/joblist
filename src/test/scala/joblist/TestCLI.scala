@@ -30,6 +30,10 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "capture the job id from stdin and wait for it" in {
+    if (!isLSF) {
+      cancel
+    }
+
     val bstatus = eval("bsub 'touch cli_add_test.dat'").stdout.head
 
     // fake some stdin data which is normally provided by piping
@@ -73,6 +77,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "submit a job which is known to fail and resumit it once it fails" in {
 
+
     val failTagFile = File("dont_fail_job.txt")
     failTagFile.delete(true)
     File("no_fail.dat").delete(true)
@@ -105,6 +110,9 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "submit non-jl jobs but should not resubmit them" in {
+    if (!isLSF) {
+      cancel
+    }
 
     val bstatus = eval(s"""bsub 'sleep 5; exit 1'""").stdout.head
 
