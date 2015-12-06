@@ -24,8 +24,26 @@ case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "
       this
     }
   }
+
+
+  // we don't use val here to avoid that it's serialized into the xml
+  def logs = new JobLogs(name, wd)
 }
 
+
+/** Log files that might be of interest for the user. JL does not rely on them but tries to create in a consistent
+  * manner them irrespective of the used scheduler. */
+case class JobLogs(name: String, wd: File) {
+
+  def logsDir = wd / s".logs"
+
+
+  // file getters
+  val id = logsDir / s"$name.jobid"
+  val cmd = logsDir / s"$name.cmd"
+  val err = logsDir / s"$name.err.log"
+  val out = logsDir / s"$name.out.log"
+}
 
 // companion object method for JC
 object JobConfiguration {

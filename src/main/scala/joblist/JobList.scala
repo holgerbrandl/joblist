@@ -170,7 +170,18 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def run(jc: JobConfiguration) = {
     val namedJC = jc.withName() // // fix auto-build a job configuration names if empty
 
+    // create hidden log directory and log cmd as well as queuing args
+    require(jc.wd.isDirectory)
+
+    val jobLogs = namedJC.logs
+    jobLogs.logsDir.createIfNotExists(true)
+
     val jobId = scheduler.submit(namedJC)
+
+    // save user logs
+    jobLogs.id.write(jobId + "")
+    jobLogs.cmd.write(jc.cmd)
+
 
     require(jobs.forall(_.config.name != namedJC.name), "job names must be unique")
 

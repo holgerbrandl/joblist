@@ -59,28 +59,22 @@ class SlurmScheduler extends JobScheduler {
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
     require(!cmd.contains("'"), "Commands must not contain single quotes. See and vote for https://github.com/holgerbrandl/joblist/issues/11")
 
-    // create hidden log directory and log cmd as well as queuing args
-    require(wd.isDirectory)
-
-    val jobLogs = JobLogs(jobName, wd)
-    jobLogs.createParent
-
     // submit the job to the lsf
     var submitCmd =
       s"""
     echo '#!/bin/bash
-    $cmd' | sbatch  -J $jobName --ntasks=1 $submitArgs -e ${jobLogs.err.fullPath} -o ${jobLogs.out.fullPath}
+    $cmd' | sbatch  -J $jobName --ntasks=1 $submitArgs -e ${jc.logs.err.fullPath} -o ${jc.logs.out.fullPath}
     """.alignLeft.trim
 
-    Console.err.println("submission cmd is:\n" + submitCmd)
+    //    Console.err.println("submission cmd is:\n" + submitCmd)
 
     // optionally prefix with working directory
     if (File(".") != wd) {
       submitCmd = s"cd '${wd.fullPath}'\n" + submitCmd
     }
 
-    val bashResult: BashResult = Bash.eval(submitCmd)
     // run
+    val bashResult: BashResult = Bash.eval(submitCmd)
     val submitStatus = bashResult.stdout
 
 
@@ -88,13 +82,9 @@ class SlurmScheduler extends JobScheduler {
     val submitConfirmMsg = submitStatus.filter(_.startsWith("Submitted batch job "))
     require(submitConfirmMsg.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
 
-    val jobId = submitConfirmMsg.head.split(" ")(3).toInt
+    val jobID = submitConfirmMsg.head.split(" ")(3).toInt
 
-    // save user logs
-    jobLogs.id.write(jobId + "")
-    jobLogs.cmd.write(cmd)
-
-    jobId
+    jobID
   }
 
 

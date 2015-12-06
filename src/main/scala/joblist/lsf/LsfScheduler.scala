@@ -49,16 +49,11 @@ class LsfScheduler extends JobScheduler {
     // TBD takes care that arguments are correctly provided as input arguments to binaries)
     require(!cmd.contains("'"), "Commands must not contain single quotes. See and vote for https://github.com/holgerbrandl/joblist/issues/11")
 
-    // create hidden log directory and log cmd as well as queuing args
-    require(wd.isDirectory)
-
-    val jobLogs = JobLogs(jobName, wd)
-    jobLogs.createParent
 
     // submit the job to the lsf
     var submitCmd =
       s"""
-    bsub   $submitArgs '( $cmd ) 2>${jobLogs.err.fullPath} 1>${jobLogs.out.fullPath}'
+    bsub   $submitArgs '( $cmd ) 2>${jc.logs.err.fullPath} 1>${jc.logs.out.fullPath}'
     """.trim
 
     // optionally prefix with working directory
@@ -66,8 +61,8 @@ class LsfScheduler extends JobScheduler {
       submitCmd = s"cd '${wd.fullPath}'\n" + submitCmd
     }
 
-    val bashResult: BashResult = Bash.eval(submitCmd)
     // run
+    val bashResult: BashResult = Bash.eval(submitCmd)
     val submitStatus = bashResult.stdout
 
 
@@ -76,11 +71,6 @@ class LsfScheduler extends JobScheduler {
     require(submitConfirmMsg.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
 
     val jobId = submitConfirmMsg.head.split(" ")(1).drop(1).dropRight(1).toInt
-
-    // save user logs
-    //    require(jobLogs.cmd.notExists) // really?
-    jobLogs.id.write(jobId + "")
-    jobLogs.cmd.write(cmd)
 
     jobId
   }
@@ -184,5 +174,4 @@ class LsfScheduler extends JobScheduler {
 
     toXml(runLog, logFile)
   }
-
 }
