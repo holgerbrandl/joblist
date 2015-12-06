@@ -280,10 +280,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-  def kill() = jobs.map(job => {
-    scheduler.cancel(jobs.map(_.id))
-  }
-
+  def kill() = jobs.foreach(job => scheduler.cancel(jobs.map(_.id)))
 
   //
   //  Reporting

@@ -52,7 +52,6 @@ object JobListCLI extends App {
     case "kill" => kill()
     case "shortcuts" => shortcuts()
     case "status" => status()
-    case "failed" => printFailed()
     case _ => printUsageAndExit()
   }
 
@@ -69,7 +68,6 @@ object JobListCLI extends App {
         up        Moves a list of jobs to the top of a queue (if supported by the used queuing system
         shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
         status    Print a short summary of the processing status of a joblist
-        failed    Print the ids of all failed jobs in this joblist. If empty the joblist has been completely processed without errors
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
@@ -312,12 +310,14 @@ object JobListCLI extends App {
   }
 
 
-  def status() = {
+  def status(): Unit = {
     val options = parseArgs(args, """
     Usage: jl status [options] [<joblist_file>]
 
     Options:
-     --report           Create an html report for this joblist
+     --report     Create an html report for this joblist
+     --failed     Print ONLY ids of all failed jobs in this joblist. If empty the joblist has
+                  been completely processed without errors. Useful for flowcontrol in bash scripts.
     """.alignLeft.trim)
 
     val jl = getJL(options)
@@ -325,20 +325,16 @@ object JobListCLI extends App {
     println(jl.toString)
     println(jl.status)
 
+    if (options.get("failed").get.toBoolean) {
+      println(jl.failed.mkString("\n"))
+      return
+    }
+
 
     // create an html report
     if (options.get("report").get.toBoolean) {
       val reportFile = jl.createHtmlReport()
     }
-  }
-
-
-  def printFailed() = {
-    val options = parseArgs(args, "Usage: jl failed [options] [<joblist_file>]")
-    val jl = getJL(options)
-
-    jl.requireListFile()
-    println(jl.failed.mkString("\n"))
   }
 
 

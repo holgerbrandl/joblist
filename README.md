@@ -43,7 +43,7 @@ busb "hello bar" | jl add
 
 jl wait
 
-if [ -n "$(jl failed)" ]; then
+if [ -n "$(jl status --failed)" ]; then
     echo "some jobs failed"
 fi
 
