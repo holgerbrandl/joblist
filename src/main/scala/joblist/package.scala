@@ -34,7 +34,7 @@ package object joblist {
       return new SlurmScheduler()
     }
 
-    Console.err.println("Could not detect queuing system. Using multi-threaded local dummy scheduler...")
+    Console.err.println("Could not auto-detect queuing system. Using multi-threaded local job-scheduler...")
     new LocalScheduler()
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }
@@ -198,7 +198,6 @@ package object joblist {
 
     def saveAs: ((PrintWriter) => Unit) => Unit = IOUtils.saveAs(file.toJava)
   }
-
 
 
   implicit class ImplJobListUtils(jl: JobList) {

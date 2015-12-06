@@ -16,7 +16,7 @@ object JlDebug extends App {
   implicit val jl = new JobList()
   jl.reset()
   jl.status
-  jl.run(JobConfiguration("sleep 10", "test_job"))
+  jl.run(JobConfiguration("sleep 10", "test_job", numThreads = 3))
 
   jl.waitUntilDone()
 

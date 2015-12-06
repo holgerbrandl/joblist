@@ -52,17 +52,15 @@ class LocalScheduler extends JobScheduler {
 
 
     protected override def beforeExecute(t: Thread, r: Runnable) {
-      super.beforeExecute(t, r)
-
       if (r.isInstanceOf[JobRunnable]) {
         val jobId = r.asInstanceOf[JobRunnable].jobId
         jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
       }
+      super.beforeExecute(t, r)
     }
 
 
     protected override def afterExecute(r: Runnable, t: Throwable) {
-      super.afterExecute(r, t)
 
       if (r.isInstanceOf[JobRunnable]) {
 
@@ -76,6 +74,8 @@ class LocalScheduler extends JobScheduler {
         // stop dummy threads
         dummies(jobId).foreach(_.asInstanceOf[ThreadPlaceHolder].shutdown = true)
       }
+
+      super.afterExecute(r, t)
     }
   }
 
@@ -84,6 +84,10 @@ class LocalScheduler extends JobScheduler {
   /** Submits a job and returns its jobID. */
   override def submit(jc: JobConfiguration): Int = {
     //    https://twitter.github.io/scala_school/concurrency.html
+
+    require(NUM_THREADS >= jc.numThreads,
+      s"""threading requirements of $jc can't be met be local scheduler which """ +
+        s"allows at max for jobs using $NUM_THREADS threads")
 
     val jobId = new Random().nextInt(Int.MaxValue)
 
@@ -94,7 +98,6 @@ class LocalScheduler extends JobScheduler {
     // http://stackoverflow.com/questions/7530194/how-to-call-a-method-n-times-in-scala
     val threadPlacholders = (2 to jc.numThreads) map (x => new ThreadPlaceHolder())
     dummies += (jobId -> threadPlacholders)
-
 
     // schedule job and (optional) placeholders
     threadPlacholders.foreach(executor.execute(_))
@@ -108,8 +111,7 @@ class LocalScheduler extends JobScheduler {
 
 
     override def run(): Unit = {
-      evalStatus = Bash.eval(jc.cmd, redirectStderr = jc.logs.err, redirectStdout = jc.logs.err)
-      //      println(s"status is $evalStatus")
+      evalStatus = Bash.eval(jc.cmd, redirectStderr = jc.logs.err, redirectStdout = jc.logs.out)
     }
 
 
@@ -141,13 +143,11 @@ class LocalScheduler extends JobScheduler {
 
 
     override def run(): Unit = {
+      //      Console.err.println("starting placholder "+this)
       while (!shutdown) {
         Thread.sleep(1000)
       }
-      // sleep forever
-      //      scala.util.control.Exception.ignoring(classOf[InterruptedException]){
-      //        Thread.sleep(Int.MaxValue)
-      //      }
+      //      Console.err.println("placeholder is done "+this)
     }
   }
 }

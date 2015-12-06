@@ -148,7 +148,7 @@ class TestTasks extends FlatSpec with Matchers with BeforeAndAfter {
 
 class ReportingTest extends FlatSpec with Matchers {
 
-  it should "take run log data and do some reporting" in {
+  ignore should "take run log data and do some reporting" in {
     //    import Matchers._; import joblist._
     val jl = new JobList("test_data/reporting/.blastn")
     jl.jobs
