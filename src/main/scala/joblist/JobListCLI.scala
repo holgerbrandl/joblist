@@ -355,6 +355,13 @@ object JobListCLI extends App {
     }
 
     println(jl.toString)
+
+    // create an html report
+    if (options.get("report").get.toBoolean) {
+      val reportFile = jl.createHtmlReport()
+      return
+    }
+
     println(jl.status)
 
     jl.jobs.map(_.info).
@@ -362,13 +369,6 @@ object JobListCLI extends App {
         Seq(ri.jobId, ri.jobName, ri.state).mkString("\t")
       }).
       foreach(println)
-
-
-
-    // create an html report
-    if (options.get("report").get.toBoolean) {
-      val reportFile = jl.createHtmlReport()
-    }
   }
 
 
