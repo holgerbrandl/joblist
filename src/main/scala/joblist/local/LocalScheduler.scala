@@ -16,8 +16,6 @@ import scalautils.Bash.BashResult
   *
   * Adopted from https://www.richardnichols.net/2012/01/how-to-get-the-running-tasks-for-a-java-executor/
   *
-  * tbd maybe we should just have this system-wide and not per instance
-  *
   * @author Holger Brandl
   */
 //noinspection TypeCheckCanBeMatch
@@ -26,7 +24,6 @@ class LocalScheduler extends JobScheduler {
 
   // from http://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
   val NUM_THREADS = Runtime.getRuntime.availableProcessors() - 2
-  private val taskQueue: LinkedBlockingQueue[Runnable] = new LinkedBlockingQueue[Runnable]
 
   private val jobstats = mutable.HashMap.empty[Int, RunInfo]
   private val dummies = mutable.HashMap.empty[Int, Seq[ThreadPlaceHolder]]
@@ -34,25 +31,14 @@ class LocalScheduler extends JobScheduler {
 
   // http://stackoverflow.com/questions/16161941/exectuorservice-vs-threadpoolexecutor-which-is-using-linkedblockingqueue
   //  val executorService = Executors.newFixedThreadPool(numCores)
-  private val executor: ExecutorService = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS, taskQueue, Executors.defaultThreadFactory) {
-
-    //    protected override def newTaskFor[T](runnable: Runnable, value: T): FutureTask[String] = {
-    //
-    //      new FutureTask[String](new Callable[String]() {
-    //
-    //
-    //        override def toString: String = {
-    //          runnable.toString
-    //        }
-    //      })
-    //
-    //    }
-
+  private val executor: ExecutorService = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable], Executors.defaultThreadFactory) {
 
     protected override def beforeExecute(t: Thread, r: Runnable) {
       if (r.isInstanceOf[JobRunnable]) {
+        Thread.sleep(3000) // wait a second to avoid that jobs are actually started in add mode
+
         val jobId = r.asInstanceOf[JobRunnable].jobId
-        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
+        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, finishTime = new DateTime()))
       }
       super.beforeExecute(t, r)
     }
@@ -71,6 +57,7 @@ class LocalScheduler extends JobScheduler {
 
         // stop dummy threads
         dummies(jobId).foreach(_.asInstanceOf[ThreadPlaceHolder].shutdown = true)
+        dummies.remove(jobId)
       }
 
       super.afterExecute(r, t)
@@ -79,6 +66,7 @@ class LocalScheduler extends JobScheduler {
 
   // see http://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
   // https://twitter.github.io/scala_school/concurrency.html
+
   /** Submits a job and returns its jobID. */
   override def submit(jc: JobConfiguration): Int = {
     //    https://twitter.github.io/scala_school/concurrency.html
@@ -89,7 +77,7 @@ class LocalScheduler extends JobScheduler {
 
     val jobId = new Random().nextInt(Int.MaxValue)
 
-    val runInfo = new RunInfo(jobId, "user", JobState.PENDING, jc.queue, "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
+    val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, jc.queue, "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
     jobstats += (jobId -> runInfo)
 
     // also create placeholder threads to respect thread settings
@@ -140,11 +128,9 @@ class LocalScheduler extends JobScheduler {
 
 
     override def run(): Unit = {
-      //      Console.err.println("starting placholder "+this)
       while (!shutdown) {
         Thread.sleep(1000)
       }
-      //      Console.err.println("placeholder is done "+this)
     }
   }
 
@@ -155,4 +141,3 @@ class LocalScheduler extends JobScheduler {
     executor.shutdownNow()
   }
 }
-

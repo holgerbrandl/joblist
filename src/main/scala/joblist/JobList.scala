@@ -1,6 +1,7 @@
 package joblist
 
 import better.files.File
+import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 
 import scalautils.Bash
@@ -166,8 +167,16 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     * This could happen for jobs which died too quickly  before we could gather stats about them
     */
   private def updateNonFinalStats(): Unit = {
+    //    if(scheduler.isInstanceOf[LocalScheduler]) return
+
     val queueIds = queueStatus.map(_.jobId)
     val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
+
+
+    if (unqeuedNonFinalJobs.nonEmpty && scheduler.isInstanceOf[LocalScheduler]) {
+      Console.err.println("skipping info update for non-final jobs because local scheduler is used")
+      return
+    }
 
     unqeuedNonFinalJobs.foreach(updateStatsFile)
   }
@@ -216,7 +225,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     */
   def add(jobId: Int) = {
     file.appendLine(jobId + "")
-    //    updateStatsFile(Job(jobId))
+
+    updateStatsFile(Job(jobId))
 
     Console.err.println(s"${file.name}: Added job '${jobId}'")
   }
@@ -236,6 +246,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
                resubJobs: List[Job] = getConfigRoots(requiresRerun)): Unit = {
 
     // tbd consider to move/rename user-logs
+    if (resubJobs.isEmpty) return // can happen when rerunning wait with local scheduler or finished joblist
 
     require(
       resubJobs.forall(_.isRestoreable),
@@ -263,7 +274,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
     // add resubmit killed ones and add their ids to the list-file as well
-    Console.err.println(s"${file.name}: Resubmitting ${resubJobs.size} killed job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
+    Console.err.println(s"${file.name}: Resubmitting ${resubJobs.size} job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
     val prev2NewIds = resubJobs.map(job => job -> {
       run(resubStrategy.escalate(job.config))
@@ -314,7 +325,11 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val pending = queuedJobs.size - numRunning
 
     // also do some internal consistenct checks
-    assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
+    if (!scheduler.isInstanceOf[LocalScheduler]) {
+      // would not work since local scheduler just runs jobs when in wait (or via api)
+      assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
+    }
+
     assert(jobs.nonEmpty)
 
     // todo also report done percentage

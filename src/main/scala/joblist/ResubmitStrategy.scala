@@ -16,6 +16,9 @@ trait ResubmitStrategy {
 class TryAgain extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc
+
+
+  override def toString = "TryAgain"
 }
 
 

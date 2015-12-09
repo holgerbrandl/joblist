@@ -87,10 +87,13 @@ jobs <- allJobs %>%
     arrange(desc(submit_time)) %>%
     slice(1) %>% ungroup
 
+#' Total Jobs: `r nrow(jobs)`
+
+
 #jcLogsFile <- paste0(reportName, ".stats.jc.log")
 #if(file.exists(jcLogsFile)){ tbd...
 
-if(unlen(jobs$exec_host)<50){
+if(unlen(jobs$exec_host)<50 & unlen(jobs$exec_host) >1){
     jobs %>% ggplot(aes(exec_host)) + geom_bar() + coord_flip()
 }
 
@@ -101,21 +104,38 @@ if(nrow(jobs)==0){
     stop()
 }
 
+## status overview
+jobs %>% ggplot(aes(status)) + geom_bar() + xlab("job status")
 
-#ggplot(jobs, aes(pending_time_min)) + geom_histogram() + ggtitle("pending times") + coord_flip()
+
+startedJobs = filter(jobs, !is.na(pending_time_min))
+finishedJobs = filter(jobs, !is.na(exec_time_hours))
+
+#' num started jobs is `r nrow(startedJobs)`
+
+#+ eval=nrow(startedJobs)>0
 if(nrow(jobs)<50){
-    ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), pending_time_min/60)) + geom_bar(stat="identity") + ggtitle("pending times") + coord_flip() + xlab("job id")
+    ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), pending_time_min/60)) +
+    geom_bar(stat="identity") + ggtitle("pending times") +
+    coord_flip() +
+    xlab("job id") +
+    ylab("pending time [h]")
 }else{
-    ggplot(jobs, aes(as.numeric(job_id), pending_time_min/60)) + geom_area() + ggtitle("pending times")+xlabre("job_nr") + ylab("pending time [h]")
+    ggplot(jobs, aes(as.numeric(job_id), pending_time_min/60)) +
+    geom_area() +
+    ggtitle("pending times") +
+    xlab("job_nr") +
+    ylab("pending time [h]")
 }
-#ggsave2(p=reportName)
 
+#+ eval=nrow(finishedJobs)>0
 if(nrow(jobs)<50){
     ggplot(jobs, aes(reorder(job_id, -as.numeric(job_id)), exec_time_hours)) + geom_bar(stat="identity") + ggtitle("job execution times") + coord_flip() + xlab("job id")
 }else{
     ggplot(jobs, aes(as.numeric(job_id), exec_time_hours))  + geom_area() + ggtitle("job execution times")+ xlab("job_nr") + geom_hline(mapping=aes(yintercept=queueLimit), color="red")
 }
 
+#+ pend_vs_exec, eval=nrow(finishedJobs)>0
 #ggplot(jobs, aes(as.numeric(job_idx), exec_time_min/pending_time_min)) + geom_area() + ggtitle("pending vs exec time ratio")+xlab("job_nr")
 ggplot(jobs, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pending vs exec time") + geom_abline()
 
@@ -123,6 +143,7 @@ ggplot(jobs, aes(exec_time_min, pending_time_min)) + geom_point() + ggtitle("pen
 # jobs <- read.delim("jobs.txt")
 
 #require_auto(knitr)
+#+
 jobs %>%
     mutate(pending_time_hours=pending_time_min/60) %>%
     select(job_id, status, exec_host, job_name, exec_time_hours) %>%
@@ -131,7 +152,7 @@ jobs %>%
 
 
 #######################################################################################################################
-#' # Resubmission Statistics
+#' ## Resubmitted Jobs
 
 #' In total there were `r filter(allJobs, !is.na(resubmission_of)) %>% nrow` job resubmissions
 resubmissions <- allJobs %>%

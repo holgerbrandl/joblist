@@ -88,6 +88,9 @@ package object joblist {
   }
 
 
+  def whoAmI: String = Bash.eval("whoami").sout
+
+
   //  private def changeWdOptional(wd: File): String = {
   //    if (wd != null && wd != File(".")) "cd " + wd.fullPath + "; " else ""
   //  }

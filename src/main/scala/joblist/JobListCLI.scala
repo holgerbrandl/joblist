@@ -210,6 +210,11 @@ object JobListCLI extends App {
       //        jl.add(jobId.next)
       //        jl.add(jobId.next)
 
+      // tag and serialize local scheduler
+      //      if(jl.scheduler.isInstanceOf[LocalScheduler]){
+      //        jl.scheduler.asInstanceOf[LocalScheduler].jobstats.keys.foreach(jl.updateStatsFile(Job(_)))
+      //      }
+
       jobIds
     } catch {
       case e: Throwable => throw new RuntimeException("could not extract jobid from stdin", e)
