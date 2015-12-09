@@ -263,13 +263,21 @@ package object joblist {
       jl.exportStatistics()
       println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
 
-      //todo load script from resource
       Console.out.print(s"${jl.file.name}: Rendering HTML report...")
-      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
-      //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
 
-      val reportFile = scalautils.r.rendrSnippet(jl.file.name + ".stats", reportScript, showCode = false, args = jl.file.fullPath, wd = jl.file.parent)
+      //      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
+      //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
+      val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
+
+      val reportFile = scalautils.r.rendrSnippet(
+        jl.file.name + ".stats",
+        reportScript, showCode = false,
+        args = jl.file.fullPath,
+        wd = jl.file.parent
+      )
+
       require(reportFile.isRegularFile, s"report generation failed for '$jl'")
+
       Console.out.println(s" done '${reportFile.name}'")
     }
   }
