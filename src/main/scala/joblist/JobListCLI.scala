@@ -183,7 +183,7 @@ object JobListCLI extends App {
     // we  block here in 2 situations
     // a) the user asked for it.
     // b) if a local scheduler is being used, which is suboptimal since the multithreading does not kick in
-    if (options.get("wait").get.toBoolean || jl.scheduler.isInstanceOf[LocalScheduler]) {
+    if (options.get("wait").get.toBoolean) {
       jl.waitUntilDone()
     }
   }
