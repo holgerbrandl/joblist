@@ -34,6 +34,10 @@ case class Job(id: Int)(implicit val jl: JobList) {
   def isFinal = infoFile.isRegularFile && JobState.finalStates.contains(info.state)
 
 
+  /** Job reached final state but is not done (because it either failed, was killed or canceled) */
+  def requiresRerun = infoFile.isRegularFile && (isFinal || !isDone)
+
+
   // todo actually this could be a collection of jobs because we escalate the base configuration
   // furthermore not job-id are resubmitted but job configuration, so the whole concept is flawed
   def resubAs() = {

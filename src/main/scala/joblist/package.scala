@@ -25,18 +25,23 @@ import scalautils.{Bash, IOUtils}
   */
 package object joblist {
 
-  def guessQueue(): JobScheduler = {
+  def guessScheduler(): JobScheduler = {
     if (isLSF) {
       return new LsfScheduler()
     }
 
-    if (Bash.eval("which squeue").sout.nonEmpty) {
+    if (isSLURM) {
       return new SlurmScheduler()
     }
 
     Console.err.println("Could not auto-detect queuing system. Using multi-threaded local job-scheduler...")
     new LocalScheduler()
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
+  }
+
+
+  def isSLURM: Boolean = {
+    Bash.eval("which squeue").sout.nonEmpty
   }
 
 

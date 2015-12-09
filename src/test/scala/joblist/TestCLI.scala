@@ -91,7 +91,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl.file.toJava should exist
     jl.jobs.size should be(1)
     jl.killed should be(empty)
-    jl.failed.size should be(1)
+    jl.requiresRerun.size should be(1)
 
     // fix tag file to make job runnable and retry agin
     failTagFile.touch()
@@ -136,5 +136,6 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.jobs.size should be(1)
     jl.failed.size should be(1)
+    jl.requiresRerun.size should be(1)
   }
 }

@@ -42,7 +42,8 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     }
 
     jl.waitUntilDone()
-    jl.failed should not be empty
+    jl.requiresRerun should not be empty
+    jl.isDone should be(false)
 
     // tweak commands in resubmission so that they all make it
     jl.resubmitFailed(new ResubmitStrategy {
@@ -52,7 +53,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     })
 
     jl.waitUntilDone()
-    jl.failed shouldBe empty
+    jl.requiresRerun shouldBe empty
     jl.jobs should have size (20)
   }
 }

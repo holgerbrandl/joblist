@@ -15,7 +15,7 @@ import scalautils.CollectionUtils.StrictSetOps
   * @author Holger Brandl
   */
 
-case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessQueue()) extends AnyRef {
+case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = guessScheduler()) extends AnyRef {
 
 
   def this(name: String) = this(File(name))
@@ -76,12 +76,22 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
+  /** True if all jobs in the list are final and complete. */
+  def isDone = {
+    jobs.forall(_.isDone)
+  }
+
+
   def failed = {
     /* see man bjobs for exit code: The job has terminated with a non-zero status – it may have been aborted due
      to an error in its execution, or killed by its owner or the LSF administrator */
     jobs.filter(_.hasFailed)
   }
 
+
+  def requiresRerun = {
+    jobs.filter(_.requiresRerun)
+  }
 
   def queueStatus = {
     //noinspection ConvertibleToMethodValue
@@ -296,12 +306,14 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     val queuedJobs = queueStatus
     val numRunning = queueStatus.count(_.status == JobState.RUNNING.toString)
+    //todo pending could also come from the queue info
     val pending = queuedJobs.size - numRunning
 
     // also do some internal consistenct checks
     assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
     assert(jobs.nonEmpty)
 
+    // todo also report done percentage
     f" ${jobs.size}%4s jobs in total; ${jobs.count(_.isDone)}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
   }
 

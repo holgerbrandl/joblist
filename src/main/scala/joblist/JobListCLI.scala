@@ -228,13 +228,14 @@ object JobListCLI extends App {
     Usage: jl wait [options] [<joblist_file>]
 
     Options:
-     --resubmit_retry                 Simply retry without any change
-     --resubmit_queue <resub_queue>   Resubmit to different queue
-     --resubmit_wall <walltime>       Resubmit with different walltime limit
-     --resubmit_threads <num_threads> Resubmit with more threads
-     --resubmit_type <fail_type>      Defines which failed jobs are beeing resubmitted. Possible values are all,killed,failed [default: all]
-     --email                          Send an email report to the current user once this joblist has finished
-     --report                         Create an html report for this joblist once the joblist has finished
+     --resubmit_retry                   Simply retry without any change
+     --resubmit_queue <resub_queue>     Resubmit to different queue
+     --resubmit_wall <walltime>         Resubmit with different walltime limit
+     --resubmit_threads <num_threads>   Resubmit with more threads
+     --resubmit_type <fail_type>        Defines which failed jobs are beeing resubmitted. Possible values are all,
+                                        killed or failed [default: all]
+     --email                            Send an email report to the current user once this joblist has finished
+     --report                           Create an html report for this joblist once the joblist has finished
      """.alignLeft.trim
 
     val options = parseArgs(args, doc)
@@ -256,9 +257,10 @@ object JobListCLI extends App {
 
 
     def tbd = options.getOrElse("fail_type", "all") match {
-      case "all" => jl.failed
-      case "failed" => jl.failed.filterNot(_.wasKilled)
-      case "killed" => jl.failed.filter(_.wasKilled)
+      case "all" => jl.requiresRerun
+      case "failed" => jl.jobs.filterNot(_.wasKilled)
+      case "killed" => jl.jobs.filter(_.wasKilled)
+      case "canceled" => jl.jobs.filter(_.info.state == JobState.CANCELED)
     }
 
     while (tbd.nonEmpty && numResubmits < resubChain.size) {
@@ -330,7 +332,7 @@ object JobListCLI extends App {
 
     Options:
      --report     Create an html report for this joblist
-     --failed     Print ONLY ids of all failed jobs in this joblist. If empty the joblist has
+     --failed     Print ONLY ids of all final but not yet done jobs in this joblist. If empty the joblist has
                   been completely processed without errors. Useful for flowcontrol in bash scripts.
     """.alignLeft.trim)
 
@@ -340,7 +342,7 @@ object JobListCLI extends App {
     println(jl.status)
 
     if (options.get("failed").get.toBoolean) {
-      println(jl.failed.mkString("\n"))
+      println(jl.requiresRerun.mkString("\n"))
       return
     }
 

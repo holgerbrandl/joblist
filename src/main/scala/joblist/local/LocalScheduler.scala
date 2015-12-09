@@ -109,7 +109,7 @@ class LocalScheduler extends JobScheduler {
 
 
     override def run(): Unit = {
-      evalStatus = Bash.eval(jc.cmd, redirectStderr = jc.logs.err, redirectStdout = jc.logs.out)
+      evalStatus = Bash.eval(jc.cmd, redirectStderr = jc.logs.err, redirectStdout = jc.logs.out, wd = jc.wd)
     }
 
 

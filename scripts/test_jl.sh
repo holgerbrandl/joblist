@@ -42,10 +42,10 @@ jsub --other_queue_args "-W 00:01" "sleep 12"
 
 jl submit -j .whit "echo foo"
 jl submit -j .whit "echo bar"
-jl submit -j .whit -O "-W 00:01" "sleep 120; touch whit.txt"
+jl submit -j .whit -O "-W 00:01" "sleep 80; touch whit.txt"
 jl wait --resubmit_wall "00:10" .whit
 
-jl stats
+jl stats --report
 
 
 ## test qeueu status monitoring

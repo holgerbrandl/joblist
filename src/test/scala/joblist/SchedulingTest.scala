@@ -1,6 +1,7 @@
 package joblist
 
 import better.files._
+import joblist.local.LocalScheduler
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.CollectionUtils.StrictSetOps
@@ -56,6 +57,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "submit some jobs and wait until they are done " in {
     val jl = new JobList(wd / ".run_and_wait")
+    //    val jl = JobList(wd / ".unit_jobs_test")
 
     val tasks = for (i <- 1 to 3) yield {
       JobConfiguration(s"""sleep 2; echo "this is task $i" > task_$i.txt """, wd = wd)
@@ -85,11 +87,19 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     // make sure that we can still access the job configurations
     val restoredJC = jl.jobs.map(_.config).head
-    restoredJC.queue should equal("medium")
+
+    if (!jl.scheduler.isInstanceOf[LocalScheduler]) {
+      restoredJC.queue should equal("medium")
+    }
   }
 
 
   it should "resubmit killed jobs" in {
+    // disable test if local scheduler is used
+    // should no longer necessary once https://github.com/holgerbrandl/joblist/issues/17 has been fixed
+    if (guessScheduler().isInstanceOf[LocalScheduler]) {
+      cancel
+    }
 
     val jl = JobList(wd / ".with_walllimit")
 
@@ -106,7 +116,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.jobs should have size (3)
     jl.killed should have size (2)
-    jl.failed should have size (2)
+    jl.requiresRerun should have size (2)
 
     // resubmit killed jobs with more walltime
     jl.resubmitFailed(new DiffWalltime("00:05"))

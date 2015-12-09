@@ -88,7 +88,11 @@ class LsfScheduler extends JobScheduler {
       map(bjLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
         val bjLineSplit = bjLine.split(" +")
-        QueueStatus(bjLineSplit(0).toInt, bjLineSplit(2))
+
+        // do simplistic state remapping to allow for correct status reporting
+        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
+
+        QueueStatus(bjLineSplit(0).toInt, status)
       }).toList
   }
 

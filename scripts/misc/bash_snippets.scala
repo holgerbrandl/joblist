@@ -17,7 +17,7 @@ import joblist._
 
 new File(".").getAbsoluteFile
 
-val jobId = guessQueue().submit(JobConfiguration("""
+val jobId = guessScheduler().submit(JobConfiguration("""
 echo test
 echo test >&2
 touch test_lsf.txt
