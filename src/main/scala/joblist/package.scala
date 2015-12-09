@@ -68,12 +68,15 @@ package object joblist {
     var nameElements: ListBuffer[String] = ListBuffer()
 
     require(directory.isDirectory)
-    if (directory.parent.isDirectory && directory.parent.parent.isDirectory) {
-      nameElements += directory.parent.parent.name
+
+    def isDirNonRoot(f: File): Boolean = f.isDirectory && f.isDirectory && f.path.toString != "/"
+
+    if (isDirNonRoot(directory.parent)) {
+      nameElements += directory.parent.name
     }
 
-    if (directory.isDirectory && directory.parent.isDirectory) {
-      nameElements += directory.parent.name
+    if (isDirNonRoot(directory)) {
+      nameElements += directory.name
     }
 
     //    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
