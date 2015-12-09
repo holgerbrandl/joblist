@@ -64,7 +64,7 @@ object JobListCLI extends App {
 
 
   def printUsageAndExit(): Unit = {
-    Console.err.println(
+    Console.out.println(
       """
       Usage: jl <command> [options] [<joblist_file>]
 
@@ -167,7 +167,7 @@ object JobListCLI extends App {
       if (!debugTag.exists) {
         debugTag.touch()
 
-        Console.err.println(s"${jl.file.name}: debug head with command:\n${jc.cmd}")
+        Console.out.println(s"${jl.file.name}: eval head with command:\n${jc.cmd}")
         Bash.eval(jc.cmd, showOutput = true)
       } else {
         Console.err.println(s"${jl.file.name}: ignoring debug job submission. Remove ${debugTag.name} to debug again")
@@ -342,19 +342,27 @@ object JobListCLI extends App {
 
     Options:
      --report     Create an html report for this joblist
-     --failed     Print ONLY ids of all final but not yet done jobs in this joblist. If empty the joblist has
-                  been completely processed without errors. Useful for flowcontrol in bash scripts.
+     --failed     Print ONLY ids of all final but not yet done jobs in this joblist. If empty the joblist
+                  has been completely processed without errors. Useful for flow-control in bash scripts.
     """.alignLeft.trim)
 
     val jl = getJL(options)
 
+
+    if (options.get("failed").get.toBoolean) {
+      Console.out.print(jl.requiresRerun.map(_.id).mkString("\n"))
+      return
+    }
+
     println(jl.toString)
     println(jl.status)
 
-    if (options.get("failed").get.toBoolean) {
-      println(jl.requiresRerun.mkString("\n"))
-      return
-    }
+    jl.jobs.map(_.info).
+      map(ri => {
+        Seq(ri.jobId, ri.jobName, ri.state).mkString("\t")
+      }).
+      foreach(println)
+
 
 
     // create an html report

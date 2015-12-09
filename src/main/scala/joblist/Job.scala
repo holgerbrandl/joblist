@@ -35,7 +35,7 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
 
   /** Job reached final state but is not done (because it either failed, was killed or canceled) */
-  def requiresRerun = infoFile.isRegularFile && (isFinal || !isDone)
+  def requiresRerun = infoFile.isRegularFile && isFinal && !isDone
 
 
   // todo actually this could be a collection of jobs because we escalate the base configuration

@@ -38,8 +38,9 @@ jl --version
 
 Submit some jobs with busb as you're used to and use jl for blocking and monitoring and final status handling:
 ```
-busb "hello foo" | jl add
-busb "hello bar" | jl add
+bsub "echo foo" | jl add
+bsub "echo bar" | jl add
+bsub "exit 1"   | jl add
 
 jl wait
 
@@ -47,6 +48,8 @@ if [ -n "$(jl status --failed)" ]; then
     echo "some jobs failed"
 fi
 
+## which ones
+jl status
 ```
 
 All `jl` commands use `.jobs` as a default list, but you can provide your own for clarity:

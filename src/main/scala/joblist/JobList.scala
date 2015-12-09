@@ -332,8 +332,11 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     assert(jobs.nonEmpty)
 
+    val numDone = jobs.count(_.isDone)
     // todo also report done percentage
-    f" ${jobs.size}%4s jobs in total; ${jobs.count(_.isDone)}%4s done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed; ${resubGraph().size}%4s ressubmitted"
+    //  ${resubGraph().size}%4s ressubmitted
+    val donePerc = 100 * numDone.toDouble / jobs.size
+    f"${file.name}: ${jobs.size}%4s jobs in total; ${numDone}%4s (${donePerc}%1.1f%%) done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed"
   }
 
 

@@ -34,7 +34,6 @@ package object joblist {
       return new SlurmScheduler()
     }
 
-    Console.err.println("Could not auto-detect queuing system. Using multi-threaded local job-scheduler...")
     new LocalScheduler()
     //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }
@@ -225,7 +224,7 @@ package object joblist {
       val statsFile = File(jl.file.fullPath + ".runinfo.log")
 
       statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
-        "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
+        "exec_host", "status", "user", "resubmission_of").mkString("\t"))
       statsFile.appendNewLine()
 
 
@@ -235,7 +234,7 @@ package object joblist {
         map(ri => {
           Seq(
             ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,
-            ri.state == JobState.KILLED, ri.execHost, ri.state, ri.user, Job(ri.jobId)(jl).resubOf.map(_.id).getOrElse("")
+            ri.execHost, ri.state, ri.user, Job(ri.jobId)(jl).resubOf.map(_.id).getOrElse("")
           ).mkString("\t")
         }).foreach(statsFile.appendLine)
 
