@@ -93,6 +93,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     jobs.filter(_.requiresRerun)
   }
 
+
   def queueStatus = {
     //noinspection ConvertibleToMethodValue
     val jobIds = jobs.map(_.id) // inlining ot would cause it to be evaulated jl.size times
@@ -224,13 +225,15 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   /** Waits for current jl to finish, resubmit failed jobs, wait again */
   def waitResubWait(resubmitStrategy: ResubmitStrategy = new TryAgain()) = {
     waitUntilDone()
-    resubmitFailed(resubmitStrategy)
+    resubmit(resubmitStrategy)
     waitUntilDone()
   }
 
 
-  def resubmitFailed(resubStrategy: ResubmitStrategy = new TryAgain(),
-                     resubJobs: List[Job] = getConfigRoots(failed)): Unit = {
+  /** Resubmit jobs to the queue. By default those jobs will be resubmitted which reached a final state that is
+    * different from DONE. */
+  def resubmit(resubStrategy: ResubmitStrategy = new TryAgain(),
+               resubJobs: List[Job] = getConfigRoots(requiresRerun)): Unit = {
 
     // tbd consider to move/rename user-logs
 
@@ -291,6 +294,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def kill() = jobs.foreach(job => scheduler.cancel(jobs.map(_.id)))
+
 
   //
   //  Reporting

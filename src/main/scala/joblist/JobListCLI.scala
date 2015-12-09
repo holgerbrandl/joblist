@@ -245,6 +245,11 @@ object JobListCLI extends App {
 
     jl.requireListFile()
 
+    // handle the local scheduler here: restart all non complete jobs
+    if (jl.scheduler.isInstanceOf[LocalScheduler]) {
+      jl.resubmit(resubJobs = jl.jobs.filterNot(_.isFinal))
+    }
+
     jl.waitUntilDone()
 
     // in case jl.submit was used to launch the jobs retry in case they've failed
@@ -265,7 +270,7 @@ object JobListCLI extends App {
 
     while (tbd.nonEmpty && numResubmits < resubChain.size) {
       // todo expose config root mapping as argument
-      jl.resubmitFailed(resubChain.get(numResubmits), getConfigRoots(tbd))
+      jl.resubmit(resubChain.get(numResubmits), getConfigRoots(tbd))
 
       numResubmits = numResubmits + 1
 

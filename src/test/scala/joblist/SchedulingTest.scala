@@ -119,7 +119,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.requiresRerun should have size (2)
 
     // resubmit killed jobs with more walltime
-    jl.resubmitFailed(new DiffWalltime("00:05"))
+    jl.resubmit(new DiffWalltime("00:05"))
     jl.scheduler.getQueued should have size (2)
 
     jl.waitUntilDone()

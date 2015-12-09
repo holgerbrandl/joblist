@@ -46,7 +46,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.isDone should be(false)
 
     // tweak commands in resubmission so that they all make it
-    jl.resubmitFailed(new ResubmitStrategy {
+    jl.resubmit(new ResubmitStrategy {
       override def escalate(jc: JobConfiguration): JobConfiguration = {
         jc.copy(cmd = "sleep 1")
       }
