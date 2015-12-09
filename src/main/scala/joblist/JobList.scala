@@ -327,7 +327,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     // also do some internal consistenct checks
     if (!scheduler.isInstanceOf[LocalScheduler]) {
       // would not work since local scheduler just runs jobs when in wait (or via api)
-      assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size)
+      assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size, s"queued=${queuedJobs.size}; final=${jobs.count(_.isFinal)}; total=${jobs.size}")
     }
 
     assert(jobs.nonEmpty)
@@ -358,7 +358,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   override def toString: String = {
-    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.fullPath})"""
+    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.parent.fullPath})"""
   }
 
 

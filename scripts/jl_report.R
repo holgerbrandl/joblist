@@ -52,7 +52,7 @@ safe_ifelse <- function(cond, yes, no) {
 empty_as_na <- function(x) safe_ifelse(x!="", x, NA)
 
 
-allJobs <- read.delim(paste0(reportName, ".stats.runinfo.log"), fill=T) %>%
+allJobs <- read.delim(paste0(reportName, ".runinfo.log"), fill=T) %>%
     transform(job_id=factor(job_id)) %>%
     arrange(job_id) %>%
     # impose an order on th ejob ids
@@ -78,7 +78,7 @@ wallLimits <- c(short=1, medium=8, long=96)
 allJobs %<>%  mutate(queueLimit=wallLimits[ac(queue)])
 allJobs %<>% mutate(exceeded_queue_limit=exec_time_hours>queueLimit)
 
-write.delim(allJobs, file=paste0(reportName, ".stats.runinfo_ext.log"))
+write.delim(allJobs, file=paste0(reportName, ".runinfo_ext.log"))
 
 
 # Extract the final set (not including the killed and resubmitted ones)

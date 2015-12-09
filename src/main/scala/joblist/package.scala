@@ -222,9 +222,7 @@ package object joblist {
     def exportStatistics() = {
       jl.requireListFile()
 
-      val statsBaseFile: File = File(jl.file.fullPath + ".stats")
-
-      val statsFile = File(statsBaseFile.fullPath + ".runinfo.log")
+      val statsFile = File(jl.file.fullPath + ".runinfo.log")
 
       statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
         "queue_killed", "exec_host", "status", "user", "resubmission_of").mkString("\t"))
@@ -243,7 +241,7 @@ package object joblist {
 
 
       // also write congig header where possible
-      val jcLogFile = File(statsBaseFile.fullPath + ".jc.log")
+      val jcLogFile = File(jl.file.fullPath + ".jobconf.log")
       jcLogFile.write(
         Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
       )
@@ -266,13 +264,13 @@ package object joblist {
       println(s"${jl.file.name}: Exported statistics into ${jl.file.name}.{runinfo|jc}.log")
 
       //todo load script from resource
+      Console.out.print(s"${jl.file.name}: Rendering HTML report...")
       val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
       //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
 
       val reportFile = scalautils.r.rendrSnippet(jl.file.name + ".stats", reportScript, showCode = false, args = jl.file.fullPath, wd = jl.file.parent)
       require(reportFile.isRegularFile, s"report generation failed for '$jl'")
-
-      println(s"${jl.file.name}: Created html report ${reportFile.name}")
+      Console.out.println(s" done '${reportFile.name}'")
     }
   }
 
