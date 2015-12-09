@@ -180,5 +180,7 @@ class LsfScheduler extends JobScheduler {
   }
 
 
-  override def cancel(jobIds: Seq[Int]) = jobIds.foreach(id => Bash.eval(s"bkill ${id}"))
+  override def cancel(jobIds: Seq[Int]) = {
+    jobIds.foreach(id => Bash.eval(s"bkill ${id}", showOutput = true))
+  }
 }

@@ -49,10 +49,11 @@ object JobListCLI extends App {
     case "submit" => submit()
     case "add" => add()
     case "wait" => wait4jl()
-    case "up" => btop()
-    case "kill" => kill()
-    case "shortcuts" => shortcuts()
     case "status" => status()
+    case "kill" => kill()
+    case "up" => btop()
+    case "shortcuts" => shortcuts()
+
     case _ => printUsageAndExit()
   }
 
@@ -70,11 +71,11 @@ object JobListCLI extends App {
 
       Supported commands are
         submit    Submits a named job including automatic stream redirection and adds it to the list
-        add       Allows to feeed stderr in jl which will extract the job-id and add it to the list
+        add       Extract job-ids from stdin and add them to the list
         wait      Wait for a list of tasks to finish
-        kill      Removes all still queued jobs of this list from the scheduler
-        up        Moves a list of jobs to the top of a queue
         status    Prints various statistics and allows to create an html report for the list
+        kill      Removes all queued jobs of this list from the scheduler
+        up        Moves a list of jobs to the top of a queue if supported by the underlying scheduler
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
@@ -86,7 +87,16 @@ object JobListCLI extends App {
 
 
   def getJL(options: Map[String, String], jlArgName: String = "joblist_file") = {
-    new JobList(File(Option(options(jlArgName)).getOrElse(DEFAULT_JL)))
+    val forceLocal = sys.env.get("JL_LOCAL_ONLY").isDefined
+
+    val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
+
+    if (forceLocal) {
+      Console.err.println(s"${listFile.name}: Using local scheduler")
+      new JobList(listFile, new LocalScheduler)
+    } else {
+      new JobList(listFile)
+    }
   }
 
 

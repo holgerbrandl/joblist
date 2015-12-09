@@ -159,7 +159,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     while (isRunning) Thread.sleep(sleepInterval)
 
     // print a short report
-    Console.err.println(file.name + ":" + status)
+    //    Console.err.println(file.name + ":" + status)
   }
 
 

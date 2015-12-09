@@ -77,7 +77,7 @@ class LocalScheduler extends JobScheduler {
 
     val jobId = new Random().nextInt(Int.MaxValue)
 
-    val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, jc.queue, "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
+    val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, "local", "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
     jobstats += (jobId -> runInfo)
 
     // also create placeholder threads to respect thread settings
@@ -137,7 +137,8 @@ class LocalScheduler extends JobScheduler {
 
   /** Cancel a list of jobs */
   override def cancel(jobIds: Seq[Int]): Unit = {
+    throw new RuntimeException("job killing is neither supported nor necessary when using the local schedueler")
     // http://stackoverflow.com/questions/1562079/how-to-stop-the-execution-of-executor-threadpool-in-java
-    executor.shutdownNow()
+    //    executor.shutdownNow()
   }
 }
