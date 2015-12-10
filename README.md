@@ -20,20 +20,27 @@ echo 'export PATH='$(pwd)/joblist_v0.3':$PATH' >> ~/.bash_profile
 source ~/.bash_profile
 ```
 
-Java8 is required to run JobList. To create (optional but recommenced) html reports [R](https://www.r-project.org/) (v3.2) and [pandoc](http://pandoc.org/) ([static build](https://github.com/jgm/pandoc/issues/11)) are needed required.
+Java8 is required to run JobList. To create (optional but recommenced) html reports [R](https://www.r-project.org/) (v3.2) and [pandoc](http://pandoc.org/) ([static build](https://github.com/jgm/pandoc/issues/11)) are needed.
 
-To use single verbs you can use some provided shortcuts by adding this to your bash_profile
-```
-eval "$(jl shortcuts)"
-```
 
 Basic Usage
 -----------
 
 
 ```
-jl --help
-jl --version
+> jl --help
+Usage: jl <command> [options] [<joblist_file>]
+
+Supported commands are
+  submit    Submits a named job including automatic stream redirection and adds it to the list
+  add       Extract job-ids from stdin and add them to the list
+  wait      Wait for a list of tasks to finish
+  status    Prints various statistics and allows to create an html report for the list
+  kill      Removes all queued jobs of this list from the scheduler
+  up        Moves a list of jobs to the top of a queue if supported by the underlying scheduler
+
+If no <joblist_file> is provided, jl will use '.jobs' as default
+
 ```
 
 
