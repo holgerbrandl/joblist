@@ -13,16 +13,28 @@ object JlDebug extends App {
   import joblist._
 
   //  implicit val jl = new JobList("/home/brandl/test/.whit*")
+  //  implicit val jl = new JobList("/Users/brandl/jl_test/.est_test")
   implicit val jl = new JobList()
   jl.reset()
-  jl.status
-  jl.run(JobConfiguration("sleep 10", "test_job", numThreads = 3))
+  jl.printStatus()
 
+  for (jobNr <- 1 to 20) {
+    jl.run(JobConfiguration("sleep 5", s"test_job_$jobNr"))
+  }
+
+  jl.printStatus()
+
+  //  Thread.sleep(10000)
+  println("waiting")
+
+
+  //  jl.run(JobConfiguration("sleep 10", "test_job", numThreads = 3))
   jl.failed
   jl.isDone
   jl.waitUntilDone()
 
-  jl.status
+  println("done")
+  //  jl.showStatus()
 
 
 

@@ -92,7 +92,7 @@ object JobListCLI extends App {
     val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
 
     if (forceLocal) {
-      Console.err.println(s"${listFile.name}: Using local scheduler")
+      Console.out.println(s"${listFile.name}: Using local scheduler")
       new JobList(listFile, new LocalScheduler)
     } else {
       new JobList(listFile)
@@ -147,17 +147,24 @@ object JobListCLI extends App {
 
 
     if (options.get("batch").get.toBoolean) {
-      //      var jobNr=1
-      val batchFile = File(options.get("cmds_file").get)
-      require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
+      val batchArg = options.get("cmds_file").get
 
-      val baseName = options.getOrElse("name", "")
+      // either read lines from file or from stdin if - is used
+      val lines = if (batchArg == "-") {
+        io.Source.stdin.getLines()
+      } else {
+        val batchFile = File(batchArg)
+        require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
 
-      batchFile.allLines.map(batchCmd => {
+        batchFile.allLines
+      }
+
+      // convert all lines into jobs
+      lines.map(batchCmd => {
 
         jobConfigs += baseConfig.copy(
           cmd = batchCmd,
-          name = baseName + "_" + Math.abs(batchCmd.hashCode())
+          name = options.getOrElse("name", null)
         )
       })
 
@@ -180,7 +187,7 @@ object JobListCLI extends App {
         Console.out.println(s"${jl.file.name}: eval head with command:\n${jc.cmd}")
         Bash.eval(jc.cmd, showOutput = true)
       } else {
-        Console.err.println(s"${jl.file.name}: ignoring debug job submission. Remove ${debugTag.name} to debug again")
+        Console.out.println(s"${jl.file.name}: ignoring debug job submission. Remove ${debugTag.name} to debug again")
       }
 
       return

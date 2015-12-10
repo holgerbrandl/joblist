@@ -1,6 +1,7 @@
 import java.io.{BufferedWriter, FileWriter, PrintWriter}
 import java.net.URI
 import java.nio.file.Files
+import java.text.DecimalFormat
 
 import better.files.File
 import com.thoughtworks.xstream.XStream
@@ -10,8 +11,8 @@ import joblist.JobState.JobState
 import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 import joblist.slurm.SlurmScheduler
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISOPeriodFormat}
+import org.joda.time.{DateTime, Duration, Seconds}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
@@ -279,6 +280,89 @@ package object joblist {
 
       Console.out.println(s" done '${reportFile.name}'")
     }
+
+
+    def estimateRemainingTime: Option[Duration] = {
+      // don't estimate if too few jobs provide data
+      if (jl.jobs.count(_.isDone) < 5) return None
+      if (jl.jobs.forall(_.isDone)) return Some(Duration.ZERO)
+
+
+      // calc mean runtime for all finished jobs
+      val avgRuntimeSecs = jl.jobs.filter(_.isDone).map(_.info).map(ri => {
+        new Duration(ri.startTime, ri.finishTime).getStandardSeconds.toDouble
+      }).mean
+
+      //calculate diffs in starting time to estimate avg between starts
+      val avgStartDiffSecs = jl.jobs.
+        map(_.info.startTime).filter(_ != null).
+        sortWith(_.isBefore(_)).sliding(2).
+        map { case List(firstTime, sndTime) =>
+          new Duration(firstTime, sndTime).getStandardSeconds.toDouble
+        }.
+        // just use the laste n=20 differences (because cluster usage might change
+        toList.takeRight(20).mean
+
+      val numPending = jl.jobs.count(_.info.state == JobState.PENDING)
+
+      // basically runtime is equal as last jobs finishtime which can be approximated by
+      val numSecondsRemaing = numPending * avgStartDiffSecs + avgRuntimeSecs
+      Some(Seconds.seconds(numSecondsRemaing.round.toInt).toStandardDuration)
+    }
   }
 
+  class ListStatus(jl: JobList) {
+
+    val queuedJobs = jl.queueStatus
+
+    private val jobs = jl.jobs
+
+    val numTotal: Int = jobs.size
+    val numDone = jobs.count(_.isDone)
+
+    val numFinal = jobs.count(_.isFinal)
+    val finalPerc = 100 * numFinal.toDouble / jobs.size
+
+
+    def fixedLenFinalPerc = jobs.size match {
+      case 0 => " <NA>"
+      case _ => "%5s" format new DecimalFormat("0.0").format(100 * numFinal.toDouble / jobs.size)
+    }
+
+
+    val numFailed = jobs.count(_.hasFailed)
+
+    val numRunning = queuedJobs.count(_.status == JobState.RUNNING.toString)
+    val numPending = queuedJobs.size - numRunning
+    // todo pending could also come from the queue info
+    val numKilled = jobs.count(_.wasKilled)
+
+
+    val remTime = jl.estimateRemainingTime
+
+
+    def stringifyRemTime = remTime match {
+      // http://stackoverflow.com/questions/3471397/pretty-print-duration-in-java
+      case Some(duration) => "~" + ISOPeriodFormat.standard().print(duration.toPeriod).replace("PT", "")
+      case _ => "<NA>"
+    }
+
+
+    // ensure list consistency
+    assert(queuedJobs.size + numFinal == numTotal, toString)
+
+
+    override def toString = {
+      val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaing time $stringifyRemTime%6s; "
+      val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; ; $numKilled%4s killed; $numFailed%4s failed"
+      summary + counts
+    }
+  }
+
+  // http://stackoverflow.com/questions/4753629/how-do-i-make-a-class-generic-for-all-numeric-types
+  // http://stackoverflow.com/questions/3498784/scala-calculate-average-of-someobj-double-in-a-listsomeobj/34196631#34196631
+  implicit class ImplDoubleVecUtils(values: Seq[Double]) {
+
+    def mean = values.sum / values.length
+  }
 }

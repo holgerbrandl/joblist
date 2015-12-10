@@ -1,7 +1,6 @@
 package joblist
 
 import better.files.File
-import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 
 import scalautils.Bash
@@ -124,7 +123,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     //      println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
     // workaround (fix?) for https://github.com/holgerbrandl/joblist/issues/5
     if (changedQS.nonEmpty) {
-      println(file.name + ":" + status)
+      printStatus()
       //todo  print estimated runtime here (see https://github.com/holgerbrandl/joblist/issues/9)
       // maybe check stdin and reprint report on user input???
     }
@@ -145,9 +144,9 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // add delay because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
-      Console.err.print("Initializing LSF monitoring...")
+      Console.out.print("Initializing LSF monitoring...")
       Thread.sleep(3000)
-      Console.err.println("Done")
+      Console.out.println("Done")
     }
 
     requireListFile()
@@ -173,10 +172,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
 
 
-    if (unqeuedNonFinalJobs.nonEmpty && scheduler.isInstanceOf[LocalScheduler]) {
-      Console.err.println("skipping info update for non-final jobs because local scheduler is used")
-      return
-    }
+    //    if (unqeuedNonFinalJobs.nonEmpty && scheduler.isInstanceOf[LocalScheduler]) {
+    //      Console.err.println("skipping info update for non-final jobs because local scheduler is used")
+    //      return
+    //    }
 
     unqeuedNonFinalJobs.foreach(updateStatsFile)
   }
@@ -228,7 +227,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     updateStatsFile(Job(jobId))
 
-    Console.err.println(s"${file.name}: Added job '${jobId}'")
+    Console.out.println(s"${file.name}: Added job '${jobId}'")
   }
 
 
@@ -274,7 +273,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
     // add resubmit killed ones and add their ids to the list-file as well
-    Console.err.println(s"${file.name}: Resubmitting ${resubJobs.size} job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
+    Console.out.println(s"${file.name}: Resubmitting ${resubJobs.size} job${if (resubJobs.size > 1) "s" else ""} with ${resubStrategy}...")
 
     val prev2NewIds = resubJobs.map(job => job -> {
       run(resubStrategy.escalate(job.config))
@@ -311,32 +310,16 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //  Reporting
   //
 
-  def status: String = {
-    if (!file.isRegularFile) {
-      return s"${file.name} has not been initialized by adding a job to it"
-    }
+  def printStatus() = {
+    println(status)
+  }
 
+
+  def status = {
+    // we refresh stats here since some jobs might still be in the queue and it's not clear if jl is running
     updateNonFinalStats()
-    // todo maybe we should refresh stats since some jobs might still be in the queue and it's not clear if jl is running
 
-    val queuedJobs = queueStatus
-    val numRunning = queueStatus.count(_.status == JobState.RUNNING.toString)
-    //todo pending could also come from the queue info
-    val pending = queuedJobs.size - numRunning
-
-    // also do some internal consistenct checks
-    if (!scheduler.isInstanceOf[LocalScheduler]) {
-      // would not work since local scheduler just runs jobs when in wait (or via api)
-      assert(queuedJobs.size + jobs.count(_.isFinal) == jobs.size, s"queued=${queuedJobs.size}; final=${jobs.count(_.isFinal)}; total=${jobs.size}")
-    }
-
-    assert(jobs.nonEmpty)
-
-    val numDone = jobs.count(_.isDone)
-    // todo also report done percentage
-    //  ${resubGraph().size}%4s ressubmitted
-    val donePerc = 100 * numDone.toDouble / jobs.size
-    f"${file.name}: ${jobs.size}%4s jobs in total; ${numDone}%4s (${donePerc}%1.1f%%) done; ${numRunning}%4s running; ${pending}%4s pending; ; ${killed.size}%4s killed; ${failed.size}%4s failed"
+    new ListStatus(this)
   }
 
 

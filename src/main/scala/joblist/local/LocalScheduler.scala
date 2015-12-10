@@ -38,7 +38,7 @@ class LocalScheduler extends JobScheduler {
         Thread.sleep(3000) // wait a second to avoid that jobs are actually started in add mode
 
         val jobId = r.asInstanceOf[JobRunnable].jobId
-        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, finishTime = new DateTime()))
+        jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
       }
       super.beforeExecute(t, r)
     }
@@ -105,8 +105,11 @@ class LocalScheduler extends JobScheduler {
   }
 
 
-  override def updateRunInfo(id: Int, runinfoFile: File): Unit = {
-    toXml(jobstats(id), runinfoFile)
+  override def updateRunInfo(jobId: Int, runinfoFile: File): Unit = {
+    toXml(jobstats(jobId), runinfoFile)
+
+    // remove final stats from fake queue
+    //    dummies.remove(jobId)
   }
 
 

@@ -37,6 +37,8 @@ mvn clean install -Dmaven.test.skip=true
 cd $jl_deps_dir
 git clone https://github.com/holgerbrandl/scalautils.git
 cd scalautils
+git pull
+
 sbt publishLocal
 
 
