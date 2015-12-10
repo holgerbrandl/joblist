@@ -1,6 +1,6 @@
 # FAQ
 
-## How to enforce local schedulering one cluster?
+## How to enforce local schedulering one a cluster?
 Define a bash variable named `JL_LOCAL_ONLY`:
 ```
 export JL_LOCAL_ONLY=true
@@ -28,3 +28,26 @@ To restore scheduler auto-detection, simply remove the variable with
 unset JL_LOCAL_ONLY
 ```
 
+
+
+## How to use jl to monitor a large number of jobs?
+
+Since jl startup is limited by the underlying java VM, subsequent invocation might be too slow to monitor/submit large (ie >1k) jobs jobs
+
+There are 2 options to overcome this limitation
+
+* Batch submissions: `jl` can read job definitions from stdin. It expectes one job per line
+
+	```
+	for job_nr in $(seq 1 10); do
+	    echo "sleepTime=$(perl -e 'print int(rand(20)) + 10'); sleep $sleepTime; echo slept for $sleepTime seconds in job $job_nr"
+	done | jl submit --batch -
+	```
+
+* Loop redirection: To just monitor a large number of jobs simply [pipe](http://stackoverflow.com/questions/18612603/redirecting-output-of-bash-for-loop) your submission loop into jl
+
+	```
+	for job_nr in $(seq 1 10); do
+	    bsub "sleep 10"
+	done | jl submit add
+	```

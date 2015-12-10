@@ -25,8 +25,6 @@ object JobListCLI extends App {
 
   val DEFAULT_JL = ".jobs"
 
-  //  Console.err.println(s"args are ${args.mkString(", ")}")
-
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
     println(
       s"""
@@ -114,9 +112,6 @@ object JobListCLI extends App {
 
   def submit(): Any = {
 
-    // todo add stdin support for batch input
-    // see http://stackoverflow.com/questions/18612603/redirecting-output-of-bash-for-loop
-
     val options = parseArgs(args,
       s"""
     Usage: jl submit [options] ( --batch <cmds_file> | <command> )
@@ -132,8 +127,6 @@ object JobListCLI extends App {
                                           execution state
      --wait                               Wait until the job is done. Useful for single clusterized tasks
       """.alignLeft.trim)
-
-    // todo add option to disable automatic stream redirection
 
     val jl = getJL(options, "jl")
 
@@ -195,7 +188,6 @@ object JobListCLI extends App {
 
     // save for later in case we need to restore it
     jobConfigs.foreach(jl.run)
-    //    jl.run(jc)
 
     // we  block here in 2 situations
     // a) the user asked for it.
@@ -207,30 +199,16 @@ object JobListCLI extends App {
 
 
   def add() = {
-    // val args = Array("jl", "add")
     val options = parseArgs(args, "Usage: jl add [options] [<joblist_file>]")
 
     val jl = getJL(options)
 
     try {
-
       // extract job id from stdin stream and add it to the given JobList
       val jobIds = jl.scheduler.readIdsFromStdin()
 
-      //      Console.err.println("pwd is "+File(".'"))
-
       require(jobIds.nonEmpty)
       jobIds.foreach(jl.add)
-
-      //tbd adding just one job per invokation this is not strictly necessary
-      // require(jobId.size==1, "just one job can be registered per invokation")
-      //        jl.add(jobId.next)
-      //        jl.add(jobId.next)
-
-      // tag and serialize local scheduler
-      //      if(jl.scheduler.isInstanceOf[LocalScheduler]){
-      //        jl.scheduler.asInstanceOf[LocalScheduler].jobstats.keys.foreach(jl.updateStatsFile(Job(_)))
-      //      }
 
       jobIds
     } catch {
@@ -241,10 +219,6 @@ object JobListCLI extends App {
 
   def wait4jl() = {
 
-
-    // val args = Array("jl", "wait")
-    // val args = Array("jl", "wait", ".blastn")
-    // val args = ("wait --resubmit_retry " + jl.file.fullPath).split(" ")
     val doc =
       """
     Usage: jl wait [options] [<joblist_file>]
