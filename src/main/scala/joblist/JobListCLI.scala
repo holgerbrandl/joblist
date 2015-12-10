@@ -368,6 +368,10 @@ object JobListCLI extends App {
   }
 
 
+  //  To use single verbs you can use some provided shortcuts by adding this to your bash_profile
+  //  ```
+  //  eval "$(jl shortcuts)"
+  //  ```
   def shortcuts() = {
     println(
       """

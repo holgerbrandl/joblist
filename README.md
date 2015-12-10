@@ -79,7 +79,7 @@ jl submit "sleep 1000"        ## add another which won't finish in our default q
 jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
 Another advantage when submitting jobs via `jl` is that it decouples workflows from the underlying queuing system.
-Ie. the last example would run on a slurm system, an lsf cluster or simply locally on any desktop machine
+Ie. the last example would run on a Slurm system, an LSF cluster or simply locally on any desktop machine.
 
 API Usage
 ---------
@@ -90,7 +90,7 @@ In addition to the provided shell utilities, joblist is also usable programatica
 libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.3"
 ```
 
-Here's an example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
+Here's a [Scala](http://www.scala-lang.org/) example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
 ```
 import joblist._
 
@@ -133,6 +133,10 @@ sbt test
 The tests will auto-detect the queuing system or fall back to use a local scheduler in case auto-detection fails
 
 
+Support
+-------
+
+Feel welcome to submit pull-requests or tickets,  or simply get in touch via gitter (see button on top).
 
 Related Projects
 ----------------
