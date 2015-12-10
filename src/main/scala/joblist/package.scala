@@ -284,18 +284,21 @@ package object joblist {
 
     def estimateRemainingTime: Option[Duration] = {
       // don't estimate if too few jobs provide data
-      if (jl.jobs.forall(_.isDone)) return Some(Duration.ZERO)
-      if (jl.jobs.count(_.isDone) < 5) return None
+      if (jl.jobs.forall(_.isFinal)) return Some(Duration.ZERO)
+      if (!jl.jobs.exists(_.isFinal)) return None
 
 
       // calc mean runtime for all finished jobs
-      val avgRuntimeSecs = jl.jobs.filter(_.isDone).map(_.info).map(ri => {
+      val avgRuntimeSecs = jl.jobs.filter(_.isFinal).map(_.info).map(ri => {
         new Duration(ri.startTime, ri.finishTime).getStandardSeconds.toDouble
       }).mean
 
+      val startedJobs = jl.jobs.map(_.info.startTime).filter(_ != null)
+      if (startedJobs.size < 2) return None // because we can not estimate a single diff between job starts
+
+
       //calculate diffs in starting time to estimate avg between starts
-      val avgStartDiffSecs = jl.jobs.
-        map(_.info.startTime).filter(_ != null).
+      val avgStartDiffSecs = startedJobs.
         sortWith(_.isBefore(_)).sliding(2).
         map { case List(firstTime, sndTime) =>
           new Duration(firstTime, sndTime).getStandardSeconds.toDouble

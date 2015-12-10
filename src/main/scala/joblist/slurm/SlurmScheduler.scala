@@ -108,16 +108,26 @@ class SlurmScheduler extends JobScheduler {
   }
 
 
+  def queryRunData(statsCmd: String, jobId: Int, trialNum: Int = 1, maxTrials: Int = 3): Seq[String] = {
+    val logData = Bash.eval(statsCmd).stdout.toSeq
+
+    if (!logData.mkString.contains(jobId + "") && trialNum <= maxTrials) {
+      Console.err.println(s"$jobId is not yet or no longer in the job history. Retrying after 5 seconds ($trialNum out of $maxTrials) ...")
+      Thread.sleep(5000)
+
+      // simply try again
+      queryRunData(statsCmd, jobId, trialNum + 1)
+    } else {
+      logData
+    }
+  }
+
+
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
-    // more details sacct -j <jobid> --format=JobID,JobName,MaxRSS,Elapsed
-    // sacct -j 1641430 --format=JobID,JobName,MaxRSS,Elapsed
-    // scontrol show jobid -dd <jobid>
-    // todo write more structured/parse data here (json,xml) to ease later use
+    val statsCmd = s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User -P"
+    val logData = queryRunData(statsCmd, jobId)
 
-    val logData = Bash.eval(s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User -P").stdout.toSeq
-    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
-    rawLogFile.write(logData.mkString("\n"))
-
+    require(logData.mkString.contains(jobId + ""), s"$jobId is not yet or no longer in the job history:\n" + logData)
 
     //    val logData ="""
     //JobID|JobName|Elapsed|End|Submit|Start|State|ExitCode|Timelimit|User
@@ -125,11 +135,9 @@ class SlurmScheduler extends JobScheduler {
     //1963414.batch|batch|00:00:32|2015-12-10T12:07:23|2015-12-10T12:06:51|2015-12-10T12:06:51|COMPLETED|0:0||
     //""".trim.split("\n")
 
-    require(logData.mkString.contains(jobId + ""), s"$jobId is no longer in job history:\n" + logData) // use bhist in such a case
 
-
-    // second line indicates the column borders
-    //    val data = logData(1).indexOf(" ")
+    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
+    rawLogFile.write(logData.mkString("\n"))
 
     val header = logData.head.split("[|]").map(_.trim)
     val vals = logData(1).split("[|]").map(_.trim)

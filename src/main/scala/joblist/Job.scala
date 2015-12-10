@@ -34,6 +34,10 @@ case class Job(id: Int)(implicit val jl: JobList) {
   def isFinal = infoFile.isRegularFile && JobState.finalStates.contains(info.state)
 
 
+  /** Update the job run statistics. This will silently skip over final runinfo */
+  def updateStatsFile() = if (!isFinal) jl.scheduler.updateRunInfo(id, infoFile)
+
+
   /** Job reached final state but is not done (because it either failed, was killed or canceled) */
   def requiresRerun = infoFile.isRegularFile && isFinal && !isDone
 

@@ -20,7 +20,7 @@ echo 'export PATH='$(pwd)/joblist_v0.3':$PATH' >> ~/.bash_profile
 source ~/.bash_profile
 ```
 
-Java8 is required to run JobList.
+Java8 is required to run JobList. To create (optional but recommenced) html reports [R](https://www.r-project.org/) (v3.2) and [pandoc](http://pandoc.org/) ([static build](https://github.com/jgm/pandoc/issues/11)) are needed required.
 
 To use single verbs you can use some provided shortcuts by adding this to your bash_profile
 ```
@@ -37,7 +37,7 @@ jl --version
 ```
 
 
-Submit some jobs with busb as you're used to and use jl for blocking and monitoring and final status handling:
+Submit some jobs with bsub/sbatch as you're used to and use jl for blocking and monitoring and final status handling:
 ```
 bsub "echo foo" | jl add
 bsub "echo bar" | jl add
@@ -53,9 +53,16 @@ fi
 jl status
 ```
 
+Or to give a slurm example:
+```
+echo '#!/bin/bash
+touch test.txt' | sbatch -p my_queue -J test_job --time=00:20 | jl add
+jl wait --report
+```
+
 All `jl` commands use `.jobs` as a default list, but you can provide your own for clarity:
 ```
-busb "sleep 3" | jl add .other_jobs
+bsub "sleep 3" | jl add .other_jobs
 ```
 
 If jobs are submitted with `jl` they can also be resubmitted in case they fail:
@@ -64,7 +71,8 @@ jl submit "sleep 10"          ## add a jobs
 jl submit "sleep 1000"        ## add another which won't finish in our default queue
 jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
-
+Another advantage when submitting jobs via `jl` is that it decouples workflows from the underlying queuing system.
+Ie. the last example would run on a slurm system, an lsf cluster or simply locally on any desktop machine
 
 API Usage
 ---------

@@ -1,7 +1,6 @@
 package joblist
 
 import better.files.File
-import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 
 import scalautils.Bash
@@ -119,7 +118,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     val changedQS: Seq[Job] = nowInQueue.strictXor(lastQueueStatus).map(_.jobId).distinct.map(Job(_))
 
     // update runinfo for all jobs for which the queuing status has changed
-    changedQS.foreach(updateStatsFile)
+    changedQS.foreach(_.updateStatsFile())
 
     //      println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
     // workaround (fix?) for https://github.com/holgerbrandl/joblist/issues/5
@@ -152,7 +151,13 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     requireListFile()
 
-    updateNonFinalStats()
+    // Update runinfo for all jobs for which are not queued anymore, but have not yet reached a final state.
+    // This could happen for jobs which died too quickly  before we could gather stats about them
+    {
+      val queueIds = queueStatus.map(_.jobId)
+      val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
+      unqeuedNonFinalJobs.foreach(_.updateStatsFile())
+    }
 
     lastQueueStatus = List() //reset the queue history tracker
 
@@ -160,25 +165,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // print a short report
     //    Console.err.println(file.name + ":" + status)
-  }
-
-
-  /** Update runinfo for all jobs for which are not queued anymore, but have not yet reached a final state.
-    * This could happen for jobs which died too quickly  before we could gather stats about them
-    */
-  private def updateNonFinalStats(): Unit = {
-    //    if(scheduler.isInstanceOf[LocalScheduler]) return
-
-    val queueIds = queueStatus.map(_.jobId)
-    val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
-
-
-    //    if (unqeuedNonFinalJobs.nonEmpty && scheduler.isInstanceOf[LocalScheduler]) {
-    //      Console.err.println("skipping info update for non-final jobs because local scheduler is used")
-    //      return
-    //    }
-
-    unqeuedNonFinalJobs.foreach(updateStatsFile)
   }
 
 
@@ -227,10 +213,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     file.appendLine(jobId + "")
 
     // update is not feasible for actual scheduler which have some delay between submission and the job showing up in
-    // the stats
-    if (scheduler.isInstanceOf[LocalScheduler]) {
-      updateStatsFile(Job(jobId))
-    }
+    // the stats. However, it's essential for the local one which will loose the submission otherwise
+    //    if (scheduler.isInstanceOf[LocalScheduler]) {
+    //      Job(jobId).updateStatsFile()
+    //    }
 
 
     Console.out.println(s"${file.name}: Added job '${jobId}'")
@@ -324,10 +310,9 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def status = {
     // we refresh stats here since some jobs might still be in the queue and it's not clear if jl is running
-
-    if (!scheduler.isInstanceOf[LocalScheduler]) {
-      updateNonFinalStats()
-    }
+    //    if (!scheduler.isInstanceOf[LocalScheduler]) {
+    jobs.filterNot(_.isFinal).foreach(_.updateStatsFile())
+    //    }
 
     new ListStatus(this)
   }
@@ -360,7 +345,4 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def logsDir = (file.parent / ".jl").createIfNotExists(true)
 
-
-  /** Update the job statistics. This won't update data for final jobs. */
-  private def updateStatsFile(job: Job) = if (!job.isFinal) scheduler.updateRunInfo(job.id, job.infoFile)
 }
