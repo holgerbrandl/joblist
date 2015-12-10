@@ -1,6 +1,6 @@
 # FAQ
 
-## How to enforce local schedulering one a cluster?
+## How to enforce local scheduling on a cluster?
 Define a bash variable named `JL_LOCAL_ONLY`:
 ```
 export JL_LOCAL_ONLY=true

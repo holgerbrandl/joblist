@@ -44,6 +44,7 @@ object JlDebug extends App {
 
   //  jl.waitUntilDone()
 
+  System.exit(0)
 }
 
 class FileTests {

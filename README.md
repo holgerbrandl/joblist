@@ -6,7 +6,8 @@ A task list manager for hpc-clusters. Among others it supports monitoring, autom
 
 JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs is finished. It can output average runtime statistics and estimates when the entire jobList should be finished. 'jl' can recover crashed jobs and submit them again.
 
-JobLists are simple lists of job-ids as reported by the underlying queuing system. Currently [LSF](https://en.wikipedia.org/wiki/Platform_LSF), [slurm](http://slurm.schedmd.com/) and the local shell are supported as job runners.
+Conceptually `jl` *just* manages lists of job-ids as reported by the underlying queuing system. Currently [LSF](https://en.wikipedia.org/wiki/Platform_LSF), [slurm](http://slurm.schedmd.com/) but also any computer
+(by means of a bundled [local multi-threading scheduler](https://github.com/holgerbrandl/joblist/blob/master/src/main/scala/joblist/local/LocalScheduler.scala)) are supported to process job lists.
 
 
 Installation
@@ -91,7 +92,7 @@ jl.waitUntilDone()
 val killedInfo: List[RunInfo] = jl.killed.map(_.info)
 
 // resubmit to other queue
-jl.resubmitFailed(new BetterQueue("long"))
+jl.resubmit(new BetterQueue("long"))
 
 ```
 
@@ -110,7 +111,11 @@ To deploy into the local ivy-index run
 sbt publishLocal
 ```
 
-To run the tests you either need `bsub` and some of the lsf tools in your path. Alternativly you can also use/source the provided [dummy tools](https://github.com/holgerbrandl/joblist/blob/master/scripts/fake_lsf.sh)
+To run the test suite simply do
+```
+sbt test
+```
+The tests will auto-detect the queuing system or fall back to use a local scheduler in case auto-detection fails
 
 
 

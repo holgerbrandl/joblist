@@ -241,10 +241,7 @@ object JobListCLI extends App {
 
     jl.requireListFile()
 
-    // handle the local scheduler here: restart all non complete jobs
-    if (jl.scheduler.isInstanceOf[LocalScheduler]) {
-      jl.resubmit(resubJobs = jl.jobs.filterNot(_.isFinal))
-    }
+    restartLocalScheduler(jl)
 
     jl.waitUntilDone()
 
@@ -284,6 +281,14 @@ object JobListCLI extends App {
 
     if (options.get("report").get.toBoolean) {
       val reportFile = jl.createHtmlReport()
+    }
+  }
+
+
+  /** Handle the local scheduler here: restart all non complete jobs */
+  def restartLocalScheduler(jl: JobList): Unit = {
+    if (jl.scheduler.isInstanceOf[LocalScheduler]) {
+      jl.resubmit(resubJobs = jl.jobs.filterNot(_.isFinal))
     }
   }
 
@@ -339,7 +344,6 @@ object JobListCLI extends App {
 
     val jl = getJL(options)
 
-
     if (options.get("failed").get.toBoolean) {
       Console.out.print(jl.requiresRerun.map(_.id).mkString("\n"))
       return
@@ -353,6 +357,7 @@ object JobListCLI extends App {
       return
     }
 
+    restartLocalScheduler(jl)
     println(jl.status)
 
     jl.jobs.map(_.info).

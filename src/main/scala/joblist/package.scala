@@ -284,8 +284,8 @@ package object joblist {
 
     def estimateRemainingTime: Option[Duration] = {
       // don't estimate if too few jobs provide data
-      if (jl.jobs.count(_.isDone) < 5) return None
       if (jl.jobs.forall(_.isDone)) return Some(Duration.ZERO)
+      if (jl.jobs.count(_.isDone) < 5) return None
 
 
       // calc mean runtime for all finished jobs

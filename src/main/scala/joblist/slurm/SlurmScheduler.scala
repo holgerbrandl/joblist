@@ -114,25 +114,25 @@ class SlurmScheduler extends JobScheduler {
     // scontrol show jobid -dd <jobid>
     // todo write more structured/parse data here (json,xml) to ease later use
 
-    val logData = Bash.eval(s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit ").stdout.toSeq
+    val logData = Bash.eval(s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User -P").stdout.toSeq
     val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
     rawLogFile.write(logData.mkString("\n"))
 
 
     //    val logData ="""
-    //JobID    JobName    Elapsed                 End              Submit               Start      State ExitCode  Timelimit
-    //------------ ---------- ---------- ------------------- ------------------- ------------------- ---------- -------- ----------
-    //1650630        test_job   00:00:36 2015-12-04T11:39:27 2015-12-04T11:38:31 2015-12-04T11:38:51  COMPLETED      0:0   00:01:00
+    //JobID|JobName|Elapsed|End|Submit|Start|State|ExitCode|Timelimit|User
+    //1963414|brandl__jl_test__1385935802__773873654|00:00:32|2015-12-10T12:07:23|2015-12-10T12:06:51|2015-12-10T12:06:51|COMPLETED|0:0|08:00:00|brandl
+    //1963414.batch|batch|00:00:32|2015-12-10T12:07:23|2015-12-10T12:06:51|2015-12-10T12:06:51|COMPLETED|0:0||
     //""".trim.split("\n")
 
-    require(logData.mkString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
+    require(logData.mkString.contains(jobId + ""), s"$jobId is no longer in job history:\n" + logData) // use bhist in such a case
 
 
     // second line indicates the column borders
     //    val data = logData(1).indexOf(" ")
 
-    val header = logData.head.split(" +").map(_.trim)
-    val vals = logData(2).split(" +").map(_.trim)
+    val header = logData.head.split("[|]").map(_.trim)
+    val vals = logData(1).split("[|]").map(_.trim)
 
 
     def parseDate(stringifiedDate: String): DateTime = {
@@ -153,16 +153,18 @@ class SlurmScheduler extends JobScheduler {
     val slurmState = vals(header.indexOf("State"))
     var killReason = null
 
-    // tbd add other kill reasons here
-    val slurmStateRemapping = Map(
-      "TIMEOUT" -> "KILLED"
-    )
+    // tbd add other kill reasons hereslurmState
+    def slurmStateRemapping(slurmState: String) = slurmState match {
+      case "TIMEOUT" => "KILLED"
+      case other: String => other
+    }
+
 
     val state = JobState.valueOf(slurmStateRemapping(slurmState))
 
     val runLog = RunInfo(
       jobId = vals(header.indexOf("JobID")).toInt,
-      user = vals(header.indexOf("JobName")),
+      user = vals(header.indexOf("User")),
       state = state,
       queue = vals(header.indexOf("ExitCode")),
       execHost = vals(header.indexOf("ExitCode")),

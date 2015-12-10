@@ -1,6 +1,7 @@
 package joblist
 
 import better.files.File
+import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 
 import scalautils.Bash
@@ -225,10 +226,16 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def add(jobId: Int) = {
     file.appendLine(jobId + "")
 
-    updateStatsFile(Job(jobId))
+    // update is not feasible for actual scheduler which have some delay between submission and the job showing up in
+    // the stats
+    if (scheduler.isInstanceOf[LocalScheduler]) {
+      updateStatsFile(Job(jobId))
+    }
+
 
     Console.out.println(s"${file.name}: Added job '${jobId}'")
   }
+
 
 
   /** Waits for current jl to finish, resubmit failed jobs, wait again */
@@ -317,7 +324,10 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   def status = {
     // we refresh stats here since some jobs might still be in the queue and it's not clear if jl is running
-    updateNonFinalStats()
+
+    if (!scheduler.isInstanceOf[LocalScheduler]) {
+      updateNonFinalStats()
+    }
 
     new ListStatus(this)
   }

@@ -54,6 +54,8 @@ jobFile=test_job.sh
 echo '#!/bin/bash -l' > $jobFile; echo 'sleep 20; exit 5' >> $jobFile
 id=$(sbatch -p haswell -J test_job --time=8:00:00 $jobFile 2>&1 | cut -d' ' -f4)
 echo "id is $id"
+sleep 1
+sacct -j $id --format=JobID,JobName,Elapsed,End,Submit,Start,State
 
 sleep 60
 scontrol show jobid -dd $id
