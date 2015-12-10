@@ -1,6 +1,8 @@
 JobList
 =======
 
+[![Join the chat at https://gitter.im/holgerbrandl/joblist](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/holgerbrandl/joblist?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 A task list manager for hpc-clusters. Among others it supports monitoring, automatic resubmission, profiling, and reporting of job lists.
 
