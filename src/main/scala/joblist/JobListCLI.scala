@@ -55,6 +55,7 @@ object JobListCLI extends App {
     case _ => printUsageAndExit()
   }
 
+  // don't quit but simply return when running the unit tests
   private val shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
 
   if (shouldExit) {
@@ -68,12 +69,12 @@ object JobListCLI extends App {
       Usage: jl <command> [options] [<joblist_file>]
 
       Supported commands are
-        submit    Submits a named job including automatic stream redirection and adds it to the list
-        add       Extract job-ids from stdin and add them to the list
-        wait      Wait for a list of tasks to finish
+        submit    Submits a job to the underlying queuing system and adds it to the list
+        add       Extracts job-ids from stdin and adds them to the list
+        wait      Wait for a list of jobs to finish
         status    Prints various statistics and allows to create an html report for the list
-        kill      Removes all queued jobs of this list from the scheduler
-        up        Moves a list of jobs to the top of a queue if supported by the underlying scheduler
+        kill      Removes all  jobs of this list from the scheduler queue
+        up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)

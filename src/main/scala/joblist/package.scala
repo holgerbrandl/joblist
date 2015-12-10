@@ -15,8 +15,6 @@ import org.joda.time.format.{DateTimeFormat, ISOPeriodFormat}
 import org.joda.time.{DateTime, Duration, Seconds}
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
-import scala.util.Random
 import scalautils.{Bash, IOUtils}
 
 /**
@@ -50,6 +48,9 @@ package object joblist {
   }
 
 
+  def whoAmI: String = Bash.eval("whoami").sout
+
+
   def getConfigRoots(jobs: List[Job]) = {
 
     // optionally (and by default) we should use apply the original job configurations for escalation and resubmission?
@@ -62,33 +63,6 @@ package object joblist {
 
     jobs.map(findRootJC)
   }
-
-
-  def buildJobName(directory: File, cmd: String) = {
-    var nameElements: ListBuffer[String] = ListBuffer()
-
-    require(directory.isDirectory)
-
-    def isDirNonRoot(f: File): Boolean = f.isDirectory && f.isDirectory && f.path.toString != "/"
-
-    if (isDirNonRoot(directory.parent)) {
-      nameElements += directory.parent.name
-    }
-
-    if (isDirNonRoot(directory)) {
-      nameElements += directory.name
-    }
-
-    //    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
-    //    val timestamp = System.nanoTime().toString
-    val timestamp = new Random().nextInt(Integer.MAX_VALUE).toString
-    nameElements +=(Math.abs(cmd.hashCode).toString, timestamp)
-
-    nameElements.mkString("__")
-  }
-
-
-  def whoAmI: String = Bash.eval("whoami").sout
 
 
   //  private def changeWdOptional(wd: File): String = {
@@ -155,42 +129,6 @@ package object joblist {
   }
 
 
-  //  // see http://x-stream.github.io/converter-tutorial.html
-  //  class JobStateConverter extends Converter {
-  //
-  //    override def canConvert(o: Class[_]) :Boolean ={
-  //      o.getTypeName.startsWith(JobState.getClass.getName)
-  //    }
-  //
-  //
-  //    override def marshal(value: Object, writer: HierarchicalStreamWriter, context: MarshallingContext): Unit = {
-  //      //      writer.startNode("state");
-  //      writer.setValue(value.toString)
-  //      //      writer.endNode();
-  //    }
-  //
-  //
-  //   override def unmarshal(reader: HierarchicalStreamReader, context: UnmarshallingContext) :AnyRef =  {
-  //      JobState.valueOf(reader.getValue)
-  //    }
-  //
-  //  }
-
-  // see http://x-stream.github.io/converter-tutorial.html
-  //  private class JobStateConverter extends AbstractSingleValueConverter {
-  //
-  //    def canConvert(o: Class[_]): Boolean = {
-  //      o.getTypeName.startsWith(JobState.getClass.getName)
-  //      //      o == classOf[JobState]
-  //    }
-  //
-  //
-  //    def fromString(str: String): AnyRef = {
-  //      JobState.valueOf(str)
-  //    }
-  //  }
-
-
   def getXstream: XStream = {
     val xStream = new XStream(new StaxDriver())
 
@@ -204,7 +142,8 @@ package object joblist {
     xStream
   }
 
-  // todo move to scalautils
+
+  // @Deprecated Because fixed in latest not-yet-released better.files
   implicit class ImplFileUtils(file: File) {
     /** Workaround for https://github.com/pathikrit/better-files/issues/51 */
     def allLines = {
@@ -368,4 +307,5 @@ package object joblist {
 
     def mean = values.sum / values.length
   }
+
 }

@@ -2,7 +2,7 @@ package joblist
 
 /**
   * Resubmission patterns for jobs. They act as transformers on JobConfigurations which is simplified by the case-class
-  * induced copy() scheme.
+  * induced copy() operator.
   *
   * @author Holger Brandl
   */
@@ -26,6 +26,7 @@ case class MoreThreads(threads: Int) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = {
     require(threads > jc.numThreads, "Only an increased thread count is allowed for job escalation")
+
     jc.copy(numThreads = threads)
   }
 }
@@ -35,6 +36,7 @@ case class BetterQueue(queue: String) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(queue = queue)
 }
+
 
 case class DiffWalltime(wallTime: String) extends ResubmitStrategy {
   // validate that format is [N]NN:NN
@@ -46,6 +48,7 @@ case class DiffWalltime(wallTime: String) extends ResubmitStrategy {
 
 
 case class CompoundStrategy(elements: ResubmitStrategy*) extends ResubmitStrategy {
+
   override def escalate(jc: JobConfiguration): JobConfiguration = {
     elements.foldLeft(jc)((jc, rs) => rs.escalate(jc))
   }

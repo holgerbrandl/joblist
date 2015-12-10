@@ -1,6 +1,10 @@
 package joblist
 
 import better.files.File
+import joblist.JobConfiguration._
+
+import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 /**
   * Defines a job and how it should be run
@@ -11,7 +15,7 @@ import better.files.File
 case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
 
   def saveAsXml(jobId: Int, inDir: File) = {
-    val xmlFile = JobConfiguration.jcXML(jobId, inDir)
+    val xmlFile = jcXML(jobId, inDir)
     toXml(this, xmlFile)
   }
 
@@ -57,4 +61,29 @@ object JobConfiguration {
     val xmlFile = jcXML(jobId, wd)
     fromXml(xmlFile).asInstanceOf[JobConfiguration]
   }
+
+
+  def buildJobName(directory: File, cmd: String) = {
+    var nameElements: ListBuffer[String] = ListBuffer()
+
+    require(directory.isDirectory)
+
+    def isDirNonRoot(f: File): Boolean = f.isDirectory && f.isDirectory && f.path.toString != "/"
+
+    if (isDirNonRoot(directory.parent)) {
+      nameElements += directory.parent.name
+    }
+
+    if (isDirNonRoot(directory)) {
+      nameElements += directory.name
+    }
+
+    //    val timestamp = new SimpleDateFormat("MMddyyyyHHmmss").format(new Date())
+    //    val timestamp = System.nanoTime().toString
+    val timestamp = new Random().nextInt(Integer.MAX_VALUE).toString
+    nameElements +=(Math.abs(cmd.hashCode).toString, timestamp)
+
+    nameElements.mkString("__")
+  }
+
 }
