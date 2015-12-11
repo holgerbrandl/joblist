@@ -4,6 +4,7 @@ import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.Bash
+import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
 import scalautils.StringUtils.ImplStringUtils
 
 /**
@@ -20,6 +21,16 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     wd.list.foreach(_.delete(true))
   }
 
+
+  it should "submit a job, wait for it and create a report" in {
+    val cmdSeq = s"""
+    cd ${wd.fullPath}
+    jl submit "sleep 5"
+    jl wait --report
+    """.alignLeft
+
+    JobList().file.withExt(".html").toJava should exist
+  }
 
 
   it should "use the shell launcher to trigger, monitor and resubmit jobs" in {

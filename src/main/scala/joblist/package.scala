@@ -170,7 +170,16 @@ package object joblist {
 
       val allJobs = List.concat(jl.jobs, jl.resubGraph().keys).map(_.id).map(Job(_)(jl))
 
-      allJobs.map(_.info).
+      val (infoJobs, misInfoJobs) = allJobs.partition(_.infoFile.isRegularFile)
+
+      if (misInfoJobs.nonEmpty) {
+        Console.err.println(
+          "The following jobs were excluded because of missing run-information:" +
+            misInfoJobs.map(_.id).mkString(",")
+        )
+      }
+
+      infoJobs.map(_.info).
         map(ri => {
           Seq(
             ri.jobId, ri.jobName, ri.queue, ri.submitTime, ri.startTime, ri.finishTime,

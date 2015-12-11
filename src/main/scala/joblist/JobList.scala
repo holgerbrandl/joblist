@@ -213,7 +213,8 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
     file.appendLine(jobId + "")
 
     // update is not feasible for actual scheduler which have some delay between submission and the job showing up in
-    // the stats. However, it's essential for the local one which will loose the submission otherwise
+    // the stats. However, it's essential for the local one which will loose the submission otherwise --> without having a run info
+    // since local jobs are auto-replaced when jl starts this just affects reporting where we take care of it
     //    if (scheduler.isInstanceOf[LocalScheduler]) {
     //      Job(jobId).updateStatsFile()
     //    }

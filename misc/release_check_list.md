@@ -1,7 +1,7 @@
 1) Increment version in build.sbt, `joblist.JobListCLI.version`
 2) Update version in README.md (installation and sbt inclusion)
 2) Push and and create version on github
-3) `sbt assembly` jar, build tar.gz with
+3) `rm -rf target && sbt assembly` jar, build tar.gz with
 ```
 cd /dir/with/joblist
 
