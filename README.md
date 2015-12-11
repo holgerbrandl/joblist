@@ -44,7 +44,7 @@ Supported commands are
 If no <joblist_file> is provided, jl will use '.jobs' as default
 
 ```
-
+All commands provide more specfic help if needed (e.g.  `jl submit --help`)
 
 Submit some jobs with bsub/sbatch as you're used to and use jl for blocking and monitoring and final status handling:
 ```
