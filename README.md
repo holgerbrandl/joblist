@@ -6,7 +6,7 @@ JobList
 
 A task list manager for hpc-clusters. Among others it supports monitoring, automatic resubmission, profiling, and reporting of job lists.
 
-JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs has finished. It reports average runtime statistics, and predicts the remaining runtime of a joblist based on cluster load and job complexities. 'jl' can recover crashed jobs and resubmit them again using a customizable set of resubmission strategies.
+JobList `jl` can submit, monitor and wait until an entire a list of clusters jobs has finished. It reports average runtime statistics, and predicts the remaining runtime of a joblist based on cluster load and job complexities. `jl` can recover crashed jobs and resubmit them again using a customizable set of resubmission strategies.
 
 Conceptually `jl` is *just* managing lists of job-ids as reported by the underlying queuing system. Currently [LSF](https://en.wikipedia.org/wiki/Platform_LSF), [slurm](http://slurm.schedmd.com/) but also any computer
 (by means of a bundled [local multi-threading scheduler](https://github.com/holgerbrandl/joblist/blob/master/src/main/scala/joblist/local/LocalScheduler.scala)) are supported to process job lists.

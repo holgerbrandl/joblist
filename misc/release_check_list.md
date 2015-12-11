@@ -13,7 +13,10 @@ version=$(grep "val version" src/main/scala/joblist/JobListCLI.scala | cut -d' '
 mkdir joblist_v${version}
 
 cp target/scala-2.11/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
-cp scripts/jl joblist_v${version}
+
+echo '#!/usr/bin/env bash' > joblist_v${version}/jl
+echo 'java -Xmx1g -cp "$(dirname $0)/joblist_assembly.jar" joblist.JobListCLI "$@"' >> joblist_v${version}/jl
+chmod ugo+x joblist_v${version}/jl
 
 tar -cvzf joblist_installer_v${version}.tar.gz  joblist_v${version}
 
