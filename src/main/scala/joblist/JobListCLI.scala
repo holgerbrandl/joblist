@@ -86,16 +86,9 @@ object JobListCLI extends App {
 
 
   def getJL(options: Map[String, String], jlArgName: String = "joblist_file") = {
-    val forceLocal = sys.env.get("JL_LOCAL_ONLY").isDefined
-
     val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
 
-    if (forceLocal) {
-      Console.out.println(s"${listFile.name}: Using local scheduler")
-      new JobList(listFile, new LocalScheduler)
-    } else {
-      new JobList(listFile)
-    }
+    new JobList(listFile)
   }
 
 

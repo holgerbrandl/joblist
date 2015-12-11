@@ -25,6 +25,12 @@ import scalautils.{Bash, IOUtils}
 package object joblist {
 
   def guessScheduler(): JobScheduler = {
+
+    if (sys.env.get("JL_FORCE_LOCAL").isDefined) {
+      Console.err.println("Using local scheduler")
+      return new LocalScheduler
+    }
+
     if (isLSF) {
       return new LsfScheduler()
     }
