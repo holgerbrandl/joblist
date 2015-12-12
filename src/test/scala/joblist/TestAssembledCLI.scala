@@ -52,4 +52,12 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl.jobs should have size (3)
   }
 
+
+  it should "run a scala script that is using jl-api and terminate" in {
+    // this needs testing because if non-daemon threads were used by joblist jl, scripts won't terminate
+    val result = Bash.eval("test_data/scripting/quit_when_done.scala", showOutput = true)
+
+    result.exitCode should be(0)
+    File("script_result.txt").toJava should exist
+  }
 }

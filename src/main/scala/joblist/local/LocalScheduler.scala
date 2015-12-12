@@ -1,6 +1,6 @@
 package joblist.local
 
-import java.util.concurrent.{Executors, TimeUnit, _}
+import java.util.concurrent.{TimeUnit, _}
 
 import better.files.File
 import joblist._
@@ -29,9 +29,22 @@ class LocalScheduler extends JobScheduler {
   private val dummies = mutable.HashMap.empty[Int, Seq[ThreadPlaceHolder]]
 
 
+  // programs/scripts will only stop when there no longer is any non-daemon thread running
+  // so will tag all of them as daemon to prevent the scheduler from prevent app-shutdown
+  // http://stackoverflow.com/questions/1211657/how-to-shut-down-all-executors-when-quitting-an-application
+  // http://stackoverflow.com/questions/7416018/when-does-the-main-thread-stop-in-java
+  class DaemonThreadFactory extends ThreadFactory {
+    override def newThread(r: Runnable): Thread = {
+      val t = new Thread(r, classOf[LocalScheduler].getSimpleName + "-worker")
+      t.setDaemon(true)
+      t
+    }
+  }
+
   // http://stackoverflow.com/questions/16161941/exectuorservice-vs-threadpoolexecutor-which-is-using-linkedblockingqueue
   //  val executorService = Executors.newFixedThreadPool(numCores)
-  private val executor: ExecutorService = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable], Executors.defaultThreadFactory) {
+  private val executor: ExecutorService = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,
+    new LinkedBlockingQueue[Runnable], new DaemonThreadFactory()) {
 
     protected override def beforeExecute(t: Thread, r: Runnable) {
       if (r.isInstanceOf[JobRunnable]) {
