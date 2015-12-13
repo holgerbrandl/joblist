@@ -190,6 +190,6 @@ class SlurmScheduler extends JobScheduler {
 
   /** Cancel a list of jobs */
   override def cancel(jobIds: Seq[Int]): Unit = {
-    jobIds.foreach(id => Bash.eval(s"bkill ${id}", showOutput = true))
+    jobIds.foreach(id => Bash.eval(s"scancel ${id}", showOutput = true))
   }
 }
