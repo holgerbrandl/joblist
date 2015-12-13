@@ -154,7 +154,7 @@ class LsfScheduler extends JobScheduler {
     val state = if (killCause.contains("TERM_RUNLIMIT: job killed")) {
       JobState.KILLED
     } else if (killCause.contains("TERM_OWNER: job killed by owner")) {
-      JobState.CANCELED
+      JobState.CANCELLED
     } else {
       JobState.valueOf(approxState)
     }

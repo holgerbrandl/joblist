@@ -252,7 +252,7 @@ object JobListCLI extends App {
       case "all" => jl.requiresRerun
       case "failed" => jl.jobs.filterNot(_.wasKilled)
       case "killed" => jl.jobs.filter(_.wasKilled)
-      case "canceled" => jl.jobs.filter(_.info.state == JobState.CANCELED)
+      case "canceled" => jl.jobs.filter(_.info.state == JobState.CANCELLED)
     }
 
     while (tbd.nonEmpty && numResubmits < resubChain.size) {

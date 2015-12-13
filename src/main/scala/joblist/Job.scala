@@ -78,7 +78,7 @@ object JobState {
 
   case object PENDING extends JobState
 
-  case object CANCELED extends JobState
+  case object CANCELLED extends JobState
 
   case object FAILED extends JobState
 
@@ -88,8 +88,8 @@ object JobState {
 
   case object UNKNOWN extends JobState
 
-  val allStates = Seq(RUNNING, PENDING, CANCELED, FAILED, KILLED, COMPLETED)
-  val finalStates = List(CANCELED, FAILED, KILLED, COMPLETED)
+  val allStates = Seq(RUNNING, PENDING, CANCELLED, FAILED, KILLED, COMPLETED)
+  val finalStates = List(CANCELLED, FAILED, KILLED, COMPLETED)
 
 
   def valueOf(status: String) = allStates.find(_.toString == status).getOrElse(UNKNOWN)
