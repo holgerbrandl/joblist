@@ -15,6 +15,7 @@ import org.joda.time.format.{DateTimeFormat, ISOPeriodFormat}
 import org.joda.time.{DateTime, Duration, Seconds}
 
 import scala.collection.JavaConversions._
+import scalautils.StringUtils.ImplStringUtils
 import scalautils.{Bash, IOUtils}
 
 /**
@@ -303,7 +304,11 @@ package object joblist {
 
 
     // ensure list consistency
-    assert(queuedJobs.size + numFinal == numTotal, "inconsistent job counts:\n" + toString)
+    assert(queuedJobs.size + numFinal == numTotal, s"""
+      Inconsistent job counts:
+      Unknown state jobs: ${jobs.filter(_.info.state == JobState.UNKNOWN)}
+      ${toString}
+    """.alignLeft.trim)
 
 
     override def toString = {

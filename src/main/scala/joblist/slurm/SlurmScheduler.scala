@@ -37,7 +37,8 @@ class SlurmScheduler extends JobScheduler {
     assert(jc.name.length > 0, "job name must not be empty")
     val jobName = jc.name
 
-    val threadArg = if (numCores > 1) s"--cpus-per-task=$numCores" else ""
+    // todo what is the purpose of the ntasks argument?
+    val threadArg = if (numCores > 1) s"--ntasks=1 --cpus-per-task=$numCores" else ""
     val wallTime = if (!jc.wallTime.isEmpty) s"--time=${jc.wallTime}" else ""
 
     // todo is the queue supported by slurm
@@ -63,7 +64,7 @@ class SlurmScheduler extends JobScheduler {
     var submitCmd =
       s"""
     echo '#!/bin/bash
-    $cmd' | sbatch  -J $jobName --ntasks=1 $submitArgs -e ${jc.logs.err.fullPath} -o ${jc.logs.out.fullPath}
+    $cmd' | sbatch $submitArgs -e ${jc.logs.err.fullPath} -o ${jc.logs.out.fullPath}
     """.alignLeft.trim
 
     //    Console.err.println("submission cmd is:\n" + submitCmd)
@@ -158,14 +159,19 @@ class SlurmScheduler extends JobScheduler {
 
     // http://www.tutorialspoint.com/scala/scala_regular_expressions.htm
 
-    val slurmState = vals(header.indexOf("State"))
+    val slurmState = vals(header.indexOf("State")).split(" ")(0)
     var killReason = null
 
     // tbd add other kill reasons hereslurmState
-    def slurmStateRemapping(slurmState: String) = slurmState match {
+    def slurmStateRemapping(slurmState: String) = slurmState.
+      //todo jobs without walltime are killed after 8-10 minutes and get a status CANCELED by 0 --> create ticket + unit test
+      // example jl submit --wait -q "haswell" "sleep 30; touch hihi.txt"  --> scancel it
+      // for blast is seems that this is caused by hitting the memory limit
+      replaceFirst("^CANCELLED by 0$", "KILLED") match {
       case "TIMEOUT" => "KILLED"
       case other: String => other
     }
+
 
 
     val state = JobState.valueOf(slurmStateRemapping(slurmState))

@@ -53,7 +53,7 @@ class LsfScheduler extends JobScheduler {
     // submit the job to the lsf
     var submitCmd =
       s"""
-    bsub   $submitArgs '( $cmd ) 2>${jc.logs.err.fullPath} 1>${jc.logs.out.fullPath}'
+    bsub $submitArgs '( $cmd ) 2>${jc.logs.err.fullPath} 1>${jc.logs.out.fullPath}'
     """.trim
 
     // optionally prefix with working directory
@@ -138,6 +138,7 @@ class LsfScheduler extends JobScheduler {
       }
     }
 
+    // lsf state graph: http://www.ccs.miami.edu/hpc/lsf/7.0.6/admin/job_ops.html
 
     val lsf2slurmStatus = Map(
       "DONE" -> "COMPLETED",
