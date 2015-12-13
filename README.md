@@ -75,7 +75,7 @@ bsub "sleep 3" | jl add .other_jobs
 
 If jobs are submitted with `jl` they can also be resubmitted in case they fail:
 ```
-jl submit "sleep 10"          ## add a jobs
+jl submit "sleep 10"          ## add a job
 jl submit "sleep 1000"        ## add another which won't finish in our default queue
 jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
