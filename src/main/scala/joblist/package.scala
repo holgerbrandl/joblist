@@ -40,7 +40,6 @@ package object joblist {
     }
 
     new LocalScheduler()
-    //    throw new RuntimeException("Could not auto-detect queuing system. Are binaries in PATH?")
   }
 
 
@@ -88,6 +87,7 @@ package object joblist {
 
   }
 
+
   //noinspection AccessorLikeMethodIsUnit
   def toXml(something: Any, file: File) = {
     getXstream.toXML(something, new BufferedWriter(new FileWriter(file.toJava)))
@@ -122,7 +122,6 @@ package object joblist {
 
 
     val formatter = DateTimeFormat.forPattern("dd-MM-yyyy HH:mm:ss")
-    //    val  formatter = DateTimeFormat.f()
 
 
     override def toString(obj: scala.Any): String = formatter.print(obj.asInstanceOf[DateTime])
@@ -151,6 +150,7 @@ package object joblist {
 
   // @Deprecated Because fixed in latest not-yet-released better.files
   implicit class ImplFileUtils(file: File) {
+
     /** Workaround for https://github.com/pathikrit/better-files/issues/51 */
     def allLines = {
       Files.readAllLines(file.path).toList
@@ -162,7 +162,6 @@ package object joblist {
 
 
   implicit class ImplJobListUtils(jl: JobList) {
-
 
     def exportStatistics() = {
       jl.requireListFile()
@@ -219,8 +218,6 @@ package object joblist {
 
       Console.out.print(s"${jl.file.name}: Rendering HTML report...")
 
-      //      val reportScript = scala.io.Source.fromURL("https://raw.githubusercontent.com/holgerbrandl/joblist/master/scripts/jl_report.R").mkString
-      //      val reportScript = scala.io.Source.fromFile("/Users/brandl/Dropbox/cluster_sync/joblist/scripts/jl_report.R").mkString
       val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
 
       val reportFile = scalautils.r.rendrSnippet(
@@ -306,7 +303,7 @@ package object joblist {
 
 
     // ensure list consistency
-    assert(queuedJobs.size + numFinal == numTotal, toString)
+    assert(queuedJobs.size + numFinal == numTotal, "inconsistent job counts:\n" + toString)
 
 
     override def toString = {
