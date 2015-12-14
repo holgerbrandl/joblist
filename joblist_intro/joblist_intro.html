@@ -170,7 +170,7 @@ Conceptually JobList `jl` is just managing lists of job-ids as reported by the u
 
 * Workflow-graph not always well defined or contains just a single node
 * [Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home): own programming language
-* [Queue](https://www.broadinstitute.org/gatk/guide/topic?name=queue): Too much tuned to GATK/Q
+* [Queue](https://www.broadinstitute.org/gatk/guide/topic?name=queue): Too much tuned to GATK
 * Not tools for direct flow control, but for workflow execution engines
 
 * [DRMAA](http://www.drmaa.org/): Just (bloated) API not a tool; reference v2 has not been touched since 3y
@@ -297,7 +297,7 @@ jl submit "echo 'hello slurm'"
 ``` bash
 jl submit "echo 'hello computer'"
 ```
-* `jl` provides abstraction for common properties but also suppors scheduler specific settings
+* `jl` provides abstraction for common properties but also supports scheduler specific settings
 * Total abstraction not feasible and also not desired
 
 ???
