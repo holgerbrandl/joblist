@@ -10,7 +10,6 @@ JobList `jl` can submit, monitor and wait until an entire a list of clusters job
 Conceptually `jl` is *just* managing lists of job-ids as reported by the underlying queuing system. Currently [LSF](https://en.wikipedia.org/wiki/Platform_LSF), [slurm](http://slurm.schedmd.com/) but also any computer
 (by means of a bundled [local multi-threading scheduler](https://github.com/holgerbrandl/joblist/blob/master/src/main/scala/joblist/local/LocalScheduler.scala)) are supported to process job lists.
 
-
 Installation
 ------------
 
@@ -43,7 +42,7 @@ Supported commands are
 If no <joblist_file> is provided, jl will use '.jobs' as default
 
 ```
-All commands provide more specfic help if needed (e.g.  `jl submit --help`)
+All commands provide more specific help if needed (e.g.  `jl submit --help`)
 
 Submit some jobs with bsub/sbatch as you're used to and use jl for blocking and monitoring and final status handling:
 ```
@@ -80,7 +79,7 @@ jl submit "sleep 1000"        ## add another which won't finish in our default q
 jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
 Another advantage when submitting jobs via `jl` is that it decouples workflows from the underlying queuing system.
-Ie. the last example would run on a Slurm system, an LSF cluster or simply locally on any desktop machine.
+Ie. the last example would run on a slurm system, an LSF cluster or simply locally on any desktop machine.
 
 API Usage
 ---------
@@ -134,10 +133,14 @@ sbt test
 The tests will auto-detect the queuing system or fall back to use a local scheduler in case auto-detection fails
 
 
-Support
--------
+Support & Documentation
+-----------------------
 
 Feel welcome to submit pull-requests or tickets,  or simply get in touch via gitter (see button on top).
+
+* [JobList Introduction](http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html) A presentation from December 2015 ([sources](./docs/joblist_intro/joblist_intro.md))
+* [FAQ](./faq.md)
+
 
 Related Projects
 ----------------

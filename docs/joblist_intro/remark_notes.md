@@ -95,3 +95,24 @@ class: center, middle
   </body>
 </html>
 " ?
+
+
+## Updates static html on pages branch
+
+see https://help.github.com/articles/creating-project-pages-manually/
+
+```
+cd ~/Desktop
+git clone https://github.com/holgerbrandl/joblist.git
+cd joblist
+git checkout --orphan gh-pages
+## just needed for initial run: git rm -rf .
+cp -r /Users/brandl/Dropbox/cluster_sync/joblist/docs/joblist_intro .
+rm joblist_intro/*md joblist_intro/*.css joblist_intro/remark_notes.md
+git add -A joblist_intro
+git commit -m "added presentation slides"
+git push origin gh-pages
+
+```
+
+http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html
