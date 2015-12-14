@@ -166,6 +166,27 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     xor should contain(3)
     xor should contain(4)
   }
+
+  it should "reset should do a proper cleanup without harming non-jl files" in {
+
+    (wd / "some_data.txt").touch()
+    wd.list.size should be(1)
+
+    val jl = JobList(wd / ".reset_test")
+    jl.run(JobConfiguration("touch other_result.txt"))
+
+    jl.waitUntilDone()
+
+    jl.exportStatistics()
+
+    jl.reset()
+
+    // original + result + logsdir + 4logs
+
+    wd.list.size should be(7)
+
+
+  }
 }
 
 

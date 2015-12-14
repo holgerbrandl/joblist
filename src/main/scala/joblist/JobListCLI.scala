@@ -51,6 +51,7 @@ object JobListCLI extends App {
     case "kill" => kill()
     case "up" => btop()
     case "shortcuts" => shortcuts()
+    case "reset" => reset()
 
     case _ => printUsageAndExit()
   }
@@ -75,6 +76,7 @@ object JobListCLI extends App {
         status    Prints various statistics and allows to create an html report for the list
         kill      Removes all  jobs of this list from the scheduler queue
         up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
+        reset     Removes all information related to this joblist.
 
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
@@ -323,6 +325,12 @@ object JobListCLI extends App {
   def kill() = {
     val options = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
     getJL(options).kill()
+  }
+
+
+  def reset() = {
+    val options = parseArgs(args, "Usage: jl reset [<joblist_file>]")
+    getJL(options).reset()
   }
 
 

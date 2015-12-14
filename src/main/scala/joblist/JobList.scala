@@ -224,7 +224,6 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   }
 
 
-
   /** Waits for current jl to finish, resubmit failed jobs, wait again */
   def waitResubWait(resubmitStrategy: ResubmitStrategy = new TryAgain()) = {
     waitUntilDone()
@@ -281,9 +280,20 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
 
   def reset(): Unit = {
+    val jlLogDir = file.parent / ".jl"
+
+    //    glob and delete all job files under .jl
+    val allJobs = List.
+      concat(jobs, resubGraph().keys).
+      foreach(job => {
+        jlLogDir.glob(job.id + ".*").foreach(_.delete())
+      })
+
+    // remove .jl if it's empty
+    if (jlLogDir.isDirectory && jlLogDir.isEmpty) jlLogDir.delete()
+
     file.delete(true)
     resubGraphFile.delete(true)
-    // todo glob and delete  all instance related file file.name* --> rm
 
     file.parent.glob(s"${file.name}*").foreach(_.delete())
 

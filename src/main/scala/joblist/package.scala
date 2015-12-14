@@ -180,7 +180,7 @@ package object joblist {
       statsFile.appendNewLine()
 
 
-      val allJobs = List.concat(jl.jobs, jl.resubGraph().keys).map(_.id).map(Job(_)(jl))
+      val allJobs = List.concat(jl.jobs, jl.resubGraph().keys)
 
       val (infoJobs, misInfoJobs) = allJobs.partition(_.infoFile.isRegularFile)
 
@@ -228,7 +228,7 @@ package object joblist {
       val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
 
       val reportFile = scalautils.r.rendrSnippet(
-        jl.file + ".stats",
+        jl.file.name + ".stats",
         reportScript, showCode = false,
         args = jl.file.pathAsString,
         wd = jl.file.parent
@@ -338,7 +338,7 @@ package object joblist {
 
     override def toString = {
       val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaining time $stringifyRemTime%6s; "
-      val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; ; $numKilled%4s killed; $numFailed%4s failed"
+      val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; $numKilled%4s killed; $numFailed%4s failed"
       summary + counts
     }
   }
