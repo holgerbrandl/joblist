@@ -240,7 +240,7 @@ package object joblist {
     }
 
 
-    def estimateRemainingTime(jobs:List[Job]): Option[Duration] = {
+    def estimateRemainingTime(jobs: List[Job]): Option[Duration] = {
 
       // don't estimate if too few jobs provide data
       if (jobs.forall(_.isFinal)) return Some(Duration.ZERO)
@@ -252,12 +252,29 @@ package object joblist {
         new Duration(ri.startTime, ri.finishTime).getStandardSeconds.toDouble
       }).mean
 
-      val startedJobs = jobs.map(_.info.startTime).filter(_ != null)
-      if (startedJobs.size < 2) return None // because we can not estimate a single diff between job starts
+
+      val numPending = jobs.count(_.info.state == JobState.PENDING)
+
+      val startedJobs = jobs.filter(_.info.startTime != null)
+
+      // if all jobs have been started take last one and calc expected remaining time
+      if (numPending == 0) {
+        def startDateSort(job: Job, other: Job) = job.info.startTime.isBefore(other.info.startTime)
+        val lastStarter = startedJobs.sortWith(startDateSort).last
+        val lsCurRuntime = new Duration(lastStarter.info.startTime, new DateTime()).getStandardSeconds
+
+        // prevent negative time estimates and cap at 10seconds
+        // todo unit test this
+        return Some(Seconds.seconds(Math.max(avgRuntimeSecs - lsCurRuntime, 10).toInt).toStandardDuration)
+      }
+
+      // because we can not estimate a single diff between job starts
+      if (startedJobs.size < 2) return None
 
 
       //calculate diffs in starting time to estimate avg between starts
       val avgStartDiffSecs = startedJobs.
+        map(_.info.startTime).
         sortWith(_.isBefore(_)).
         //define a sliding windows of 2 subsequent start times and calculate differences
         sliding(2).
@@ -265,9 +282,8 @@ package object joblist {
           new Duration(firstTime, sndTime).getStandardSeconds.toDouble
         }.
         // just use the last 20 differences (because cluster load might change over time)
-        toList.takeRight(20).mean
+        toList.takeRight(20).median
 
-      val numPending = jobs.count(_.info.state == JobState.PENDING)
 
       // basically runtime is equal as last jobs finishtime which can be approximated by
       val numSecondsRemaining = numPending * avgStartDiffSecs + avgRuntimeSecs
@@ -321,7 +337,7 @@ package object joblist {
 
 
     override def toString = {
-      val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaing time $stringifyRemTime%6s; "
+      val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaining time $stringifyRemTime%6s; "
       val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; ; $numKilled%4s killed; $numFailed%4s failed"
       summary + counts
     }
@@ -332,6 +348,13 @@ package object joblist {
   implicit class ImplDoubleVecUtils(values: Seq[Double]) {
 
     def mean = values.sum / values.length
+
+
+    // http://stackoverflow.com/questions/4662292/scala-median-implementation
+    def median = {
+      val (lower, upper) = values.sorted.splitAt(values.size / 2)
+      if (values.size % 2 == 0) (lower.last + upper.head) / 2.0 else upper.head
+    }
   }
 
 }

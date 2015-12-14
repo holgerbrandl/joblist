@@ -338,6 +338,8 @@ object JobListCLI extends App {
 
     val jl = getJL(options)
 
+    jl.requireListFile()
+
     if (options.get("failed").get.toBoolean) {
       Console.out.print(jl.requiresRerun.map(_.id).mkString("\n"))
       return
