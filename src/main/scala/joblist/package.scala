@@ -234,35 +234,38 @@ package object joblist {
     }
 
 
-    def estimateRemainingTime: Option[Duration] = {
+    def estimateRemainingTime(jobs:List[Job]): Option[Duration] = {
+
       // don't estimate if too few jobs provide data
-      if (jl.jobs.forall(_.isFinal)) return Some(Duration.ZERO)
-      if (!jl.jobs.exists(_.isFinal)) return None
+      if (jobs.forall(_.isFinal)) return Some(Duration.ZERO)
+      if (!jobs.exists(_.isFinal)) return None
 
 
       // calc mean runtime for all finished jobs
-      val avgRuntimeSecs = jl.jobs.filter(_.isFinal).map(_.info).map(ri => {
+      val avgRuntimeSecs = jobs.filter(_.isFinal).map(_.info).map(ri => {
         new Duration(ri.startTime, ri.finishTime).getStandardSeconds.toDouble
       }).mean
 
-      val startedJobs = jl.jobs.map(_.info.startTime).filter(_ != null)
+      val startedJobs = jobs.map(_.info.startTime).filter(_ != null)
       if (startedJobs.size < 2) return None // because we can not estimate a single diff between job starts
 
 
       //calculate diffs in starting time to estimate avg between starts
       val avgStartDiffSecs = startedJobs.
-        sortWith(_.isBefore(_)).sliding(2).
+        sortWith(_.isBefore(_)).
+        //define a sliding windows of 2 subsequent start times and calculate differences
+        sliding(2).
         map { case List(firstTime, sndTime) =>
           new Duration(firstTime, sndTime).getStandardSeconds.toDouble
         }.
-        // just use the laste n=20 differences (because cluster usage might change
+        // just use the last 20 differences (because cluster load might change over time)
         toList.takeRight(20).mean
 
-      val numPending = jl.jobs.count(_.info.state == JobState.PENDING)
+      val numPending = jobs.count(_.info.state == JobState.PENDING)
 
       // basically runtime is equal as last jobs finishtime which can be approximated by
-      val numSecondsRemaing = numPending * avgStartDiffSecs + avgRuntimeSecs
-      Some(Seconds.seconds(numSecondsRemaing.round.toInt).toStandardDuration)
+      val numSecondsRemaining = numPending * avgStartDiffSecs + avgRuntimeSecs
+      Some(Seconds.seconds(numSecondsRemaining.round.toInt).toStandardDuration)
     }
   }
 
@@ -293,7 +296,7 @@ package object joblist {
     val numKilled = jobs.count(_.wasKilled)
 
 
-    val remTime = jl.estimateRemainingTime
+    val remTime = jl.estimateRemainingTime(jl.jobs)
 
 
     def stringifyRemTime = remTime match {
