@@ -1,12 +1,11 @@
 import java.io.{BufferedWriter, FileWriter, PrintWriter}
-import java.net.URI
 import java.nio.file.Files
 import java.text.DecimalFormat
 
 import better.files.File
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
-import com.thoughtworks.xstream.io.xml.StaxDriver
+import com.thoughtworks.xstream.io.xml.DomDriver
 import joblist.JobState.JobState
 import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
@@ -109,7 +108,7 @@ package object joblist {
 
 
     def fromString(str: String): AnyRef = {
-      File(new URI(str).toURL.getFile)
+      File(str)
     }
   }
 
@@ -136,7 +135,7 @@ package object joblist {
 
 
   def getXstream: XStream = {
-    val xStream = new XStream(new StaxDriver())
+    val xStream = new XStream(new DomDriver())
 
     xStream.registerConverter(new BetterFilerConverter())
     xStream.registerConverter(new JodaConverter())
