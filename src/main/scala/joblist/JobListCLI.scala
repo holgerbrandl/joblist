@@ -143,7 +143,7 @@ object JobListCLI extends App {
         val batchFile = File(batchArg)
         require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
 
-        batchFile.allLines
+        batchFile.lines
       }
 
       // convert all lines into jobs

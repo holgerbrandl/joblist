@@ -10,10 +10,6 @@ scalaVersion := "2.11.7"
 resolvers += Resolver.mavenLocal
 
 
-//libraryDependencies += "com.github.pathikrit" %% "better-files" % "2.13.0"
-//libraryDependencies += "com.github.pathikrit" %% "better-files" % "2.13.0-SNAPSHOT"
-
-
 // just needed for the unit-tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 

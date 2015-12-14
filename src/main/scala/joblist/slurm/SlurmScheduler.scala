@@ -64,14 +64,14 @@ class SlurmScheduler extends JobScheduler {
     var submitCmd =
       s"""
     echo '#!/bin/bash
-    $cmd' | sbatch $submitArgs -e ${jc.logs.err.fullPath} -o ${jc.logs.out.fullPath}
+    $cmd' | sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute}
     """.alignLeft.trim
 
     //    Console.err.println("submission cmd is:\n" + submitCmd)
 
     // optionally prefix with working directory
     if (File(".") != wd) {
-      submitCmd = s"cd '${wd.fullPath}'\n" + submitCmd
+      submitCmd = s"cd '${wd}'\n" + submitCmd
     }
 
     // run
@@ -137,7 +137,7 @@ class SlurmScheduler extends JobScheduler {
     //""".trim.split("\n")
 
 
-    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
+    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
     rawLogFile.write(logData.mkString("\n"))
 
     val header = logData.head.split("[|]").map(_.trim)

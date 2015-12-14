@@ -72,7 +72,7 @@ package object joblist {
 
 
   //  private def changeWdOptional(wd: File): String = {
-  //    if (wd != null && wd != File(".")) "cd " + wd.fullPath + "; " else ""
+  //    if (wd != null && wd != File(".")) "cd " + wd.pathAsString + "; " else ""
   //  }
   case class RunInfo(jobId: Int, user: String, state: joblist.JobState.JobState, queue: String,
                      //                  FromHost:String,
@@ -153,8 +153,15 @@ package object joblist {
   implicit class ImplFileUtils(file: File) {
 
     /** Workaround for https://github.com/pathikrit/better-files/issues/51 */
+    @Deprecated
     def allLines = {
       Files.readAllLines(file.path).toList
+    }
+
+
+    // todo remove this once bf is providing by default
+    def absolute = {
+      File(file.path.toAbsolutePath.toString)
     }
 
 
@@ -167,7 +174,7 @@ package object joblist {
     def exportStatistics() = {
       jl.requireListFile()
 
-      val statsFile = File(jl.file.fullPath + ".runinfo.log")
+      val statsFile = File(jl.file + ".runinfo.log")
 
       statsFile.write(Seq("job_id", "job_name", "queue", "submit_time", "start_time", "finish_time",
         "exec_host", "status", "user", "resubmission_of").mkString("\t"))
@@ -195,7 +202,7 @@ package object joblist {
 
 
       // also write congig header where possible
-      val jcLogFile = File(jl.file.fullPath + ".jobconf.log")
+      val jcLogFile = File(jl.file + ".jobconf.log")
       jcLogFile.write(
         Seq("id", "name", "num_threads", "other_queue_args", "queue", "wall_time", "wd").mkString("\t")
       )
@@ -222,9 +229,9 @@ package object joblist {
       val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
 
       val reportFile = scalautils.r.rendrSnippet(
-        jl.file.name + ".stats",
+        jl.file + ".stats",
         reportScript, showCode = false,
-        args = jl.file.fullPath,
+        args = jl.file.pathAsString,
         wd = jl.file.parent
       )
 

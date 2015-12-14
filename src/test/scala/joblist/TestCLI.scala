@@ -2,6 +2,7 @@ package joblist
 
 import java.io.ByteArrayInputStream
 
+import better.files.File._
 import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -41,14 +42,14 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     System.setIn(in)
 
     // add it to jl
-    JobListCLI.main(("add " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("add " + jl.file).split(" "))
 
 
     jl.file.toJava should exist
     bstatus should include(jl.jobs.head.id + "")
 
     // wait until its done
-    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("wait " + jl.file).split(" "))
 
     jl.jobs.head.isFinal should be(true)
   }
@@ -59,14 +60,14 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     resultFile.delete(true)
 
     // http://stackoverflow.com/questions/7500081/scala-what-is-the-best-way-to-append-an-element-to-an-array
-    val cmd: Array[String] = s"submit -j ${jl.file.fullPath} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.fullPath}"
+    val cmd: Array[String] = s"submit -j ${jl.file.pathAsString} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.pathAsString}"
     JobListCLI.main(cmd)
 
     jl.file.toJava should exist
     //    bstatus should include(jl.jobIds.head.toString)
 
     // wait until its done
-    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
     jl.jobs.head.info
 
     resultFile.toJava should exist
@@ -82,11 +83,11 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     failTagFile.delete(true)
     File("no_fail.dat").delete(true)
 
-    val bashCmd = s"""if [ ! -f "${failTagFile.fullPath}" ]; then exit 1; fi; touch no_fail.dat"""
-    val cmd: Array[String] = s"submit -j ${jl.file.fullPath}".split(" ") :+ bashCmd
+    val bashCmd = s"""if [ ! -f "${failTagFile.pathAsString}" ]; then exit 1; fi; touch no_fail.dat"""
+    val cmd: Array[String] = s"submit -j ${jl.file.pathAsString}".split(" ") :+ bashCmd
     JobListCLI.main(cmd)
 
-    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
 
     jl.file.toJava should exist
     jl.jobs.size should be(1)
@@ -96,13 +97,13 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     // fix tag file to make job runnable and retry agin
     failTagFile.touch()
 
-    Bash.eval(s"ls -l ${failTagFile.fullPath}").exitCode should be(0)
+    Bash.eval(s"ls -l ${failTagFile.pathAsString}").exitCode should be(0)
     //    Bash.eval(bashCmd)
     //    System.gc()
 
     // wait with retry object to fix the failed one
-    JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
-    JobListCLI.main(("status " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("wait --resubmit_retry " + jl.file.pathAsString).split(" "))
+    JobListCLI.main(("status " + jl.file.pathAsString).split(" "))
 
     //    jl.jobs.head.info
     //    jl.jobs.head.config.cmd
@@ -121,17 +122,17 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     System.setIn(in)
 
     // addtry to run it
-    JobListCLI.main(("add " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("add " + jl.file.pathAsString).split(" "))
 
     jl.jobs.size should be(1)
 
-    JobListCLI.main(("wait " + jl.file.fullPath).split(" "))
+    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
 
     jl.jobs.size should be(1)
     jl.failed.size should be(1)
 
     an[AssertionError] should be thrownBy {
-      JobListCLI.main(("wait --resubmit_retry " + jl.file.fullPath).split(" "))
+      JobListCLI.main(("wait --resubmit_retry " + jl.file.pathAsString).split(" "))
     }
 
     jl.jobs.size should be(1)

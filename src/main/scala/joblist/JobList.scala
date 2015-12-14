@@ -24,7 +24,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   implicit val JobList = this
 
 
-  val resubGraphFile = File(file.fullPath + ".resubgraph")
+  val resubGraphFile = File(file + ".resubgraph")
 
   //
   // Model
@@ -32,7 +32,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
   /** Loads the current state of this joblist from disk. If there is no list files yet, it returns an empty list. */
   // Note: use cached .jobs instead
-  private def ids = if (file.isRegularFile) file.allLines.map(_.toInt) else List()
+  private def ids = if (file.isRegularFile) file.lines.toList.map(_.toInt) else List()
 
 
   private var lastFileMD5: String = null
@@ -324,7 +324,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   def resubGraph(): Map[Job, Job] = {
     if (!resubGraphFile.isRegularFile) return Map()
 
-    resubGraphFile.allLines.map(line => {
+    resubGraphFile.lines.map(line => {
       val resubEvent = line.split("\t").map(_.toInt)
       (Job(resubEvent(0)), Job(resubEvent(1)))
     }).toMap
@@ -336,11 +336,11 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
   //
 
 
-  def requireListFile() = require(file.isRegularFile && file.allLines.nonEmpty, s"job list '${file}'does not exist or is empty")
+  def requireListFile() = require(file.isRegularFile && file.lines.nonEmpty, s"job list '${file}'does not exist or is empty")
 
 
   override def toString: String = {
-    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.parent.fullPath})"""
+    s"""JobList(${file.name}, scheduler=${scheduler.getClass.getSimpleName}, wd=${file.parent.absolute})"""
   }
 
 

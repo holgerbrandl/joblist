@@ -1,11 +1,11 @@
 package joblist
 
+import better.files.File._
 import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.Bash
 import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
-import scalautils.StringUtils.ImplStringUtils
 
 /**
   * @author Holger Brandl
@@ -24,7 +24,7 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "submit a job, wait for it and create a report" in {
     val cmdSeq = s"""
-    cd ${wd.fullPath}
+    cd ${wd.pathAsString}
     jl submit "sleep 5"
     jl wait --report
     """.alignLeft
@@ -37,11 +37,11 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     val jl = JobList(wd / ".whit")
 
     val cmdSeq = s"""
-    cd ${wd.fullPath}
-    jl submit -j ${jl.file.fullPath} "echo foo"
-    jl submit -j ${jl.file.fullPath} "echo bar"
-    jl submit -j ${jl.file.fullPath} -O "-W 00:01" "sleep 120; touch whit.txt"
-    jl wait --resubmit_wall "00:10" ${jl.file.fullPath}
+    cd ${wd.pathAsString}
+    jl submit -j ${jl.file.pathAsString} "echo foo"
+    jl submit -j ${jl.file.pathAsString} "echo bar"
+    jl submit -j ${jl.file.pathAsString} -O "-W 00:01" "sleep 120; touch whit.txt"
+    jl wait --resubmit_wall "00:10" ${jl.file.pathAsString}
     """.alignLeft
 
     println(cmdSeq)

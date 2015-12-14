@@ -1,6 +1,6 @@
 package joblist
 
-import better.files._
+import better.files.File._
 import joblist.local.LocalScheduler
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

@@ -53,12 +53,12 @@ class LsfScheduler extends JobScheduler {
     // submit the job to the lsf
     var submitCmd =
       s"""
-    bsub $submitArgs '( $cmd ) 2>${jc.logs.err.fullPath} 1>${jc.logs.out.fullPath}'
+    bsub $submitArgs '( $cmd ) 2>${jc.logs.err.absolute} 1>${jc.logs.out.absolute}'
     """.trim
 
     // optionally prefix with working directory
     if (File(".") != wd) {
-      submitCmd = s"cd '${wd.fullPath}'\n" + submitCmd
+      submitCmd = s"cd '${wd}'\n" + submitCmd
     }
 
     // run
@@ -109,7 +109,7 @@ class LsfScheduler extends JobScheduler {
     sb.append("\n-----\n\n")
     sb.append(Bash.eval(s"bjobs -l ${jobId}").stdout.mkString("\n"))
 
-    val rawLogFile = File(logFile.fullPath.replace(".xml", ""))
+    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
     rawLogFile.clear().write(sb.toString())
 
 

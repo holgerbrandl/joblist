@@ -40,7 +40,7 @@ object JlDebug extends App {
 
   //  jl.waitUntilDone()
   //  jl.resubmit(jl.failed, new TryAgain)
-  //  jl.exportStatistics(File(jl.file.fullPath + ".stats"))
+  //  jl.exportStatistics(File(jl.file.pathAsString + ".stats"))
 
   //  jl.waitUntilDone()
 
@@ -48,8 +48,6 @@ object JlDebug extends App {
 }
 
 class FileTests {
-
-  import joblist._
 
   val aFile = File("/lustre/projects/plantx/inprogress/test.txt")
   for (a <- 1 to 1000) {
@@ -62,7 +60,7 @@ class FileTests {
   someFile.write("tt")
 
   for (a <- 1 to 10000) {
-    someFile.allLines
+    someFile.lines
     Files.readAllLines(someFile.path)
   }
 

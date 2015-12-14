@@ -148,6 +148,6 @@ Related Projects
 
 * [para](https://github.com/hillerlab/ParasolLSF/) is a parasol-like wrapper around LSF for efficiently handling batches of jobs on a compute cluster
 * [Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home)  is a workflow management system
-* [lsf_utils](https://github.com/holgerbrandl/datautils/blob/master/bash/lsf_utils.sh) A collections of bash functions to manage list of lsf-cluster jobs
-* [Queue](https://www.broadinstitute.org/gatk/guide/topic?name=queue) is command-line scripting framework for defining multi-stage genomic analysis pipelines combined with an execution manager
-* [DRMAA](https://en.wikipedia.org/wiki/DRMAA):  is a high-level API specification for the submission and control of jobs to a distributed resource management (DRM) system
+* [lsf_utils](https://github.com/holgerbrandl/datautils/blob/master/bash/lsf_utils.sh) is a collections of bash functions to manage list of lsf-cluster jobs
+* [Queue](https://www.broadinstitute.org/gatk/guide/topic?name=queue) is a command-line scripting framework for defining multi-stage genomic analysis pipelines combined with an execution manager
+* [DRMAA](https://en.wikipedia.org/wiki/DRMAA) is a high-level API specification for the submission and control of jobs to a distributed resource management (DRM) system
