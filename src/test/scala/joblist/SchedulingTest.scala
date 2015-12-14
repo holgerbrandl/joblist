@@ -83,7 +83,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     (wd / "task_1.txt").toJava should exist
     (wd / "task_3.txt").toJava should exist
 
-    (wd / "task_3.txt").lines.next shouldBe "this is task 3"
+    (wd / "task_3.txt").lines.head shouldBe "this is task 3"
 
     // make sure that we can still access the job configurations
     val restoredJC = jl.jobs.map(_.config).head

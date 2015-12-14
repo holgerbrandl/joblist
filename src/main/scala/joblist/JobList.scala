@@ -144,7 +144,7 @@ case class JobList(file: File = File(".joblist"), scheduler: JobScheduler = gues
 
     // add delay because sometimes it takes a few seconds until jobs show up in bjobs
     if (scheduler.isInstanceOf[LsfScheduler]) {
-      Console.out.print("Initializing LSF monitoring...")
+      Console.out.print("Initializing queue monitoring...")
       Thread.sleep(3000)
       Console.out.println("Done")
     }

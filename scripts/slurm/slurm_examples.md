@@ -104,6 +104,8 @@ SystemCPU        Timelimit       TotalCPU     UID
 User             UserCPU         WCKey        WCKeyID
 
 
+sacct -j 2120486 --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,NodeList
+
 
 
 ## same with sorted args

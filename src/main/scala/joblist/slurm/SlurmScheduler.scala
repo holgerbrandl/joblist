@@ -125,7 +125,7 @@ class SlurmScheduler extends JobScheduler {
 
 
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
-    val statsCmd = s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User -P"
+    val statsCmd = s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User,Partition,NodeList -P"
     val logData = queryRunData(statsCmd, jobId)
 
     require(logData.mkString.contains(jobId + ""), s"$jobId is not yet or no longer in the job history:\n" + logData)
@@ -146,7 +146,7 @@ class SlurmScheduler extends JobScheduler {
 
     def parseDate(stringifiedDate: String): DateTime = {
       try {
-        DateTimeFormat.forPattern("MM/dd-HH:mm:ss").parseDateTime(stringifiedDate).withYear(new DateTime().getYear)
+        DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(stringifiedDate.replace("T", " "))
       } catch {
         case _: Throwable => null
       }
@@ -180,9 +180,9 @@ class SlurmScheduler extends JobScheduler {
       jobId = vals(header.indexOf("JobID")).toInt,
       user = vals(header.indexOf("User")),
       state = state,
-      queue = vals(header.indexOf("ExitCode")),
-      execHost = vals(header.indexOf("ExitCode")),
-      jobName = vals(header.indexOf("ExitCode")),
+      queue = vals(header.indexOf("Partition")),
+      execHost = vals(header.indexOf("NodeList")),
+      jobName = vals(header.indexOf("JobName")),
       submitTime = parseDate(vals(header.indexOf("Submit"))),
       startTime = parseDate(vals(header.indexOf("Start"))),
       finishTime = parseDate(vals(header.indexOf("End"))),

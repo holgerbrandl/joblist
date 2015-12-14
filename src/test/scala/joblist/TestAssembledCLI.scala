@@ -6,6 +6,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.Bash
 import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
+import scalautils.StringUtils.ImplStringUtils
 
 /**
   * @author Holger Brandl
