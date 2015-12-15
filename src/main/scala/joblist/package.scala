@@ -14,7 +14,6 @@ import org.joda.time.format.{DateTimeFormat, ISOPeriodFormat}
 import org.joda.time.{DateTime, Duration, Seconds}
 
 import scala.collection.JavaConversions._
-import scalautils.StringUtils.ImplStringUtils
 import scalautils.{Bash, IOUtils}
 
 /**
@@ -164,6 +163,10 @@ package object joblist {
     }
 
 
+    /** Expose Path.resolve for simpler typing and less braces. */
+    def resolve(childName: String) = file / childName
+
+
     def saveAs: ((PrintWriter) => Unit) => Unit = IOUtils.saveAs(file.toJava)
   }
 
@@ -293,32 +296,40 @@ package object joblist {
 
   class ListStatus(jl: JobList) {
 
-    val queuedJobs = jl.queueStatus
+    // we snapshot queue and jobs here and reuse for all the counting
+    val queueSnapshot = jl.queueStatus
+    val jobsSnapshot = jl.jobs
 
-    private val jobs = jl.jobs
-
-    val numTotal: Int = jobs.size
-    val numDone = jobs.count(_.isDone)
-
-    val numFinal = jobs.count(_.isFinal)
-    val finalPerc = 100 * numFinal.toDouble / jobs.size
+    val numTotal = jobsSnapshot.size
+    val numDone = jobsSnapshot.count(_.isDone)
+    val numFinal = jobsSnapshot.count(_.isFinal)
+    val numFailed = jobsSnapshot.count(_.hasFailed)
+    val numKilled = jobsSnapshot.count(_.wasKilled)
 
 
-    def fixedLenFinalPerc = jobs.size match {
-      case 0 => " <NA>"
-      case _ => "%5s" format new DecimalFormat("0.0").format(100 * numFinal.toDouble / jobs.size)
+    val numRunning = queueSnapshot.count(_.status == JobState.RUNNING.toString)
+    val numPending = queueSnapshot.size - numRunning // todo pending could also come from the queue info
+
+
+    // ensure list consistency, but just warn because temoprary list incnsistencies can happen
+    def hasConsistentCounts = queueSnapshot.size + numFinal != numTotal
+
+
+    if (hasConsistentCounts) {
+      Console.err.println(s"warning: job counts don t add up: ${toString}")
     }
 
 
-    val numFailed = jobs.count(_.hasFailed)
-
-    val numRunning = queuedJobs.count(_.status == JobState.RUNNING.toString)
-    val numPending = queuedJobs.size - numRunning
-    // todo pending could also come from the queue info
-    val numKilled = jobs.count(_.wasKilled)
+    val finalPerc = numFinal.toDouble / jobsSnapshot.size
 
 
-    val remTime = jl.estimateRemainingTime(jl.jobs)
+    def fixedLenFinalPerc = jobsSnapshot.size match {
+      case 0 => " <NA>"
+      case _ => "%5s" format new DecimalFormat("0.0").format(100 * finalPerc)
+    }
+
+
+    lazy val remTime = jl.estimateRemainingTime(jobsSnapshot)
 
 
     def stringifyRemTime = remTime match {
@@ -328,18 +339,14 @@ package object joblist {
     }
 
 
-    // ensure list consistency
-    assert(queuedJobs.size + numFinal == numTotal, s"""
-      Inconsistent job counts:
-      Unknown state jobs: ${jobs.filter(_.info.state == JobState.UNKNOWN)}
-      ${toString}
-    """.alignLeft.trim)
-
-
     override def toString = {
       val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaining time $stringifyRemTime%6s; "
       val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; $numKilled%4s killed; $numFailed%4s failed"
-      summary + counts
+
+      val unknownState = jobsSnapshot.filter(_.info.state == JobState.UNKNOWN)
+      val unknownIfAny = if (unknownState.isEmpty) "" else s"""; unknown ${unknownState}={${unknownState.map(_.id).mkString(",")}"""
+
+      summary + counts + unknownIfAny
     }
   }
 

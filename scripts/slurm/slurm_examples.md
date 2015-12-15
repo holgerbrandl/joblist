@@ -1,3 +1,11 @@
+## Notes
+
+* Running jobs can change back to be PENDING on taurus/slurm, but jl seems to cope with it well
+```
+572 jobs in total;   0.0% complete; Remaining time   <NA>;    0 done;  160 running;  412 pending;    0 killed;    0 failed
+572 jobs in total;   0.0% complete; Remaining time   <NA>;    0 done;  156 running;  416 pending;    0 killed;    0 failed
+```
+
 
 ## Job Cmd Piping
 

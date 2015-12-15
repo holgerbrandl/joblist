@@ -195,7 +195,7 @@ jl wait --report
 
 ```
 
-* Sidenote: [It](https://github.com/holgerbrandl/joblist/blob/master/src/main/scala/joblist/local/LocalScheduler.scala)'s implementation a lovely piece of art
+* Sidenote: [Its](https://github.com/holgerbrandl/joblist/blob/master/src/main/scala/joblist/local/LocalScheduler.scala) implementation a lovely piece of (multi-threading) art
 
 ---
 # API 
