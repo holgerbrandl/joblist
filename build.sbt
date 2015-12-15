@@ -14,7 +14,9 @@ resolvers += Resolver.mavenLocal
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
 // needed for cli interface
-libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
+//libraryDependencies += "org.docopt" % "docopt" % "0.6.0-SNAPSHOT"
+// see https://github.com/docopt/docopt.java/issues/4
+libraryDependencies += "com.offbytwo" % "docopt" % "0.6.0.20150202"
 
 // common utilities
 libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
