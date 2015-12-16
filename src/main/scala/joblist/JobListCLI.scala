@@ -149,12 +149,12 @@ object JobListCLI extends App {
       }
 
       // convert all lines into jobs
-      lines.map(batchCmd => {
+      lines.foreach(batchCmd => {
 
         jobConfigs += baseConfig.copy(
           cmd = batchCmd,
-          name = options.getOrElse("name", null)
-        )
+          name = options.getOrElse("name", null) + "_batch" + jobConfigs.size
+        ) // todo unit-test batch submission
       })
 
     } else {
