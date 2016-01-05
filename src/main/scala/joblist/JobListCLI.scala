@@ -153,7 +153,7 @@ object JobListCLI extends App {
 
         jobConfigs += baseConfig.copy(
           cmd = batchCmd,
-          name = options.getOrElse("name", null) + "_batch" + jobConfigs.size
+          name = options.getOrElse("name", "jobs") + "_batch" + jobConfigs.size
         ) // todo unit-test batch submission
       })
 
