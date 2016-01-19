@@ -121,10 +121,18 @@ object JobListCLI extends App {
      --debug                              Debug mode which will execute the first submission in the local shell and
                                           will ignore additional submissions. Creates a $${jl.name}.debug to track
                                           execution state
-     --wait                               Wait until the job is done. Useful for single clusterized tasks
+     --wait                               Reset the joblist, add the job and wait until it is done. Useful for single
+                                          clusterized tasks
       """.alignLeft.trim)
 
     val jl = getJL(options, "jl")
+
+    val waitForJob = options.get("wait").get.toBoolean
+
+    if (waitForJob) {
+      jl.reset()
+    }
+
 
     val baseConfig = JobConfiguration(null,
       queue = options.get("queue").get,
@@ -188,7 +196,7 @@ object JobListCLI extends App {
     // we  block here in 2 situations
     // a) the user asked for it.
     // b) if a local scheduler is being used, which is suboptimal since the multithreading does not kick in
-    if (options.get("wait").get.toBoolean) {
+    if (waitForJob) {
       jl.waitUntilDone()
     }
   }
