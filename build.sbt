@@ -40,10 +40,11 @@ libraryDependencies ++= Seq(
 //  case false => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
 //}
 
+
 sys.env.get("USE_AMMO").isDefined match {
   case true => {
     println("using ammonite shell")
-    libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.1" % "test" cross CrossVersion.full
+    libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.2" % "test" cross CrossVersion.full
     // note does not work because the wole sb expression can just do ONE thing and not two. Why?
     //    initialCommands in (Test, console) := """ammonite.repl.Main.run("")"""
   }
