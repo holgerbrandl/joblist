@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.20/R/core_commons.R")
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.20/R/ggplot_commons.R")
+devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.22/R/core_commons.R")
+devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.22/R/ggplot_commons.R")
 
 require_auto(lubridate)
 require_auto(DT)
@@ -30,26 +30,6 @@ reportNiceName <- reportName %>% basename() %>% str_replace_all("^[.]", "")
 #' Working Directory: `r normalizePath(reportName)`
 
 stopifnot(file.exists(reportName))
-
-
-## todo remove redefinition once core_commons_v1.21 has been released
-safe_ifelse <- function(cond, yes, no) {
-  class.y <- class(yes)
-  if ("factor" %in% class.y) {  # Note the small condition change here
-    levels.y = levels(yes)
-  }
-  X <- ifelse(cond,yes,no)
-  if ("factor" %in% class.y) {  # Note the small condition change here
-    X = as.factor(X)
-    levels(X) = levels.y
-  } else {
-    class(X) <- class.y
-  }
-  return(X)
-}
-
-## todo remove redefinition once core_commons_v1.21 has been released
-empty_as_na <- function(x) safe_ifelse(x!="", x, NA)
 
 
 allJobs <- read.delim(paste0(reportName, ".runinfo.log"), fill=T) %>%
