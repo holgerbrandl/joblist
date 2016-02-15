@@ -3,7 +3,7 @@ import sbt.Resolver
 name := "joblist"
 organization := "de.mpicbg.scicomp"
 
-version := "0.6"
+version := "0.6-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
