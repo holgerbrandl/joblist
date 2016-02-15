@@ -21,7 +21,7 @@ import scalautils.{Bash, ShellUtils}
   */
 object JobListCLI extends App {
 
-  val version = "0.5-SNAPSHOT"
+  val version = "0.5"
 
   val DEFAULT_JL = ".jobs"
 
