@@ -103,6 +103,8 @@ class LsfScheduler extends JobScheduler {
     val sb = new StringBuilder()
     sb.append(Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n"))
 
+//    if(!sb.toString.contains(jobId + "")) return // todo really??
+
     require(sb.toString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 
 

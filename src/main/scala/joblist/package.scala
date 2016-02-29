@@ -301,6 +301,12 @@ package object joblist {
     val queueSnapshot = jl.queueStatus
     val jobsSnapshot = jl.jobs
 
+//    // detail out jobs without runinfo (requires enable of joblist/lsf/LsfScheduler.scala:106)
+//    private val missingJobInfo: List[Job] = jobsSnapshot.filter(!_.infoFile.exists)
+//    if(missingJobInfo.nonEmpty){
+//      print(missingJobInfo.map(job => job.id + " " + job.name).mkString("\n"))
+//    }
+
     val numTotal = jobsSnapshot.size
     val numDone = jobsSnapshot.count(_.isDone)
     val numFinal = jobsSnapshot.count(_.isFinal)
