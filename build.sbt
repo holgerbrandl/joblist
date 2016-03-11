@@ -69,3 +69,6 @@ parallelExecution in Test := false
 
 // http://www.scala-sbt.org/0.12.4/docs/Howto/logging.html
 //logLevel in Global := Level.Debug
+
+// http://www.scala-sbt.org/release/docs/Publishing.html#Define+the+repository
+publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
