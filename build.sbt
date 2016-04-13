@@ -33,13 +33,6 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3"
 )
 
-// todo remove for release or use custom property
-//libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
-//sys.env.get("TERM_PROGRAM").isDefined match {
-//  case true => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.9-SNAPSHOT" % "test" cross CrossVersion.full
-//  case false => libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.4.8" % "test" cross CrossVersion.full
-//}
-
 
 sys.env.get("USE_AMMO").isDefined match {
   case true => {
