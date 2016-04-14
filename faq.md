@@ -29,14 +29,13 @@ unset JL_FORCE_LOCAL
 ```
 
 
-
 ## How to use jl to monitor a large number of jobs?
 
 Since jl startup is limited by the underlying java VM, subsequent invocation might be too slow to monitor/submit large (ie >1k) jobs jobs
 
 There are 2 options to overcome this limitation
 
-* Batch submissions: `jl` can read job definitions from stdin. It expectes one job per line
+* Batch submissions: `jl` can read job definitions from stdin. It expects one job per line
 
 	```
 	for job_nr in $(seq 1 10); do

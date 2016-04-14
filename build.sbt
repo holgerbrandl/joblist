@@ -19,7 +19,8 @@ libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 libraryDependencies += "com.offbytwo" % "docopt" % "0.6.0.20150202"
 
 // common utilities
-libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1-SNAPSHOT"
+libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.1"
+//libraryDependencies += "com.github.pathikrit" %% "better-files" % "2.14.0"
 
 
 // add xstream without sub-dependencies because they are optional and contain class-duplicates in pull-parser
@@ -32,6 +33,7 @@ libraryDependencies ++= Seq(
   "org.joda" % "joda-convert" % "1.5",
   "joda-time" % "joda-time" % "2.3"
 )
+
 
 
 sys.env.get("USE_AMMO").isDefined match {
