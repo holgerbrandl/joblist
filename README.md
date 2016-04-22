@@ -140,6 +140,7 @@ Feel welcome to submit pull-requests or tickets,  or simply get in touch via git
 
 * [JobList Introduction](http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html) A presentation from December 2015 ([sources](./docs/joblist_intro/joblist_intro.md))
 * [FAQ](./faq.md)
+* [Developer Info](./docs/devel_joblist.md) Information about to build, test and improve joblist
 
 
 Related Projects

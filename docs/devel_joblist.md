@@ -1,3 +1,30 @@
+# JobList Developer Info
+
+We always welcome pull request and tickets.
+
+
+## How to build
+
+
+To build the jar
+```
+sbt assembly
+```
+
+To publish the jar to the local maven and ivy index do
+```
+sbt assembly publishLocal publish
+```
+
+To clean dependency cache and previous build use
+```
+sbt clean
+```
+See [here](http://stackoverflow.com/questions/17190755/why-sbt-runs-dependency-resolution-every-time-after-clean) for details
+
+****
+## Release Check List
+
 1) Increment version in build.sbt, `joblist.JobListCLI.version`
 2) Update version in README.md (installation and sbt inclusion)
 2) Push and and create version on github
