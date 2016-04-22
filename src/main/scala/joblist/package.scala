@@ -347,7 +347,7 @@ package object joblist {
 
 
     override def toString = {
-      val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaining time $stringifyRemTime%6s; "
+      val summary = f"$numTotal%4s jobs in total; $fixedLenFinalPerc%% complete; Remaining time $stringifyRemTime%10s; "
       val counts = f"$numDone%4s done; $numRunning%4s running; $numPending%4s pending; $numKilled%4s killed; $numFailed%4s failed"
 
       val unknownState = jobsSnapshot.filter(_.info.state == JobState.UNKNOWN)
