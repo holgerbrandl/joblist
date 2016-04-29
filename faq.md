@@ -35,13 +35,25 @@ Since jl startup is limited by the underlying java VM, subsequent invocation mig
 
 There are 2 options to overcome this limitation
 
-* Batch submissions: `jl` can read job definitions from stdin. It expects one job per line
+* Batch submissions: `jl` can read job definitions from stdin (or from a file as well). By default it expects one job per line
 
 	```
 	for job_nr in $(seq 1 10); do
 	    echo "sleepTime=$(perl -e 'print int(rand(20)) + 10'); sleep $sleepTime; echo slept for $sleepTime seconds in job $job_nr"
 	done | jl submit --batch -
 	```
+	`joblist` also allows to use a custom separator charactor to process multi-line commands with this pattern
+
+    ```
+    for job_nr in $(seq 1 10); do
+        echo "
+        ## another job nr${job_nr}
+        sleepTime=$(perl -e 'print int(rand(20)) + 10');
+        sleep $sleepTime;
+        echo slept for $sleepTime seconds in job $job_nr
+        " | sed 's/^ *//' ## delete leading whitespace to allow for more robust regex
+	done | jl submit --batch - --bsep '^##'
+    ```
 
 * Loop redirection: To just monitor a large number of jobs simply [pipe](http://stackoverflow.com/questions/18612603/redirecting-output-of-bash-for-loop) your submission loop into jl
 

@@ -30,7 +30,7 @@ object JobListCLI extends App {
       s"""
     JobList       v$version
     Description   An hpc-job manager
-    Copyright     2015 Holger Brandl
+    Copyright     2016 Holger Brandl
     License       Simplified BSD
     Website       https://github.com/holgerbrandl/joblist
     """.alignLeft.trim)
@@ -123,6 +123,7 @@ object JobListCLI extends App {
                                           execution state
      --wait                               Reset the joblist, add the job and wait until it is done. Useful for single
                                           clusterized tasks
+     --bsep <separator_pattern>           Batch separator character to separate jobs [default: ^]
       """.alignLeft.trim)
 
     val jl = getJL(options, "jl")
@@ -143,27 +144,54 @@ object JobListCLI extends App {
     val jobConfigs = ListBuffer.empty[JobConfiguration]
 
 
+    // for corresponding unit test see joblist/TestCLI.scala:113
     if (options.get("batch").get.toBoolean) {
       val batchArg = options.get("cmds_file").get
 
-      // either read lines from file or from stdin if - is used
-      val lines = if (batchArg == "-") {
-        io.Source.stdin.getLines()
+      // either read cmds from file or from stdin if - is used
+      val cmds = if (batchArg == "-") {
+
+        // fetch the command separator and split up stdin into into job commands
+        val batchSep = options.get("bsep").get.r.unanchored
+
+        // https://www.safaribooksonline.com/library/view/scala-cookbook/9781449340292/ch01s07.html
+        // "es".r.unanchored.findFirstIn("tst").isDefined
+
+        // io.Source.stdin.getLines() // old approach without customizable batch separation
+
+
+        // http://stackoverflow.com/questions/7293617/split-up-a-list-at-each-element-satisfying-a-predicate-scala
+        // http://stackoverflow.com/questions/14613995/whats-scalas-idiomatic-way-to-split-a-list-by-separator
+        File("test_data/test_stdin.txt").lines.
+          //        io.Source.stdin.getLines().
+          foldLeft(Seq(Seq.empty[String])) {
+          (acc, line) =>
+            if (batchSep.findFirstIn(line).isDefined) acc :+ Seq(line)
+            else acc.init :+ (acc.last :+ line)
+        }.map(_.mkString("\n"))
+
       } else {
         val batchFile = File(batchArg)
         require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
 
+
         batchFile.lines
       }
 
-      // convert all lines into jobs
-      lines.foreach(batchCmd => {
 
-        jobConfigs += baseConfig.copy(
-          cmd = batchCmd,
-          name = options.getOrElse("name", "jobs") + "_batch" + jobConfigs.size
-        ) // todo unit-test batch submission
-      })
+      // convert all cmds into jobs
+      cmds.
+        // remove empty elements due to formatting of input
+        filterNot(_.isEmpty).
+        map(_.alignLeft).
+        map(_.trim).
+        foreach(batchCmd => {
+
+          jobConfigs += baseConfig.copy(
+            cmd = batchCmd,
+            name = options.getOrElse("name", "jobs") + "_batch" + jobConfigs.size
+          ) // todo unit-test batch submission
+        })
 
     } else {
       jobConfigs += baseConfig.copy(

@@ -61,4 +61,28 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     result.exitCode should be(0)
     File("script_result.txt").toJava should exist
   }
+
+
+
+
+  it should "split batch jobs up correctly" in {
+
+    val script = s"""
+    cd ${wd.pathAsString}
+
+    jl reset
+    cat ${home/"test_data"/"test_stdin.txt"} | jl --batch - --bsep '^##'
+
+    jl wait
+    """.alignLeft
+
+    println(script)
+
+    Bash.eval(script, showOutput = true)
+
+    val jl = JobList()
+
+    jl.file.withExt(".html").toJava should exist
+    jl.jobs.size should be (3)
+  }
 }

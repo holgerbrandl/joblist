@@ -297,17 +297,17 @@ package object joblist {
     }
   }
 
-  // todo rather use scala-utils version instead once release to jcenter
-  implicit class MiscVectorUtils(values: Seq[Double]) {
-
-
-    def quantile(quantile:Double) = {
-      assert(quantile >=0 && quantile <=1)
-      // convert quantile into and index
-      val quantIndex = (values.length.toDouble*quantile).round.toInt -1
-      values.sorted.get(quantIndex)
-    }
-  }
+//  // todo rather use scala-utils version instead once release to jcenter
+//  implicit class MiscVectorUtils(values: Seq[Double]) {
+//
+//
+//    def quantile(quantile:Double) = {
+//      assert(quantile >=0 && quantile <=1)
+//      // convert quantile into and index
+//      val quantIndex = (values.length.toDouble*quantile).round.toInt -1
+//      values.sorted.get(quantIndex)
+//    }
+//  }
 
   class ListStatus(jl: JobList) {
 
