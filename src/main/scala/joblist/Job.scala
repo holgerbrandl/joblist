@@ -1,5 +1,7 @@
 package joblist
 
+import org.joda.time.DateTime
+
 /**
   * @author Holger Brandl
   */
@@ -96,3 +98,34 @@ object JobState {
 
 }
 
+object Test extends App{
+//  println(JobState.PENDING.toString)
+//  println(JobState.PENDING.getClass.getName)
+
+  private val info: RunInfo = new RunInfo(1, "me", JobState.PENDING, "long", "n22", "no_name", new DateTime, new DateTime, new DateTime, 3, "no_cause")
+
+  private val xml: String = joblist.getXstream.toXML(info)
+  joblist.getXstream.getConverterLookup
+  println(xml)
+
+  private val restoredInfo: AnyRef = joblist.getXstream.fromXML(xml)
+  println(restoredInfo)
+
+
+
+//  private val restoredInfo2: AnyRef = joblist.getXstream.fromXML("""<RunInfo>
+//                                                                   |  <jobId>79373156</jobId>
+//                                                                   |  <user>brandl</user>
+//                                                                   |  <state class="joblist.JobState$COMPLETED$"/>
+//                                                                   |  <queue>local</queue>
+//                                                                   |  <execHost>localhost</execHost>
+//                                                                   |  <jobName>null_batch2</jobName>
+//                                                                   |  <submitTime>29-04-2016 15:13:36</submitTime>
+//                                                                   |  <startTime>29-04-2016 15:13:39</startTime>
+//                                                                   |  <finishTime>29-04-2016 15:13:39</finishTime>
+//                                                                   |  <exitCode>2147483647</exitCode>
+//                                                                   |  <killCause></killCause>
+//                                                                   |</RunInfo>""")
+//
+//  println(restoredInfo2) // so its not backwards compatible
+}

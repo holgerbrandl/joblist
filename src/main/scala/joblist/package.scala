@@ -4,6 +4,7 @@ import java.text.DecimalFormat
 
 import better.files.File
 import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.annotations.XStreamAsAttribute
 import com.thoughtworks.xstream.converters.basic.AbstractSingleValueConverter
 import com.thoughtworks.xstream.io.xml.DomDriver
 import joblist.JobState.JobState
@@ -133,16 +134,49 @@ package object joblist {
     }
   }
 
+  // see http://x-stream.github.io/converter-tutorial.html
+  private class JobStateConverter extends AbstractSingleValueConverter {
+
+    def canConvert(o: Class[_]): Boolean = {
+      o.getName.startsWith("joblist.JobState$")
+    }
+
+
+    override def toString(obj: scala.Any): String = {
+      obj.asInstanceOf[JobState].toString
+    }
+
+
+    def fromString(str: String): AnyRef = {
+      JobState.valueOf(str)
+    }
+  }
+
 
   def getXstream: XStream = {
     val xStream = new XStream(new DomDriver())
 
     xStream.registerConverter(new BetterFilerConverter())
     xStream.registerConverter(new JodaConverter())
-    //    xStream.registerConverter(new JobStateConverter())
+    xStream.registerConverter(new JobStateConverter())
 
     xStream.alias("RunInfo", classOf[RunInfo])
     xStream.alias("JobState", classOf[JobState])
+    xStream.alias("JobConfig", classOf[JobConfiguration])
+
+//    xStream.alias("state", classOf[RunInfo], null)
+//    xStream.alias("state", classOf[JobState], null)
+
+    // http://stackoverflow.com/questions/2008043/xstream-removing-class-attribute
+    xStream.aliasSystemAttribute(null, "class")
+
+
+
+    //    does not work because of http://stackoverflow.com/questions/14079859/xstream-annotation-not-working-in-scala
+    //    xStream.autodetectAnnotations(true)
+    //    xStream.processAnnotations(classOf[JobState])
+    //    xStream.processAnnotations(classOf[JobConfiguration])
+    //    xStream.processAnnotations(classOf[RunInfo])
 
     xStream
   }
@@ -286,7 +320,7 @@ package object joblist {
           new Duration(firstTime, sndTime).getStandardSeconds.toDouble
         }.
         // just use the last 20 differences (because cluster load might change over time)
-//        toList.takeRight(20).median
+        //        toList.takeRight(20).median
         toList.takeRight(20).quantile(0.8)
 
 
@@ -297,17 +331,17 @@ package object joblist {
     }
   }
 
-//  // todo rather use scala-utils version instead once release to jcenter
-//  implicit class MiscVectorUtils(values: Seq[Double]) {
-//
-//
-//    def quantile(quantile:Double) = {
-//      assert(quantile >=0 && quantile <=1)
-//      // convert quantile into and index
-//      val quantIndex = (values.length.toDouble*quantile).round.toInt -1
-//      values.sorted.get(quantIndex)
-//    }
-//  }
+  //  // todo rather use scala-utils version instead once release to jcenter
+  //  implicit class MiscVectorUtils(values: Seq[Double]) {
+  //
+  //
+  //    def quantile(quantile:Double) = {
+  //      assert(quantile >=0 && quantile <=1)
+  //      // convert quantile into and index
+  //      val quantIndex = (values.length.toDouble*quantile).round.toInt -1
+  //      values.sorted.get(quantIndex)
+  //    }
+  //  }
 
   class ListStatus(jl: JobList) {
 
