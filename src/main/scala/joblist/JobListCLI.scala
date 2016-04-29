@@ -314,7 +314,7 @@ object JobListCLI extends App {
     }
 
     if (options.get("report").get.toBoolean) {
-      val reportFile = new ListReport(jl).createHtmlReport()
+      val reportFile = new JobReport(jl).createHtmlReport()
     }
   }
 
@@ -393,11 +393,15 @@ object JobListCLI extends App {
                           has been completely processed without errors. Useful for flow-control in bash scripts.
      --killed             Only print the status of jobs killed by the queuing system.
      --ids <csv_ids>      Limit reporting to the comma-separted list of jobs ids
+     --first              Limit reporting to the first job only
      --by_name <pattern>  Limit reporting to those jobs whose names match the given regex
-     --verbose            Include more job details in the table like log files etc.
      --no_header          Do not print the joblist summary as header
      --log <what>         Print logging info for selected jobs. Possible values are "cmd", "err", "out"
       """.alignLeft.trim)
+
+//    --fields <what>      Define which job details to include in the table. Comma-separated list of "basics","logs",
+//    "runinfo", "qinfo" or "basics" [default: all]
+
 
     val jl = getJL(options)
 
@@ -429,11 +433,15 @@ object JobListCLI extends App {
       statusJobs = jl.killed
     }
 
+
     if (options.get("ids").orNull != null) {
       val queryIds = options.get("ids").get.split(",")
       statusJobs = jl.jobs.filter(queryIds.contains(_))
     }
 
+    if (options.get("first").get.toBoolean) {
+      statusJobs = List(statusJobs.head)
+    }
 
     // check what type of reporting we want to do (log or table)
     val logReporting = options.get("log").orNull
@@ -457,18 +465,22 @@ object JobListCLI extends App {
 
     // by default do regular table reporting
 
-    val isVerbose = options.get("verbose").get.toBoolean
+
+//    val isVerbose = options.get("verbose").get.toBoolean
+//    val fields = options.get("fields").get.split(",").map(ExportProps.valueOf(_))
+
+    new JobReport(jl).exportStatistics()
 
     statusJobs.map(job => {
       val ri = job.info
       val fields = ListBuffer(ri.jobId, ri.jobName, ri.state)
 
-      if (isVerbose) {
-        //        fields += Seq(job.config.logs.err, job.config.logs.out)
-        fields += File(".").relativize(job.config.logs.err)
-        fields += File(".").relativize(job.config.logs.out)
-        fields += File(".").relativize(job.config.logs.cmd)
-      }
+//      if (isVerbose) {
+//        //        fields += Seq(job.config.logs.err, job.config.logs.out)
+//        fields += File(".").relativize(job.config.logs.err)
+//        fields += File(".").relativize(job.config.logs.out)
+//        fields += File(".").relativize(job.config.logs.cmd)
+//      }
 
       fields.mkString("\t")
 

@@ -103,7 +103,7 @@ object Test extends App{
 //  println(JobState.PENDING.toString)
 //  println(JobState.PENDING.getClass.getName)
 
-  private val info: RunInfo = new RunInfo(1, "me", JobState.PENDING, "long", "n22", "no_name", new DateTime, new DateTime, new DateTime, 3, "no_cause")
+  private val info: RunInfo = new RunInfo(1, "me", JobState.PENDING, "test", "long",  "n22", "no_name", new DateTime, new DateTime, new DateTime, 3, "no_cause")
 
   private val xml: String = PersistUtils.getXstream.toXML(info)
   PersistUtils.getXstream.getConverterLookup

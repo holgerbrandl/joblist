@@ -20,7 +20,7 @@ package object joblist {
   implicit class ImplJobListUtils(jl: JobList) {
 
     // simple convenience wrapper
-    def createHtmlReport() = new ListReport(jl).createHtmlReport()
+    def createHtmlReport() = new JobReport(jl).createHtmlReport()
   }
 
   def guessScheduler(): JobScheduler = {
@@ -72,7 +72,9 @@ package object joblist {
   //  private def changeWdOptional(wd: File): String = {
   //    if (wd != null && wd != File(".")) "cd " + wd.pathAsString + "; " else ""
   //  }
-  case class RunInfo(jobId: Int, user: String, state: joblist.JobState.JobState, queue: String,
+  case class RunInfo(jobId: Int, user: String, state: joblist.JobState.JobState,
+                     scheduler: String,
+                     queue: String,
                      //                  FromHost:String,
                      execHost: String,
                      jobName: String,

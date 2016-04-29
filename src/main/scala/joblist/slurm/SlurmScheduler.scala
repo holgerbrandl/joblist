@@ -181,6 +181,7 @@ class SlurmScheduler extends JobScheduler {
       jobId = vals(header.indexOf("JobID")).toInt,
       user = vals(header.indexOf("User")),
       state = state,
+      scheduler = "slurm",
       queue = vals(header.indexOf("Partition")),
       execHost = vals(header.indexOf("NodeList")),
       jobName = vals(header.indexOf("JobName")),

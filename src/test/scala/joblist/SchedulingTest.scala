@@ -177,7 +177,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.waitUntilDone()
 
-    new ListReport(jl).exportStatistics()
+    new JobReport(jl).exportStatistics()
 
     jl.reset()
 

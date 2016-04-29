@@ -7,32 +7,44 @@ require_auto(lubridate)
 require_auto(DT)
 
 
-if(!exists("reportName")){
+if(!exists("joblist")){
     argv = commandArgs(TRUE)
 
     if(length(argv) == 0){
-        reportName=".jobs"
-        # reportName=".ipsjobs"
-        # reportName=".trinjob"
-        # reportName=".blastn"
-        # reportName=".failchunksblastx"
+        joblist=".jobs"
+        # joblist=".ipsjobs"
+        # joblist=".trinjob"
+        # joblist=".blastn"
+        # joblist=".failchunksblastx"
     #    stop("Usage: RemoveContaminants.R <assemblyBaseName>")
     }else{
-        reportName=argv[1]
+        joblist=argv[1]
     }
 }
-# setwd("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
-# setwd("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); reportName=".blastn"
+# setwd("/Volumes/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); joblist=".blastn"
+# setwd("/projects/plantx/inprogress/stowers/dd_Pgra_v4/bac_contamination"); joblist=".blastn"
 
-reportNiceName <- reportName %>% basename() %>% str_replace_all("^[.]", "")
+reportNiceName <- joblist %>% basename() %>% str_replace_all("^[.]", "")
 #' # JobList Report:  `r reportNiceName`
 
-#' Working Directory: `r normalizePath(reportName)`
+#' Working Directory: `r normalizePath(joblist)`
 
-stopifnot(file.exists(reportName))
+stopifnot(file.exists(joblist))
 
 
-allJobs <- read.delim(paste0(reportName, ".runinfo.log"), fill=T) %>%
+#' ## Summary
+#+ results='asis'
+cat(system(paste("jl status", joblist), intern=T), sep='<br>')
+
+
+#' ## Job Example
+#+ results='asis'
+cat(paste("<code>", system(paste("jl status --first --log cmd --no_header", joblist), intern=T), "</code>"), sep='<br>')
+
+#' ## Job Statistics
+
+#+
+allJobs <- read.delim(paste0(joblist, ".runinfo.log"), fill=T) %>%
     transform(job_id=factor(job_id)) %>%
     arrange(job_id) %>%
     # impose an order on th ejob ids
@@ -58,7 +70,7 @@ wallLimits <- c(short=1, medium=8, long=96)
 allJobs %<>%  mutate(queueLimit=wallLimits[ac(queue)])
 allJobs %<>% mutate(exceeded_queue_limit=exec_time_hours>queueLimit)
 
-write.delim(allJobs, file=paste0(reportName, ".runinfo_ext.log"))
+write.delim(allJobs, file=paste0(joblist, ".runinfo_ext.log"))
 
 
 # Extract the final set (not including the killed and resubmitted ones)
@@ -70,7 +82,7 @@ jobs <- allJobs %>%
 #' Total Jobs: `r nrow(jobs)`
 
 
-#jcLogsFile <- paste0(reportName, ".stats.jc.log")
+#jcLogsFile <- paste0(joblist, ".stats.jc.log")
 #if(file.exists(jcLogsFile)){ tbd...
 
 if(unlen(jobs$exec_host)<50 & unlen(jobs$exec_host) >1){
@@ -79,8 +91,8 @@ if(unlen(jobs$exec_host)<50 & unlen(jobs$exec_host) >1){
 
 
 if(nrow(jobs)==0){
-    system(paste("mailme 'no jobs were run in  ",normalizePath(reportName),"'"))
-    warning(paste("no jobs were run in  ",normalizePath(reportName)))
+    system(paste("mailme 'no jobs were run in  ",normalizePath(joblist),"'"))
+    warning(paste("no jobs were run in  ",normalizePath(joblist)))
     stop()
 }
 
@@ -134,11 +146,12 @@ jobs %>%
 #######################################################################################################################
 #' ## Resubmitted Jobs
 
-#' In total there were `r filter(allJobs, !is.na(resubmission_of)) %>% nrow` job resubmissions
 resubmissions <- allJobs %>%
     filter(!is.na(resubmission_of)) %>%
-#    semi_join(allJobs, c("job_id"="resubmission_of")) %>%
+    #    semi_join(allJobs, c("job_id"="resubmission_of")) %>%
     transmute(job_id, status, exec_time_hours, job_name, resubmission_of)
+
+#' In total there were `r filter(allJobs, !is.na(resubmission_of)) %>% nrow` job resubmissions
 
 resubmissions %>% datatable()
 

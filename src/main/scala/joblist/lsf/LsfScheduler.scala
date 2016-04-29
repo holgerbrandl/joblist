@@ -173,6 +173,7 @@ class LsfScheduler extends JobScheduler {
       jobId = slimValues.head.toInt,
       user = slimValues(1),
       state = state,
+      scheduler = "lsf",
       queue = slimValues(3),
       execHost = slimValues(5),
       jobName = jobName,

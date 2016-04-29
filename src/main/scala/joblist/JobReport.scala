@@ -3,26 +3,14 @@ package joblist
 import better.files.File
 
 /**
-  * Created by brandl on 4/29/16.
+  * Export list data into tabular format
   */
-class ListReport(jl:JobList) {
 
 
-  object ExportProps {
-    sealed trait ExportProps
+class JobReport(jl: JobList) {
 
-    case object BASE extends ExportProps
-    case object LOGS extends ExportProps
-    case object TIMES extends ExportProps
-    case object ALL extends ExportProps
+  def exportStatistics() {
 
-
-    val allStates = Seq(BASE, LOGS, TIMES, ALL)
-
-    def valueOf(status: String) = allStates.find(_.toString == status) //.getOrElse(UNKNOWN)
-  }
-
-  def exportStatistics() = {
     jl.requireListFile()
 
     val statsFile = File(jl.file + ".runinfo.log")
@@ -90,6 +78,20 @@ class ListReport(jl:JobList) {
 
     Console.out.println(s" done '${reportFile.name}'")
   }
-
-
 }
+
+
+//object ExportProps {
+//  sealed trait ExportProps
+//
+//  case object basics extends ExportProps
+//  case object logs extends ExportProps
+//  case object runinfo extends ExportProps
+//  case object qinfo extends ExportProps
+//  case object all extends ExportProps
+//
+//  val allStates = Seq(basics, logs, runinfo, qinfo, all)
+//
+//  def valueOf(status: String) = allStates.find(_.toString == status) //.getOrElse(UNKNOWN)
+//}
+

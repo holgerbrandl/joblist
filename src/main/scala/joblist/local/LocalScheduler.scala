@@ -91,7 +91,7 @@ class LocalScheduler extends JobScheduler {
 
     val jobId = new Random().nextInt(Int.MaxValue)
 
-    val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, "local", "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
+    val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, "local", "none", "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
     jobstats += (jobId -> runInfo)
 
     // also create placeholder threads to respect thread settings
