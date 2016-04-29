@@ -286,12 +286,26 @@ package object joblist {
           new Duration(firstTime, sndTime).getStandardSeconds.toDouble
         }.
         // just use the last 20 differences (because cluster load might change over time)
-        toList.takeRight(20).median
+//        toList.takeRight(20).median
+        toList.takeRight(20).quantile(0.8)
+
 
 
       // basically runtime is equal as last jobs finishtime which can be approximated by
       val numSecondsRemaining = numPending * avgStartDiffSecs + avgRuntimeSecs
       Some(Seconds.seconds(numSecondsRemaining.round.toInt).toStandardDuration)
+    }
+  }
+
+  // todo rather use scala-utils version instead once release to jcenter
+  implicit class MiscVectorUtils(values: Seq[Double]) {
+
+
+    def quantile(quantile:Double) = {
+      assert(quantile >=0 && quantile <=1)
+      // convert quantile into and index
+      val quantIndex = (values.length.toDouble*quantile).round.toInt -1
+      values.sorted.get(quantIndex)
     }
   }
 
@@ -301,11 +315,11 @@ package object joblist {
     val queueSnapshot = jl.queueStatus
     val jobsSnapshot = jl.jobs
 
-//    // detail out jobs without runinfo (requires enable of joblist/lsf/LsfScheduler.scala:106)
-//    private val missingJobInfo: List[Job] = jobsSnapshot.filter(!_.infoFile.exists)
-//    if(missingJobInfo.nonEmpty){
-//      print(missingJobInfo.map(job => job.id + " " + job.name).mkString("\n"))
-//    }
+    //    // detail out jobs without runinfo (requires enable of joblist/lsf/LsfScheduler.scala:106)
+    //    private val missingJobInfo: List[Job] = jobsSnapshot.filter(!_.infoFile.exists)
+    //    if(missingJobInfo.nonEmpty){
+    //      print(missingJobInfo.map(job => job.id + " " + job.name).mkString("\n"))
+    //    }
 
     val numTotal = jobsSnapshot.size
     val numDone = jobsSnapshot.count(_.isDone)

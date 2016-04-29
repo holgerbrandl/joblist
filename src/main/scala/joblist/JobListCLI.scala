@@ -401,7 +401,7 @@ object JobListCLI extends App {
       statusJobs = jl.killed
     }
 
-    if (options.get("ids").isDefined) {
+    if (options.get("ids").orNull != null) {
       val queryIds = options.get("ids").get.split(",")
       statusJobs = jl.jobs.filter(queryIds.contains(_))
     }
@@ -463,7 +463,7 @@ object JobListCLI extends App {
       jlwait(){
         jl wait $*
       }
-      export -f wait4jobs
+      export -f jlwait
 
       ##note: mysub jl wait
       jlsub(){
