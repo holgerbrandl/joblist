@@ -13,7 +13,7 @@ import scalautils.math._
 class ListStatus(jl: JobList) {
 
   // we snapshot queue and jobs here and reuse for all the counting
-  val queueSnapshot = jl.queueStatus
+  val queueSnapshot = jl.queueStatus()
   val jobsSnapshot = jl.jobs
 
   //    // detail out jobs without runinfo (requires enable of joblist/lsf/LsfScheduler.scala:106)
@@ -29,7 +29,7 @@ class ListStatus(jl: JobList) {
   val numKilled = jobsSnapshot.count(_.wasKilled)
 
 
-  val numRunning = queueSnapshot.count(_.status == JobState.RUNNING.toString)
+  val numRunning = queueSnapshot.count(_.state == JobState.RUNNING)
   val numPending = queueSnapshot.size - numRunning // todo pending could also come from the queue info
 
 

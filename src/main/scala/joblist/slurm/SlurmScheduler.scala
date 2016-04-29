@@ -1,6 +1,7 @@
 package joblist.slurm
 
 import better.files.File
+import joblist.JobState.JobState
 import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
@@ -105,7 +106,8 @@ class SlurmScheduler extends JobScheduler {
       map(slLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
         val splitLine = slLine.trim.split(" +")
-        QueueStatus(splitLine(0).toInt, splitLine(4))
+        val curstate: JobState= JobState.valueOf(slurmStateRemapping(splitLine(4)))
+        QueueStatus(splitLine(0).toInt, curstate)
       }).toList
   }
 
@@ -163,16 +165,6 @@ class SlurmScheduler extends JobScheduler {
     val slurmState = vals(header.indexOf("State")).split(" ")(0)
     var killReason = null
 
-    // tbd add other kill reasons hereslurmState
-    def slurmStateRemapping(slurmState: String) = slurmState.
-      //todo jobs without walltime are killed after 8-10 minutes and get a status CANCELED by 0 --> create ticket + unit test
-      // example jl submit --wait -q "haswell" "sleep 30; touch hihi.txt"  --> scancel it
-      // for blast is seems that this is caused by hitting the memory limit
-      replaceFirst("^CANCELLED by 0$", "KILLED") match {
-      case "TIMEOUT" => "KILLED"
-      case other: String => other
-    }
-
 
 
     val state = JobState.valueOf(slurmStateRemapping(slurmState))
@@ -193,6 +185,17 @@ class SlurmScheduler extends JobScheduler {
     )
 
     toXml(runLog, logFile)
+  }
+
+
+  // tbd add other kill reasons hereslurmState
+  def slurmStateRemapping(slurmState: String) = slurmState.
+    //todo jobs without walltime are killed after 8-10 minutes and get a status CANCELED by 0 --> create ticket + unit test
+    // example jl submit --wait -q "haswell" "sleep 30; touch hihi.txt"  --> scancel it
+    // for blast is seems that this is caused by hitting the memory limit
+    replaceFirst("^CANCELLED by 0$", "KILLED") match {
+    case "TIMEOUT" => "KILLED"
+    case other: String => other
   }
 
 

@@ -125,9 +125,9 @@ more .jl/* | cat
 ## enhanced reporting
 
 jl reset
-jl submit "sleep 3; echo hallo; exit 1 "
-jl submit "sleep 3; echo foo ; echo 'bar' >&2;  exit 0"
-jl submit "sleep 2; echo baumaus"
+jl submit "sleep 20; echo hallo; exit 1 "
+jl submit "sleep 25; echo foo ; echo 'bar' >&2;  exit 0"
+jl submit "sleep 10; echo baumaus"
 jl wait
 jl status --report
 

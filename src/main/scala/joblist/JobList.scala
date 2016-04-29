@@ -94,21 +94,22 @@ case class JobList(file: File = File(".jobs"), scheduler: JobScheduler = guessSc
   }
 
 
-  def queueStatus = {
+  def queueStatus() = {
     //noinspection ConvertibleToMethodValue
     val jobIds = jobs.map(_.id) // inlining ot would cause it to be evaulated jl.size times
     scheduler.getQueued.filter(qs => jobIds.contains(qs.jobId))
   }
 
 
-  def inQueue = queueStatus.map(qs => Job(qs.jobId))
+  def inQueue() = queueStatus().map(qs => Job(qs.jobId))
 
 
   private var lastQueueStatus: List[QueueStatus] = List()
 
 
-  def isRunning: Boolean = {
-    val nowInQueue = queueStatus
+  //noinspection AccessorLikeMethodIsEmptyParen
+  def isRunning(): Boolean = {
+    val nowInQueue = queueStatus()
 
     // calculate a list of jobs for which the queue status changed. This basically an xor-set operation
     // (for which there's not library method)
@@ -120,12 +121,9 @@ case class JobList(file: File = File(".jobs"), scheduler: JobScheduler = guessSc
     // update runinfo for all jobs for which the queuing status has changed
     changedQS.foreach(_.updateStatsFile())
 
-    //      println(s"${file.name}: In queue are ${nowInQueue.size} jobs out of ${jobs.size}")
-    // workaround (fix?) for https://github.com/holgerbrandl/joblist/issues/5
     if (changedQS.nonEmpty) {
       printStatus()
-      //todo  print estimated runtime here (see https://github.com/holgerbrandl/joblist/issues/9)
-      // maybe check stdin and reprint report on user input???
+      // maybe monitor stdin and reprint report on user input???
     }
 
 
@@ -154,14 +152,14 @@ case class JobList(file: File = File(".jobs"), scheduler: JobScheduler = guessSc
     // Update runinfo for all jobs for which are not queued anymore, but have not yet reached a final state.
     // This could happen for jobs which died too quickly  before we could gather stats about them
     {
-      val queueIds = queueStatus.map(_.jobId)
+      val queueIds = queueStatus().map(_.jobId)
       val unqeuedNonFinalJobs = jobs.filterNot(_.isFinal).filterNot(j => queueIds.contains(j.id))
       unqeuedNonFinalJobs.foreach(_.updateStatsFile())
     }
 
     lastQueueStatus = List() //reset the queue history tracker
 
-    while (isRunning) Thread.sleep(sleepInterval)
+    while (isRunning()) Thread.sleep(sleepInterval)
 
     // print a short report
     //    Console.err.println(file.name + ":" + status)
@@ -247,7 +245,7 @@ case class JobList(file: File = File(".jobs"), scheduler: JobScheduler = guessSc
 
     // Make sure that same jc's are not submitted again while still running
     require(
-      inQueue.map(_.config.name).strictIntersect(resubJobs.map(_.config.name)).isEmpty,
+      inQueue().map(_.config.name).strictIntersect(resubJobs.map(_.config.name)).isEmpty,
       s"jobs can not be resubmitted while still running: $resubJobs")
 
 

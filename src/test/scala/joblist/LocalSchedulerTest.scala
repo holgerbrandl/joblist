@@ -39,7 +39,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     if (jl.scheduler.isInstanceOf[LocalScheduler]) {
       Thread.sleep(5000) // because local scheduling is delayed
       val expParJobs = jl.scheduler.asInstanceOf[LocalScheduler].NUM_THREADS / threadsPerJob
-      jl.queueStatus.filter(_.status == "RUNNING") should have size expParJobs
+      jl.queueStatus().filter(_.state == JobState.RUNNING) should have size expParJobs
     }
 
     jl.waitUntilDone()

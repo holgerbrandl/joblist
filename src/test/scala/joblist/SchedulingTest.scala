@@ -1,6 +1,7 @@
 package joblist
 
 import better.files.File._
+import joblist.JobState.{PENDING, RUNNING}
 import joblist.local.LocalScheduler
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -155,9 +156,9 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "do a correct xor for QueueStatus" in {
-    val someQS = List(QueueStatus(1, "RUN"), QueueStatus(2, "PEND"), QueueStatus(3, "RUN"))
+    val someQS = List(QueueStatus(1, RUNNING), QueueStatus(2, PENDING), QueueStatus(3, RUNNING))
     // one still running(1), one new(4), one change status and onne done(3)
-    val otherQS = List(QueueStatus(1, "RUN"), QueueStatus(2, "RUN"), QueueStatus(4, "PEND"))
+    val otherQS = List(QueueStatus(1, RUNNING), QueueStatus(2, RUNNING), QueueStatus(4, PENDING))
 
     val xor = someQS.strictXor(otherQS).map(_.jobId).distinct
 

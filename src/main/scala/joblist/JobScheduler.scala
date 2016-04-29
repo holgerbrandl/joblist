@@ -1,6 +1,7 @@
 package joblist
 
 import better.files.File
+import joblist.JobState.JobState
 
 /**
   * An interface used by jl to communicate with job schedulers
@@ -26,5 +27,5 @@ trait JobScheduler {
 }
 
 
-case class QueueStatus(jobId: Int, status: String)
+case class QueueStatus(jobId: Int, state: JobState)
 

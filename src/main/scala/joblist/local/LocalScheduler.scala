@@ -130,7 +130,7 @@ class LocalScheduler extends JobScheduler {
   override def getQueued: List[QueueStatus] = {
     jobstats.
       filterNot({ case (id, runInfo) => JobState.finalStates.contains(runInfo.state) }).
-      map { case (id, runInfo) => QueueStatus(id, runInfo.state.toString) }.toList
+      map { case (id, runInfo) => QueueStatus(id, runInfo.state) }.toList
   }
 
 

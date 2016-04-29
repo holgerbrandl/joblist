@@ -1,6 +1,7 @@
 package joblist.lsf
 
 import better.files.File
+import joblist.JobState.JobState
 import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
@@ -93,9 +94,9 @@ class LsfScheduler extends JobScheduler {
         val bjLineSplit = bjLine.split(" +")
 
         // do simplistic state remapping to allow for correct status reporting
-        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
+//        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
 
-        QueueStatus(bjLineSplit(0).toInt, status)
+        QueueStatus(bjLineSplit(0).toInt, getLsfState(bjLineSplit(2)))
       }).toList
   }
 
@@ -145,25 +146,10 @@ class LsfScheduler extends JobScheduler {
 
     // lsf state graph: http://www.ccs.miami.edu/hpc/lsf/7.0.6/admin/job_ops.html
 
-    val lsf2slurmStatus = Map(
-      "DONE" -> "COMPLETED",
-      "RUN" -> "RUNNING",
-      "PEND" -> "PENDING",
-      //      "EXIT" -> "CANCELED", // actually sacct seems to return a CANCELED+
-      "EXIT" -> "FAILED" // lsf reports canceld jobs as EXIT and details it out in bjobs -l (killed by term owner)
-      //      "EXIT" -> "TIMEOUT"
-    )
-
     val killCause = logData.drop(3).mkString("\n")
+    val lsfJobStatus: String = slimValues(2)
 
-    val approxState = lsf2slurmStatus(slimValues(2))
-    val state = if (killCause.contains("TERM_RUNLIMIT: job killed")) {
-      JobState.KILLED
-    } else if (killCause.contains("TERM_OWNER: job killed by owner")) {
-      JobState.CANCELLED
-    } else {
-      JobState.valueOf(approxState)
-    }
+    val state: JobState with Product with Serializable = getLsfState(lsfJobStatus, killCause)
 
     // note if a user kills the jobs with bkill, log would rather state that:
     // Mon Nov 23 14:00:39: Completed <exit>; TERM_OWNER: job killed by owner.
@@ -186,6 +172,27 @@ class LsfScheduler extends JobScheduler {
     toXml(runLog, logFile)
   }
 
+
+  def getLsfState(lsfJobStatus: String, killCause: String=""): JobState with Product with Serializable = {
+    val lsf2slurmStatus = Map(
+      "DONE" -> "COMPLETED",
+      "RUN" -> "RUNNING",
+      "PEND" -> "PENDING",
+      //      "EXIT" -> "CANCELED", // actually sacct seems to return a CANCELED+
+      "EXIT" -> "FAILED" // lsf reports canceld jobs as EXIT and details it out in bjobs -l (killed by term owner)
+      //      "EXIT" -> "TIMEOUT"
+    )
+
+    val state = if (killCause.contains("TERM_RUNLIMIT: job killed")) {
+      JobState.KILLED
+    } else if (killCause.contains("TERM_OWNER: job killed by owner")) {
+      JobState.CANCELLED
+    } else {
+      JobState.valueOf(lsf2slurmStatus(lsfJobStatus))
+    }
+
+    state
+  }
 
   override def cancel(jobIds: Seq[Int]) = {
     jobIds.foreach(id => Bash.eval(s"bkill ${id}", showOutput = true))
