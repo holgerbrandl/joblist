@@ -22,9 +22,15 @@ sbt clean
 ```
 See [here](http://stackoverflow.com/questions/17190755/why-sbt-runs-dependency-resolution-every-time-after-clean) for details
 
+To create an interactive console do
+```
+sbt test:console
+```
+
 ****
 ## Release Check List
 
+0) make sure that `joblist/JobListCLI.scala:99` is commented out
 1) Increment version in build.sbt, `joblist.JobListCLI.version`
 2) Update version in README.md (installation and sbt inclusion)
 2) Push and and create version on github

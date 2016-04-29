@@ -56,8 +56,8 @@ if [ -n "$(jl status --failed)" ]; then
     echo "some jobs failed"
 fi
 
-## which ones
-jl status
+## print captured sterr to understand why they did fail
+jl status --failed --logs err
 ```
 
 Or to give a slurm example:

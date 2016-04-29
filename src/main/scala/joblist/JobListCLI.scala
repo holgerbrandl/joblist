@@ -21,7 +21,7 @@ import scalautils.{Bash, ShellUtils}
   */
 object JobListCLI extends App {
 
-  val version = "0.5-SNAPSHOT"
+  val version = "0.6-SNAPSHOT"
 
   val DEFAULT_JL = ".jobs"
 
@@ -223,6 +223,7 @@ object JobListCLI extends App {
 
   def wait4jl() = {
 
+    //    val args = "wait".split(" ")
     val doc =
       """
     Usage: jl wait [options] [<joblist_file>]
@@ -236,7 +237,7 @@ object JobListCLI extends App {
                                         killed or failed [default: all]
      --email                            Send an email report to the current user once this joblist has finished
      --report                           Create an html report for this joblist once the joblist has finished
-     """.alignLeft.trim
+      """.alignLeft.trim
 
     val options = parseArgs(args, doc)
 
@@ -276,7 +277,8 @@ object JobListCLI extends App {
 
     // reporting
     if (options.get("email").get.toBoolean) {
-      ShellUtils.mailme(s"${jl.file.name}: Processing Done ", s"""
+      ShellUtils.mailme(s"${jl.file.name}: Processing Done ",
+        s"""
       joblist: ${jl.toString}
       status: ${jl.status}
       """.alignLeft.trim)
@@ -343,25 +345,36 @@ object JobListCLI extends App {
 
 
   def status(): Unit = {
-    val options = parseArgs(args, """
+    // val args = "status".split(" ")
+    // val args = "status --verbose".split(" ")
+    // val args = "status --verbose --killed ".split(" ")
+    // val args = "status --verbose --killed --log cmd ".split(" ")
+    // val args = "status --ids 1318504918,2117495693".split(" ")
+
+    // not java-docopt is a bit limited here since it does not allow for empty lines between the options or differently name options sections
+    // see https://github.com/docopt/docopt.java/issues/11
+
+    val options = parseArgs(args,
+      """
     Usage: jl status [options] [<joblist_file>]
 
     Options:
-     --report     Create an html report for this joblist
-     --failed     Print ONLY ids of all final but not yet done jobs in this joblist. If empty the joblist
-                  has been completely processed without errors. Useful for flow-control in bash scripts.
-    """.alignLeft.trim)
+     --report             Create an html report for this joblist
+     --failed             Only print the status for final but not yet done jobs in this joblist. This could be because those job
+                          failed due to incorrect user logic, or because the queuing system killed them
+                          has been completely processed without errors. Useful for flow-control in bash scripts.
+     --killed             Only print the status of jobs killed by the queuing system.
+     --ids <csv_ids>      Limit reporting to the comma-separted list of jobs ids
+     --by_name <pattern>  Limit reporting to those jobs whose names match the given regex
+     --verbose            Include more job details in the table like log files etc.
+     --no_header          Do not print the joblist summary as header
+     --log <what>         Print logging info for selected jobs. Possible values are "cmd", "err", "out"
+      """.alignLeft.trim)
 
     val jl = getJL(options)
 
     jl.requireListFile()
 
-    if (options.get("failed").get.toBoolean) {
-      Console.out.print(jl.requiresRerun.map(_.id).mkString("\n"))
-      return
-    }
-
-    println(jl.toString)
 
     // create an html report
     if (options.get("report").get.toBoolean) {
@@ -370,13 +383,68 @@ object JobListCLI extends App {
     }
 
     restartLocalScheduler(jl)
-    println(jl.status)
 
-    jl.jobs.map(_.info).
-      map(ri => {
-        Seq(ri.jobId, ri.jobName, ri.state).mkString("\t")
-      }).
-      foreach(println)
+
+    if (!options.get("no_header").get.toBoolean && !options.get("failed").get.toBoolean) {
+      println(jl.toString)
+      println(jl.status)
+    }
+
+
+    var statusJobs = jl.jobs
+
+    if (options.get("failed").get.toBoolean) {
+      statusJobs = jl.requiresRerun
+    }
+
+    if (options.get("killed").get.toBoolean) {
+      statusJobs = jl.killed
+    }
+
+    if (options.get("ids").isDefined) {
+      val queryIds = options.get("ids").get.split(",")
+      statusJobs = jl.jobs.filter(queryIds.contains(_))
+    }
+
+
+    // check what type of reporting we want to do (log or table)
+    val logReporting = options.get("log").orNull
+
+    if (logReporting != null) {
+
+      statusJobs.foreach(job => {
+        println("==> " + job.name + " <==")
+
+        (logReporting match {
+          case "err" => job.config.logs.err
+          case "out" => job.config.logs.out
+          case "cmd" => job.config.logs.cmd
+        }).lines.foreach(println(_))
+
+        println() // add an empty line for better readability
+      })
+
+      return
+    }
+
+    // by default do regular table reporting
+
+    val isVerbose = options.get("verbose").get.toBoolean
+
+    statusJobs.map(job => {
+      val ri = job.info
+      val fields = ListBuffer(ri.jobId, ri.jobName, ri.state)
+
+      if (isVerbose) {
+        //        fields += Seq(job.config.logs.err, job.config.logs.out)
+        fields += File(".").relativize(job.config.logs.err)
+        fields += File(".").relativize(job.config.logs.out)
+        fields += File(".").relativize(job.config.logs.cmd)
+      }
+
+      fields.mkString("\t")
+
+    }).foreach(println)
   }
 
 
@@ -397,7 +465,7 @@ object JobListCLI extends App {
       }
       export -f wait4jobs
 
-      ##note: mysb jlwait
+      ##note: mysub jl wait
       jlsub(){
         jl submit $*
       }
