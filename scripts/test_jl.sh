@@ -120,3 +120,14 @@ jl status --log out
 jl status --log err
 jl status --log cmd
 more .jl/* | cat
+
+
+## enhanced reporting
+
+jl reset
+jl submit "sleep 3; echo hallo; exit 1 "
+jl submit "sleep 3; echo foo ; echo 'bar' >&2;  exit 0"
+jl submit "sleep 2; echo baumaus"
+jl wait
+jl status --report
+

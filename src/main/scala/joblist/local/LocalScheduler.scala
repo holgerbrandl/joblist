@@ -3,6 +3,7 @@ package joblist.local
 import java.util.concurrent.{TimeUnit, _}
 
 import better.files.File
+import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
 

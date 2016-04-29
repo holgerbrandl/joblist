@@ -314,7 +314,7 @@ object JobListCLI extends App {
     }
 
     if (options.get("report").get.toBoolean) {
-      val reportFile = jl.createHtmlReport()
+      val reportFile = new ListReport(jl).createHtmlReport()
     }
   }
 

@@ -1,6 +1,7 @@
 package joblist.lsf
 
 import better.files.File
+import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

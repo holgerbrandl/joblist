@@ -1,5 +1,6 @@
 package joblist
 
+import joblist.PersistUtils._
 import org.joda.time.DateTime
 
 /**
@@ -104,11 +105,11 @@ object Test extends App{
 
   private val info: RunInfo = new RunInfo(1, "me", JobState.PENDING, "long", "n22", "no_name", new DateTime, new DateTime, new DateTime, 3, "no_cause")
 
-  private val xml: String = joblist.getXstream.toXML(info)
-  joblist.getXstream.getConverterLookup
+  private val xml: String = PersistUtils.getXstream.toXML(info)
+  PersistUtils.getXstream.getConverterLookup
   println(xml)
 
-  private val restoredInfo: AnyRef = joblist.getXstream.fromXML(xml)
+  private val restoredInfo: AnyRef = PersistUtils.getXstream.fromXML(xml)
   println(restoredInfo)
 
 

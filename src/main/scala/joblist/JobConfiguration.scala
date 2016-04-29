@@ -2,6 +2,7 @@ package joblist
 
 import better.files.File
 import joblist.JobConfiguration._
+import joblist.PersistUtils._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
