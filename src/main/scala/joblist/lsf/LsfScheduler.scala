@@ -7,6 +7,7 @@ import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
 import scalautils.Bash.BashResult
+import scalautils.StringUtils.ImplStringUtils
 
 
 /**
@@ -45,16 +46,17 @@ class LsfScheduler extends JobScheduler {
     // compile all args into cluster configuration
     val submitArgs = s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
 
-    // TBD Could be avoided if we would call bsub directly (because ProcessIO
-    // TBD takes care that arguments are correctly provided as input arguments to binaries)
-    require(!cmd.contains("'"), "Commands must not contain single quotes. See and vote for https://github.com/holgerbrandl/joblist/issues/11")
-
+    require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 
     // submit the job to the lsf
+    // for examples see scripts/test_jl.sh:91
     var submitCmd =
       s"""
-    bsub $submitArgs '( $cmd ) 2>${jc.logs.err.absolute} 1>${jc.logs.out.absolute}'
-    """.trim
+      bsub $submitArgs  <<"JLCMD"
+      ( $cmd ) 2>${jc.logs.err.absolute} 1>${jc.logs.out.absolute}
+      JLCMD
+      """.alignLeft.trim
+
 
     // optionally prefix with working directory
     if (File(".") != wd) {
@@ -103,7 +105,7 @@ class LsfScheduler extends JobScheduler {
     val sb = new StringBuilder()
     sb.append(Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n"))
 
-//    if(!sb.toString.contains(jobId + "")) return // todo really??
+    //    if(!sb.toString.contains(jobId + "")) return // todo really??
 
     require(sb.toString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 

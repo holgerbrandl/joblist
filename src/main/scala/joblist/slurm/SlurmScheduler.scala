@@ -56,16 +56,16 @@ class SlurmScheduler extends JobScheduler {
     // compile all args into cluster configuration
     val submitArgs = s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
 
-    // TBD Could be avoided if we would call bsub directly (because ProcessIO
-    // TBD takes care that arguments are correctly provided as input arguments to binaries)
-    require(!cmd.contains("'"), "Commands must not contain single quotes. See and vote for https://github.com/holgerbrandl/joblist/issues/11")
+    require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 
     // submit the job to the lsf
-    var submitCmd =
+        var submitCmd =
       s"""
-    echo '#!/bin/bash
-    $cmd' | sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute}
-    """.alignLeft.trim
+      sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute} <<"EOF"
+      #!/bin/bash
+      $cmd
+      JLCMD
+      """.alignLeft
 
     //    Console.err.println("submission cmd is:\n" + submitCmd)
 

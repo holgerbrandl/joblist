@@ -187,7 +187,31 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   }
+
+
+  //  implicit def bf2ioFile(bf: better.files.File): java.io.File = bf.toJava
+
+  it should "submit jobs that contain single qutotes" in {
+    // see https://github.com/holgerbrandl/joblist/issues/11
+
+    wd.list.size should be(0)
+
+    val resultFile = wd / "single_quote_result.txt"
+    resultFile.delete(true)
+
+    val jl = JobList(wd / ".single_quotes")
+    jl.run(JobConfiguration(s"touch '${resultFile}'"))
+
+    jl.waitUntilDone()
+
+
+    resultFile.toJava should exist
+    wd.list.size should be(3)
+  }
+
 }
+
+
 
 
 

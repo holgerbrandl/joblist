@@ -81,7 +81,42 @@ jl wait --report .qs_test
 jl submit --batch "echo test"
 
 
-## simply reporting
 
-rm .jobs*
-jl submit "sleep 10"
+################################
+## single quote support
+################################
+
+## see https://github.com/holgerbrandl/joblist/issues/11
+
+
+## local works anyway
+
+## works with LSF
+bsub <<"JLCMD"
+JLCMD
+
+echo "touch tttt" | bsub
+
+
+## slurm
+mcdir test_jl
+
+echo '#!/bin/bash
+touch hello_slurm.txt' | sbatch $submitArgs -e err.log -o out.log
+rm hello_slurm.txt
+
+sbatch $submitArgs -e err.log -o out.log <<"EOF"
+#!/bin/bash
+touch hello_slurm.txt
+EOF
+
+
+
+mcdir ~/jl_test
+jl reset
+jl submit --wait "echo '10'"
+jl status
+jl status --log out
+jl status --log err
+jl status --log cmd
+more .jl/* | cat
