@@ -5,7 +5,6 @@ import better.files._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scalautils.Bash
-import scalautils.IOUtils.BetterFileUtils.FileApiImplicits
 import scalautils.StringUtils.ImplStringUtils
 
 /**
@@ -15,7 +14,8 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   //  import Matchers._; import joblist._
 
-  val wd = (home / "unit_tests").createIfNotExists(true)
+  val wd = (home / "unit_tests").createIfNotExists(asDirectory = true)
+  val jlHome = File("/Users/brandl/Dropbox/cluster_sync/joblist")
 
   // clean up old unit-test data before running each of the tests
   before {
@@ -30,7 +30,10 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl wait --report
     """.alignLeft
 
-    JobList().file.withExt(".html").toJava should exist
+
+    Bash.eval(cmdSeq, showOutput = true)
+
+    (wd/(DEFAULT_JL+".html")).toJava should exist
   }
 
 
@@ -50,7 +53,7 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     Bash.eval(cmdSeq, showOutput = true)
 
     jl.file.toJava should exist
-    jl.jobs should have size (3)
+    jl.jobs should have size 3
   }
 
 
@@ -64,25 +67,22 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
 
 
-
   it should "split batch jobs up correctly" in {
 
     val script = s"""
     cd ${wd.pathAsString}
 
     jl reset
-    cat ${home/"test_data"/"test_stdin.txt"} | jl --batch - --bsep '^##'
+    cat "$jlHome/test_data/test_stdin.txt" | jl submit --batch - --bsep '^##'
 
     jl wait
     """.alignLeft
 
-    println(script)
-
     Bash.eval(script, showOutput = true)
 
-    val jl = JobList()
+    val jl =  JobList(wd / DEFAULT_JL)
 
-    jl.file.withExt(".html").toJava should exist
-    jl.jobs.size should be (3)
+    jl.jobs should have size 3
+    jl. failed should have size 0
   }
 }

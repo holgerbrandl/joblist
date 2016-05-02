@@ -87,7 +87,7 @@ object JobListCLI extends App {
 
 
   def getJL(options: Map[String, String], jlArgName: String = "joblist_file") = {
-//    val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
+    //    val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
     val listFile = File(Option(options(jlArgName)).getOrElse(getDefaultJlFile().absolute.toString()))
 
     val jl = new JobList(listFile)
@@ -121,6 +121,7 @@ object JobListCLI extends App {
      -j --jl <joblist_file>               Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job. Must be unique within this joblist
      -t --num_threads <threads>           Number of threads [default: 1]
+     -W  <walltime>                       Maximal walltime formatted as 'hour:minute'
      -q --queue <queue>                   Used queue [default: short]
      -O --other_queue_args <queue_args>   Additional queue parameters
      --debug                              Debug mode which will execute the first submission in the local shell and
@@ -141,9 +142,11 @@ object JobListCLI extends App {
 
 
     val baseConfig = JobConfiguration(null,
-      queue = options.get("queue").get,
+      queue = options.getOrElse("queue", ""),
       numThreads = options.get("num_threads").get.toInt,
+      wallTime = options.getOrElse("W", ""),
       otherQueueArgs = options.getOrElse("other_queue_args", "")
+//      wd = jl.file.parent // not needed since in CLI mode it should be always current directory
     )
 
     val jobConfigs = ListBuffer.empty[JobConfiguration]
@@ -167,13 +170,13 @@ object JobListCLI extends App {
 
         // http://stackoverflow.com/questions/7293617/split-up-a-list-at-each-element-satisfying-a-predicate-scala
         // http://stackoverflow.com/questions/14613995/whats-scalas-idiomatic-way-to-split-a-list-by-separator
-        File("test_data/test_stdin.txt").lines.
-          //        io.Source.stdin.getLines().
+        //        File("test_data/test_stdin.txt").lines.
+        io.Source.stdin.getLines().
           foldLeft(Seq(Seq.empty[String])) {
-          (acc, line) =>
-            if (batchSep.findFirstIn(line).isDefined) acc :+ Seq(line)
-            else acc.init :+ (acc.last :+ line)
-        }.map(_.mkString("\n"))
+            (acc, line) =>
+              if (batchSep.findFirstIn(line).isDefined) acc :+ Seq(line)
+              else acc.init :+ (acc.last :+ line)
+          }.map(_.mkString("\n"))
 
       } else {
         val batchFile = File(batchArg)
@@ -346,7 +349,7 @@ object JobListCLI extends App {
     }
 
     if (resubStrats.get("resubmit_wall").get != null) {
-      pargs += new DiffWalltime(resubStrats.get("resubmit_wall").get)
+      pargs += new MoreTimeStrategy(resubStrats.get("resubmit_wall").get)
     }
 
     if (resubStrats.get("resubmit_threads").get != null) {
@@ -404,8 +407,8 @@ object JobListCLI extends App {
      --log <what>         Print details for selected jobs. Possible values are "cmd", "err", "out", "config" and "runinfo"
       """.alignLeft.trim)
 
-//    --fields <what>      Define which job details to include in the table. Comma-separated list of "basics","logs",
-//    "runinfo", "qinfo" or "basics" [default: all]
+    //    --fields <what>      Define which job details to include in the table. Comma-separated list of "basics","logs",
+    //    "runinfo", "qinfo" or "basics" [default: all]
 
 
     val jl = getJL(options)
@@ -457,12 +460,13 @@ object JobListCLI extends App {
         println("==> " + job.name + " <==")
 
         (logReporting match {
-          case "err" => job.config.logs.err
-          case "out" => job.config.logs.out
-          case "cmd" => job.config.logs.cmd
-          case "config" => JobConfiguration.jcXML(job.id, jl.dbDir)
-          case "runinfo" => job.infoFile
-        }).lines.foreach(println(_))
+          case "err" => job.config.logs.err.lines
+          case "out" => job.config.logs.out.lines
+//          case "cmd" => job.config.logs.cmd // simplified because of https://github.com/holgerbrandl/joblist/issues/43
+          case "cmd" => job.config.cmd.split("\n").toList
+          case "config" => JobConfiguration.jcXML(job.id, jl.dbDir).lines
+          case "runinfo" => job.infoFile.lines
+        }).foreach(println(_))
 
         println() // add an empty line for better readability
       })
@@ -473,8 +477,8 @@ object JobListCLI extends App {
     // by default do regular table reporting
 
 
-//    val isVerbose = options.get("verbose").get.toBoolean
-//    val fields = options.get("fields").get.split(",").map(ExportProps.valueOf(_))
+    //    val isVerbose = options.get("verbose").get.toBoolean
+    //    val fields = options.get("fields").get.split(",").map(ExportProps.valueOf(_))
 
     new JobReport(jl).exportStatistics()
 
@@ -482,12 +486,12 @@ object JobListCLI extends App {
       val ri = job.info
       val fields = ListBuffer(ri.jobId, ri.jobName, ri.state)
 
-//      if (isVerbose) {
-//        //        fields += Seq(job.config.logs.err, job.config.logs.out)
-//        fields += File(".").relativize(job.config.logs.err)
-//        fields += File(".").relativize(job.config.logs.out)
-//        fields += File(".").relativize(job.config.logs.cmd)
-//      }
+      //      if (isVerbose) {
+      //        //        fields += Seq(job.config.logs.err, job.config.logs.out)
+      //        fields += File(".").relativize(job.config.logs.err)
+      //        fields += File(".").relativize(job.config.logs.out)
+      //        fields += File(".").relativize(job.config.logs.cmd)
+      //      }
 
       fields.mkString("\t")
 
@@ -504,6 +508,6 @@ object JobListCLI extends App {
     println(
       """
          # none yet
-          """.alignLeft)
+      """.alignLeft)
   }
 }

@@ -41,8 +41,8 @@ package object joblist {
     val wdRemMeFile: File = wd / rememberMeFile
     if (wdRemMeFile.isRegularFile) {
       val restoredJl: File = File(wdRemMeFile.lines.head)
-      println(s"restored jl is $restoredJl")
       if (restoredJl.isRegularFile) {
+        // println(s"restored jl is $restoredJl")
         return restoredJl
       } else {
         wdRemMeFile.delete(true)

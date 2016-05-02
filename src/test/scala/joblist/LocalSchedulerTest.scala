@@ -23,7 +23,8 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     "adjust job settings and resubmit them, " +
     "and wait for completion" in {
 
-    val jl = JobList(wd / ".unit_jobs")
+
+    val jl = JobList(wd / ".unit_jobs", scheduler = new LocalScheduler)
     jl.reset()
     jl.jobs
 

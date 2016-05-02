@@ -188,9 +188,9 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 
     val jobId = scheduler.submit(namedJC)
 
-    // save user logs
-    jobLogs.id.write(jobId + "")
-    jobLogs.cmd.write(jc.cmd)
+    // save user logs (disabled because of https://github.com/holgerbrandl/joblist/issues/43)
+//    jobLogs.id.write(jobId + "")
+//    jobLogs.cmd.write(jc.cmd)
 
 
     require(jobs.forall(_.config.name != namedJC.name), "job names must be unique")

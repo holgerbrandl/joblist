@@ -68,7 +68,7 @@ class JobReport(jl: JobList) {
     val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
 
     val reportFile = scalautils.r.rendrSnippet(
-      jl.file.name + ".stats",
+      jl.file.name,
       reportScript, showCode = false,
       args = jl.file.pathAsString,
       wd = jl.file.parent

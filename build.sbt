@@ -20,7 +20,7 @@ libraryDependencies += "com.offbytwo" % "docopt" % "0.6.0.20150202"
 
 // common utilities
 // git clone https://github.com/holgerbrandl/scalautils.git su_tmp && cd su_tmp && sbt publish && rm -rf ../su_tmp
-libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.2-SNAPSHOT"
+libraryDependencies += "de.mpicbg.scicomp" % "scalautils_2.11" % "0.2"
 //libraryDependencies += "com.github.pathikrit" %% "better-files" % "2.14.0"
 
 

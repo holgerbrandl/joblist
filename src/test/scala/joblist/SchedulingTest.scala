@@ -120,7 +120,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.requiresRerun should have size (2)
 
     // resubmit killed jobs with more walltime
-    jl.resubmit(new DiffWalltime("00:05"))
+    jl.resubmit(new MoreTimeStrategy("00:05"))
     jl.scheduler.getQueued should have size (2)
 
     jl.waitUntilDone()
@@ -174,7 +174,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     wd.list.size should be(1)
 
     val jl = JobList(wd / ".reset_test")
-    jl.run(JobConfiguration("touch other_result.txt"))
+    jl.run(JobConfiguration(s"touch ${wd}/other_result.txt", wd=wd))
 
     jl.waitUntilDone()
 
@@ -182,11 +182,9 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.reset()
 
-    // original + result + logsdir + 4logs
-
-    wd.list.size should be(7)
-
-
+    // original + result + logsdir + 2 logs (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
+//    wd.listRecursively.size should be(5)
+    wd.listRecursively.toSeq should be(5)
   }
 
 
@@ -201,7 +199,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     resultFile.delete(true)
 
     val jl = JobList(wd / ".single_quotes")
-    jl.run(JobConfiguration(s"touch '${resultFile}'"))
+    jl.run(JobConfiguration(s"touch '${resultFile}'", wd=wd))
 
     jl.waitUntilDone()
 

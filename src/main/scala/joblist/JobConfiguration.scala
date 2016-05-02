@@ -13,7 +13,10 @@ import scala.util.Random
   * @author Holger Brandl
   */
 
-case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "short", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
+case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
+
+  // validate inputs
+  if(!wallTime.isEmpty) validateWallTime(wallTime)
 
   def saveAsXml(jobId: Int, inDir: File) = {
     val xmlFile = jcXML(jobId, inDir)
@@ -44,10 +47,12 @@ case class JobLogs(name: String, wd: File) {
 
 
   // file getters
-  val id = logsDir / s"$name.jobid"
-  val cmd = logsDir / s"$name.cmd"
   val err = logsDir / s"$name.err.log"
   val out = logsDir / s"$name.out.log"
+  // disabled to reduce output clutter (see https://github.com/holgerbrandl/joblist/issues/43)
+  //  val id = logsDir / s"$name.jobid"
+  //  val cmd = logsDir / s"$name.cmd"
+
 }
 
 // companion object method for JC
@@ -87,4 +92,8 @@ object JobConfiguration {
     nameElements.mkString("__")
   }
 
+  /** validate that the walltime format is [N]NN:NN */
+  def validateWallTime(time: String ): Unit = {
+    require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(time).matches)
+  }
 }

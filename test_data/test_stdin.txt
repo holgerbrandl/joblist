@@ -1,16 +1,16 @@
 ## another job nr1
-sleepTime=12;
-sleep ;
-echo slept for  seconds in job 1
+sleepTime=10;
+sleep $sleepTime;
+echo slept for $sleepTime seconds in job 1
 
 
 ## another job nr2
-sleepTime=28;
-sleep ;
-echo slept for  seconds in job 2
+sleepTime=10;
+sleep $sleepTime;
+echo slept for $sleepTime seconds in job 2
 
 
 ## another job nr3
-sleepTime=10;
-sleep ;
-echo slept for  seconds in job 3
+sleepTime=5;
+sleep $sleepTime;
+echo slept for $sleepTime seconds in job 3
