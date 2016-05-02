@@ -78,11 +78,8 @@ jl submit --batch "echo test"
 
 
 ################################
-## single quote support
+## SLURM job submssion methods
 ################################
-
-## see https://github.com/holgerbrandl/joblist/issues/11
-
 
 ## local works anyway
 
@@ -97,13 +94,43 @@ echo "touch tttt" | bsub
 mcdir test_jl
 
 echo '#!/bin/bash
-touch hello_slurm.txt' | sbatch $submitArgs -e err.log -o out.log
+echo some out
+echo some err >&2
+touch some_file.txt
+' > test.sh
+sbatch  -e err.log -o out.log test.sh
+
+echo '#!/bin/bash
+touch hello_slurm.txt
+' | sbatch  -e err.log -o out.log
 rm hello_slurm.txt
+
 
 sbatch $submitArgs -e err.log -o out.log <<"EOF"
 #!/bin/bash
-touch hello_slurm.txt
+touch hello_slurm2.txt
 EOF
+
+
+sbatch --wrap='
+touch hello_slurm.txt
+touch hello_slurm_3.txt
+'
+
+#http://stackoverflow.com/questions/29810186/is-there-a-one-liner-for-submiting-many-jobs-to-slurm-similar-to-lsf
+
+## forced oneliner
+echo -e '#!/bin/bash'"\n"'touch hello_slurm.txt' | sbatch -e err.log -o out.log
+
+## http://stackoverflow.com/questions/2128949/how-to-pipe-a-here-document-through-a-command-and-capture-the-result-into-a-vari
+## http://stackoverflow.com/questions/7046381/syntax-for-piping-a-heredoc-is-this-portable
+
+################################
+## single quote support
+################################
+
+## see https://github.com/holgerbrandl/joblist/issues/11
+
 
 
 

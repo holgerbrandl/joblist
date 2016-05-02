@@ -48,7 +48,7 @@ Since some tests require an the assembled CLI make sure to prepare it first and 
 tests
 ```
 sbt assembly
-export PATH=./scripts:$PATH # .. which contains a jl launcher thats referring to the assembled jar in ./target/...
+export PATH=$(pwd)/scripts:$PATH # .. which contains a jl launcher thats referring to the assembled jar in ./target/...
 
 ## run all tests
 sbt test

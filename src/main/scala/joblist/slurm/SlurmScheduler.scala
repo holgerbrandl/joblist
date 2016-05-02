@@ -61,6 +61,7 @@ class SlurmScheduler extends JobScheduler {
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 
+    // write temporary script since
     // submit the job to the lsf
     // @formatter:off
     var submitCmd =
@@ -133,6 +134,7 @@ JLCMD""".alignLeft.trim + "\n"
 
 
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
+    // see https://sph.umich.edu/biostat/computing/cluster/slurm.html#sbatch
     val statsCmd = s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User,Partition,NodeList -P"
     val logData = queryRunData(statsCmd, jobId)
 

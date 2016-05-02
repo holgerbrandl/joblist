@@ -131,3 +131,4 @@ Related Projects
 * [lsf_utils](https://github.com/holgerbrandl/datautils/blob/master/bash/lsf_utils.sh) is a collections of bash functions to manage list of lsf-cluster jobs
 * [Queue](https://www.broadinstitute.org/gatk/guide/topic?name=queue) is a command-line scripting framework for defining multi-stage genomic analysis pipelines combined with an execution manager
 * [DRMAA](https://en.wikipedia.org/wiki/DRMAA) is a high-level API specification for the submission and control of jobs to a distributed resource management (DRM) system
+* [sbatch_run](http://stackoverflow.com/a/34232712/590437) script takes a job name and your command in quotes, creates the script, and runs it (Slurm only)
