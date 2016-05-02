@@ -106,3 +106,32 @@ object PersistUtils {
     xStream
   }
 }
+
+
+//object MapdbTest extends App {
+//
+//  //  http://stackoverflow.com/questions/14783327/scala-disk-based-map
+//  import collection.JavaConversions._
+//
+//  println("setting up db")
+//  val db = DBMaker
+//    .fileDB(".mydb")
+//    .fileLockDisable()
+//    .closeOnJvmShutdown()
+//    .make()
+//
+//  val configMap = db.hashMap("job_config").
+//    keySerializer(Serializer.LONG).
+//    valueSerializer(Serializer.STRING).
+//    createOrOpen()
+//
+//
+//
+////  configMap.put(2L, "tgest2")
+//
+//
+//  println("values are " + configMap.values())
+//
+//  println("going to sleep")
+//  Thread.sleep(1000000)
+//}

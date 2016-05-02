@@ -36,6 +36,7 @@ libraryDependencies ++= Seq(
 )
 
 
+//libraryDependencies += "org.mapdb" % "mapdb" % "3.0.0-beta2"
 
 sys.env.get("USE_AMMO").isDefined match {
   case true => {
