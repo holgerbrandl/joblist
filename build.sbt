@@ -7,7 +7,8 @@ version := "0.6-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
-resolvers += Resolver.mavenLocal
+resolvers += Resolver.jcenterRepo
+//resolvers += Resolver.mavenLocal // just needed for local SNAPSHOT dependencies (disable for release)
 
 
 // just needed for the unit-tests

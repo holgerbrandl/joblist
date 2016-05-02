@@ -125,7 +125,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.scheduler.getQueued should have size 2
 
     jl.waitUntilDone()
-    jl.killed should be('empty)
+    jl.killed should be(empty)
   }
 
 
@@ -185,7 +185,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     // original + result + logsdir + 2 logs (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
 //    wd.listRecursively.size should be(5)
-    wd.listRecursively should have size 5
+    wd.listRecursively.toList should have size 5
   }
 
 

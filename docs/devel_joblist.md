@@ -27,6 +27,21 @@ To create an interactive console do
 sbt test:console
 ```
 
+### Issues:
+
+1) It does not build when using NFS?
+
+    * see http://stackoverflow.com/questions/17676336/no-locks-available-when-run-sbt-cmd
+    * see http://stackoverflow.com/questions/29593153/sbt-forces-file-system-locking-even-on-distributed-file-systems
+    * related ticket https://github.com/sbt/sbt/issues/2222
+
+    Only known workaround: build under non-nfs FS, eg. under `/tmp` instead
+    ```
+    rsync -avs ~/Dropbox/cluster_sync/joblist /tmp/
+    cd /tmp/joblist
+    sbt clean assembly
+    ```
+
 ## How to test?
 
 Since some tests require an the assembled CLI make sure to prepare it first and add it to your PATH before running the

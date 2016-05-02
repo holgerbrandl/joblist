@@ -42,6 +42,7 @@ class SlurmScheduler extends JobScheduler {
     // todo what is the purpose of the ntasks argument?
     val threadArg = if (numCores > 1) s"--ntasks=1 --cpus-per-task=$numCores" else ""
     val wallTime = if (!jc.wallTime.isEmpty) s"--time=${jc.wallTime}" else ""
+    val queue = if (!jc.queue.isEmpty) s"-p ${jc.queue}" else ""
 
     // todo is the queue supported by slurm
     // according to https://rc.fas.harvard.edu/resources/documentation/convenient-slurm-commands/
@@ -51,7 +52,6 @@ class SlurmScheduler extends JobScheduler {
     // #!/bin/bash
     // #SBATCH --job-name=JobName
     // #SBATCH --partition=PartitionName
-    val queue = if (!jc.queue.isEmpty) s"-p ${jc.queue}" else ""
 
     val otherSubmitArgs = Option(jc.otherQueueArgs).getOrElse("")
 

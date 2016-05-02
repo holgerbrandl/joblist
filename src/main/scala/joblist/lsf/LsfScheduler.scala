@@ -42,7 +42,7 @@ class LsfScheduler extends JobScheduler {
     val wallTime = if (!jc.wallTime.isEmpty) s"-W ${jc.wallTime}" else ""
     val queue = if (!jc.queue.isEmpty) s"-q ${jc.queue}" else ""
 
-    val otherSubmitArgs = Option(jc.otherQueueArgs).getOrElse("")
+    val otherSubmitArgs = if (!jc.otherQueueArgs.isEmpty) jc.otherQueueArgs else ""
 
     // compile all args into cluster configuration
     val submitArgs =

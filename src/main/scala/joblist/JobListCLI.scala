@@ -15,7 +15,7 @@ import scalautils.{Bash, ShellUtils}
 
 
 /**
-  * A command line interface to the joblist API
+  * A command line interface to the joblist API.
   *
   * @author Holger Brandl
   */
@@ -104,7 +104,10 @@ object JobListCLI extends App {
       //      withExit(false). // just used for debugging
       parse(args.toList).
       map { case (key, value) =>
-        key.stripPrefix("--").replaceAll("[<>]", "") -> {
+        key
+          .stripPrefix("--")
+          .stripPrefix("-")
+          .replaceAll("[<>]", "") -> {
           if (value == null) null else Objects.toString(value)
         }
       }.toMap
@@ -121,8 +124,8 @@ object JobListCLI extends App {
      -j --jl <joblist_file>               Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job. Must be unique within this joblist
      -t --num_threads <threads>           Number of threads [default: 1]
-     -W  <walltime>                       Maximal walltime formatted as 'hour:minute'
-     -q --queue <queue>                   Used queue [default: short]
+     -W <walltime>                        Maximal walltime formatted as 'hour:minute'
+     -q --queue <queue>                   Queue/partition to submit job to. Ignored for local scheduler
      -O --other_queue_args <queue_args>   Additional queue parameters
      --debug                              Debug mode which will execute the first submission in the local shell and
                                           will ignore additional submissions. Creates a $${jl.name}.debug to track
@@ -142,10 +145,10 @@ object JobListCLI extends App {
 
 
     val baseConfig = JobConfiguration(null,
-      queue = options.getOrElse("queue", ""),
+      queue = Option(options("queue")).getOrElse(""),
       numThreads = options.get("num_threads").get.toInt,
-      wallTime = options.getOrElse("W", ""),
-      otherQueueArgs = options.getOrElse("other_queue_args", "")
+      wallTime = Option(options("W")).getOrElse(""),
+      otherQueueArgs = Option(options("other_queue_args")).getOrElse("")
 //      wd = jl.file.parent // not needed since in CLI mode it should be always current directory
     )
 
@@ -197,14 +200,14 @@ object JobListCLI extends App {
 
           jobConfigs += baseConfig.copy(
             cmd = batchCmd,
-            name = options.getOrElse("name", "jobs") + "_batch" + jobConfigs.size
+            name = Option(options("name")).getOrElse("jobs") + "_batch" + jobConfigs.size
           ) // todo unit-test batch submission
         })
 
     } else {
       jobConfigs += baseConfig.copy(
         cmd = options.get("command").get.alignLeft,
-        name = options.getOrElse("name", "")
+        name = Option(options("name")).getOrElse("")
       )
     }
 
@@ -295,7 +298,7 @@ object JobListCLI extends App {
     if (resubChain.nonEmpty) assert(jl.jobs.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
 
 
-    def tbd = options.getOrElse("fail_type", "all") match {
+    def tbd = options("resubmit_type") match {
       case "all" => jl.requiresRerun
       case "failed" => jl.jobs.filterNot(_.wasKilled)
       case "killed" => jl.jobs.filter(_.wasKilled)
