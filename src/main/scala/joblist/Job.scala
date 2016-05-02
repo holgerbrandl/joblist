@@ -45,10 +45,20 @@ case class Job(id: Int)(implicit val jl: JobList) {
   def updateStatsFile() = if (!isFinal) jl.scheduler.updateRunInfo(id, infoFile)
 
 
-  // todo actually this could be a collection of jobs because we escalate the base configuration
-  // furthermore not job-id are resubmitted but job configuration, so the whole concept is flawed
-  def resubAs() = {
-    jl.resubGraph().find({ case (failed, resub) => resub == this }).map(_._2)
+  /**
+    * Convenience method to explore the resubmission graph. At the moment not used by joblist itself
+    *
+    * This approach is conceptually a bit flawed since not job-id are resubmitted but job configurations.
+    *
+    * @return a collection of jobs that were escalated from this jobs' base configuration
+    */
+  def resubmittedAs(includeChilds:Boolean=false): Iterable[Job] = {
+    val resubmissions = jl.resubGraph().filter({ case (failed, resub) => resub == this }).values
+
+    if(includeChilds)
+      resubmissions.flatMap(_.resubmittedAs(true))
+    else
+      resubmissions
   }
 
 
