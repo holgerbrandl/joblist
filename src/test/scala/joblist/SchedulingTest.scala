@@ -18,7 +18,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   //  import Matchers._; import joblist._
 
-  val wd = (home / "unit_tests").createIfNotExists(true)
+  val wd = (home / "unit_tests").createIfNotExists(asDirectory = true)
 
   // clean up old unit-test data before running each of the tests
   before {
@@ -115,13 +115,13 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.waitUntilDone()
 
-    jl.jobs should have size (3)
-    jl.killed should have size (2)
-    jl.requiresRerun should have size (2)
+    jl.jobs should have size 3
+    jl.killed should have size 2
+    jl.requiresRerun should have size 2
 
     // resubmit killed jobs with more walltime
     jl.resubmit(new MoreTimeStrategy("00:05"))
-    jl.scheduler.getQueued should have size (2)
+    jl.scheduler.getQueued should have size 2
 
     jl.waitUntilDone()
     jl.killed should be('empty)
@@ -152,7 +152,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.killed should be(empty)
 
     // .. but is detected as failed
-    jl.failed should have size (1)
+    jl.failed should have size 1
   }
 
   it should "do a correct xor for QueueStatus" in {
@@ -162,7 +162,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     val xor = someQS.strictXor(otherQS).map(_.jobId).distinct
 
-    xor should not contain (1)
+    xor should not contain 1
     xor should contain(2)
     xor should contain(3)
     xor should contain(4)
@@ -184,7 +184,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     // original + result + logsdir + 2 logs (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
 //    wd.listRecursively.size should be(5)
-    wd.listRecursively.toSeq should be(5)
+    wd.listRecursively should have size 5
   }
 
 
@@ -193,7 +193,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
   it should "submit jobs that contain single qutotes" in {
     // see https://github.com/holgerbrandl/joblist/issues/11
 
-    wd.list.size should be(0)
+    wd.list should be (empty)
 
     val resultFile = wd / "single_quote_result.txt"
     resultFile.delete(true)
@@ -205,7 +205,8 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
 
     resultFile.toJava should exist
-    wd.list.size should be(3)
+    // .jl, .logs, resultFile, joblist-file = 4
+    wd.list.toList should have size 4
   }
 
 }

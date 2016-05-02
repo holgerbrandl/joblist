@@ -15,7 +15,8 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
   //  import Matchers._; import joblist._
 
   val wd = (home / "unit_tests").createIfNotExists(asDirectory = true)
-  val jlHome = File("/Users/brandl/Dropbox/cluster_sync/joblist")
+  //  val jlHome = File("/Users/brandl/Dropbox/cluster_sync/joblist")
+  val jlHome = File(".")
 
   // clean up old unit-test data before running each of the tests
   before {
@@ -24,7 +25,8 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "submit a job, wait for it and create a report" in {
-    val cmdSeq = s"""
+    val cmdSeq =
+      s"""
     cd ${wd.pathAsString}
     jl submit "sleep 5"
     jl wait --report
@@ -33,14 +35,15 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     Bash.eval(cmdSeq, showOutput = true)
 
-    (wd/(DEFAULT_JL+".html")).toJava should exist
+    (wd / (DEFAULT_JL + ".html")).toJava should exist
   }
 
 
   it should "use the shell launcher to trigger, monitor and resubmit jobs" in {
     val jl = JobList(wd / ".whit")
 
-    val cmdSeq = s"""
+    val cmdSeq =
+      s"""
     cd ${wd.pathAsString}
     jl submit -j ${jl.file.pathAsString} "echo foo"
     jl submit -j ${jl.file.pathAsString} "echo bar"
@@ -59,30 +62,39 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "run a scala script that is using jl-api and terminate" in {
     // this needs testing because if non-daemon threads were used by joblist jl, scripts won't terminate
-    val result = Bash.eval("test_data/scripting/quit_when_done.scala", showOutput = true)
+    val resultFile: File = wd/"script_result.txt"
+    resultFile.delete(true)
 
-    result.exitCode should be(0)
-    File("script_result.txt").toJava should exist
+
+    val result = Bash.eval(
+      s"""
+         cd $wd
+         $jlHome/test_data/scripting/quit_when_done.scala
+      """.alignLeft, showOutput = true)
+
+    result.exitCode should be (0)
+    resultFile.toJava should exist
   }
 
 
 
   it should "split batch jobs up correctly" in {
 
-    val script = s"""
+    val script =
+      s"""
     cd ${wd.pathAsString}
 
     jl reset
-    cat "$jlHome/test_data/test_stdin.txt" | jl submit --batch - --bsep '^##'
+    cat "${jlHome}/test_data/test_stdin.txt" | jl submit --batch - --bsep '^##'
 
     jl wait
     """.alignLeft
 
     Bash.eval(script, showOutput = true)
 
-    val jl =  JobList(wd / DEFAULT_JL)
+    val jl = JobList(wd / DEFAULT_JL)
 
     jl.jobs should have size 3
-    jl. failed should have size 0
+    jl.failed should have size 0
   }
 }

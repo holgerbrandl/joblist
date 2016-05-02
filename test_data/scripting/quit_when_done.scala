@@ -7,6 +7,7 @@ import joblist._
 
 
 val jl = new JobList(".auto_quit")
+jl.reset()
 
 jl.run(JobConfiguration("sleep 3"))
 jl.run(JobConfiguration("touch script_result.txt"))
