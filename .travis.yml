@@ -3,3 +3,5 @@ scala:
    - 2.11.7
 jdk: oraclejdk8
 sudo: false
+install: export PATH="$HOME/scipts/:$PATH"
+script: sbt ++$TRAVIS_SCALA_VERSION assembly test
