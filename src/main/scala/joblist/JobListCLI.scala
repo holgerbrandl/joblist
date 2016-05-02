@@ -77,7 +77,8 @@ object JobListCLI extends App {
         up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
         reset     Removes all information related to this joblist.
 
-      If no <joblist_file> is provided, jl will use '.jobs' as default
+      If no <joblist_file> is provided, jl will use '.jobs' as default, but to save typing it will remember
+      the last used joblist instance per directory.
       """.alignLeft)
 
     //    shortcuts Print a list of bash helper function definitions which can be added via eval  $(jl shortcuts)

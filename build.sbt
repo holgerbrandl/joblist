@@ -70,3 +70,6 @@ parallelExecution in Test := false
 
 // http://www.scala-sbt.org/release/docs/Publishing.html#Define+the+repository
 publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
+
+// http://stackoverflow.com/questions/8288859/how-do-you-remove-the-scala-version-postfix-from-artifacts-builtpublished-wi
+crossPaths := false

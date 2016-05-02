@@ -96,8 +96,21 @@ cp joblist_installer_v${version}.tar.gz /Users/brandl/Dropbox/Public/joblist_rel
 ```
 4) Attach installer to release
 
-5) Upload to jcenter (todo use https://github.com/softprops/bintray-sbt)
+5) Create new version on [jcenter](https://bintray.com/holgerbrandl/mpicbg-scicomp/joblist/view`
+)
+```
+sbt publish
 
-Post-release
-6) Inc version to 1.x-SNAPSHOT in build.sbt and JobListCLI
-7) Adjust dependent build.sbt's
+# locate jar, sources.jar and pom for new version in
+open ~/.m2/repository/de/mpicbg/scicomp/joblist_2.11
+```
+
+Upload path (see crossPath notes in build.sbt)
+```
+de/mpicbg/scicomp/joblist/0.X
+```
+(todo use https://github.com/softprops/bintray-sbt)
+
+### Post-release
+
+Inc version to 1.x-SNAPSHOT in build.sbt and JobListCLI
