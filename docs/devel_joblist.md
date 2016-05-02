@@ -1,9 +1,9 @@
 # JobList Developer Info
 
-We always welcome pull request and tickets.
+If you just would like to use `jl` without developing it, see the [User Guide](./user_guide.md) instead.
 
 
-## How to build
+## How to build?
 
 
 To build the jar
@@ -27,7 +27,27 @@ To create an interactive console do
 sbt test:console
 ```
 
-****
+## How to test?
+
+Since some tests require an the assembled CLI make sure to prepare it first and add it to your PATH before running the
+tests
+```
+sbt assembly
+export PATH=./scripts:$PATH # .. which contains a jl launcher thats referring to the assembled jar in ./target/...
+
+## run all tests
+sbt test
+
+## to run just one of the test classes do
+## see http://stackoverflow.com/questions/6997730/how-to-execute-tests-that-match-a-regular-expression
+sbt testOnly joblist.*CLI
+sbt testOnly joblist.ReportingTest
+
+```
+Tests are supposed to run locally or with any of the supported queuing system. Queuing system specific tests test for
+the queue at the beginning of the test and are considered as passed on other platforms.
+
+
 ## Release Check List
 
 Before getting started:
