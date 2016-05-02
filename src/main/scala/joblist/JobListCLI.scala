@@ -80,7 +80,7 @@ object JobListCLI extends App {
       If no <joblist_file> is provided, jl will use '.jobs' as default
       """.alignLeft)
 
-    //    shortcuts Print a list of bash helper function defiitions which can be added via eval  $(jl shortcuts)
+    //    shortcuts Print a list of bash helper function definitions which can be added via eval  $(jl shortcuts)
 
     System.exit(0)
   }
@@ -499,25 +499,11 @@ object JobListCLI extends App {
   //  ```
   //  eval "$(jl shortcuts)"
   //  ```
+  @Deprecated
   def shortcuts() = {
     println(
       """
-      jladd(){
-        jl add $*
-      }
-      export -f jladd
-
-      jlwait(){
-        jl wait $*
-      }
-      export -f jlwait
-
-      ##note: mysub jl wait
-      jlsub(){
-        jl submit $*
-      }
-      export -f jlsub
-
-      """.alignLeft)
+         # none yet
+          """.alignLeft)
   }
 }

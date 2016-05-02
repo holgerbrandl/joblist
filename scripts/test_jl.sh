@@ -9,9 +9,7 @@ bsub "touch foo.txt" | jl add .jobs
 jl wait
 
 ## shortcut installation
-
-eval "$(jl shortcuts)"
-
+#eval "$(jl shortcuts)"
 
 (cd $(dirname $(which jl))/.. && sbt assembly)
 
@@ -19,8 +17,7 @@ cd ~/unit_tests
 bsub "touch foo.txt" | jl add .myjobs
 jl wait .myjobs
 
-eval "$(jl shortcuts)"
-wait4jobs .myjobs
+#jlsub .myjobs
 
 
 ## fake a walltime hit
@@ -30,9 +27,7 @@ wait4jobs .myjobs
 
 mcdir ~/jl_test
 
-eval "$(jl shortcuts)"
-
-jsub --other_queue_args "-W 00:01" "sleep 12"
+jl submit --other_queue_args "-W 00:01" "sleep 12"
 
 
 ## failing example which requires resubmission
