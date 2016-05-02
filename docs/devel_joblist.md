@@ -62,6 +62,11 @@ sbt testOnly joblist.ReportingTest
 Tests are supposed to run locally or with any of the supported queuing system. Queuing system specific tests test for
 the queue at the beginning of the test and are considered as passed on other platforms.
 
+## Travis CI Integration
+
+For details and examples see
+* https://docs.travis-ci.com/user/languages/scala
+* https://github.com/twitter/scalding/blob/master/.travis.yml
 
 ## Release Check List
 
