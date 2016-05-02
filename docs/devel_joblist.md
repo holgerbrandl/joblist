@@ -67,6 +67,7 @@ the queue at the beginning of the test and are considered as passed on other pla
 For details and examples see
 * https://docs.travis-ci.com/user/languages/scala
 * https://github.com/twitter/scalding/blob/master/.travis.yml
+* http://conda.pydata.org/docs/travis.html (PATH)
 
 ## Release Check List
 
