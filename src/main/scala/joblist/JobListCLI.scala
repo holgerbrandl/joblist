@@ -401,7 +401,7 @@ object JobListCLI extends App {
      --first              Limit reporting to the first job only
      --by_name <pattern>  Limit reporting to those jobs whose names match the given regex
      --no_header          Do not print the joblist summary as header
-     --log <what>         Print logging info for selected jobs. Possible values are "cmd", "err", "out"
+     --log <what>         Print details for selected jobs. Possible values are "cmd", "err", "out", "config" and "runinfo"
       """.alignLeft.trim)
 
 //    --fields <what>      Define which job details to include in the table. Comma-separated list of "basics","logs",
@@ -460,6 +460,8 @@ object JobListCLI extends App {
           case "err" => job.config.logs.err
           case "out" => job.config.logs.out
           case "cmd" => job.config.logs.cmd
+          case "config" => JobConfiguration.jcXML(job.id, jl.dbDir)
+          case "runinfo" => job.infoFile
         }).lines.foreach(println(_))
 
         println() // add an empty line for better readability

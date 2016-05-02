@@ -198,7 +198,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     add(jobId)
 
     // serialzie job configuration in case we need to rerun it
-    namedJC.saveAsXml(jobId, logsDir)
+    namedJC.saveAsXml(jobId, dbDir)
 
     Job(jobId)
   }
@@ -352,6 +352,6 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   }
 
 
-  def logsDir = (file.parent / ".jl").createIfNotExists(true)
+  def dbDir = (file.parent / ".jl").createIfNotExists(true)
 
 }

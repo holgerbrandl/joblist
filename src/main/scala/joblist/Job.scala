@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 case class Job(id: Int)(implicit val jl: JobList) {
 
 
-  val infoFile = jl.logsDir / s"$id.runinfo.xml"
+  val infoFile = jl.dbDir / s"$id.runinfo.xml"
 
 
   def info = {
@@ -59,15 +59,15 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
   // note just use lazy val for properties that do not change
 
-  lazy val isRestoreable = JobConfiguration.jcXML(id, jl.logsDir).isRegularFile
+  lazy val isRestoreable = JobConfiguration.jcXML(id, jl.dbDir).isRegularFile
 
 
   lazy val config = {
-    JobConfiguration.fromXML(id, jl.logsDir)
+    JobConfiguration.fromXML(id, jl.dbDir)
   }
 
   lazy val name = {
-    JobConfiguration.fromXML(id, jl.logsDir).name
+    JobConfiguration.fromXML(id, jl.dbDir).name
   }
 }
 
