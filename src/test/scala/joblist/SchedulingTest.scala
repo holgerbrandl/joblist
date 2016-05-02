@@ -66,12 +66,12 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.run(tasks)
 
+    jl.waitUntilDone()
     // http://www.scalatest.org/user_guide/matchers_quick_reference
 
     // make sure that outputs have been created
     (wd / ".logs").toJava should exist
 
-    jl.waitUntilDone()
 
     // relative globbing broken in b-f --> fixed for new version
     //    (wd / ".logs").glob("*").toList.head.lines.next should include ("medium")
@@ -89,9 +89,10 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     // make sure that we can still access the job configurations
     val restoredJC = jl.jobs.map(_.config).head
 
-    if (!jl.scheduler.isInstanceOf[LocalScheduler]) {
-      restoredJC.queue should equal("medium")
-    }
+    // disabled because queuing config dependent and not generic
+//    if (!jl.scheduler.isInstanceOf[LocalScheduler]) {
+//      restoredJC.queue should equal("medium")
+//    }
   }
 
 
@@ -104,11 +105,11 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     val jl = JobList(wd / ".with_walllimit")
 
-    val cmds = for (runMinutes <- 1 to 3) yield {
+    val cmds = for (runMultiplicator <- 1 to 3) yield {
       s"""
-        sleep ${60 * runMinutes - 30}
-        touch walltime_test_${runMinutes}.txt
-      """.alignLeft
+        sleep ${60 * runMultiplicator - 30}
+        touch walltime_test_${runMultiplicator}.txt
+      """.alignLeft.trim
     }
 
     jl.run(cmds.map(JobConfiguration(_, wallTime = "00:01", wd = wd)))

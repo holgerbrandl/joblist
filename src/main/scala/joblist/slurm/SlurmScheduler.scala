@@ -56,20 +56,25 @@ class SlurmScheduler extends JobScheduler {
     val otherSubmitArgs = Option(jc.otherQueueArgs).getOrElse("")
 
     // compile all args into cluster configuration
-    val submitArgs = s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
+    val submitArgs =
+      s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 
     // submit the job to the lsf
-        var submitCmd =
+    // @formatter:off
+    var submitCmd =
       s"""
-      sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute} <<"EOF"
-      #!/bin/bash
-      $cmd
-      JLCMD
-      """.alignLeft
+sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute} <<"JLCMD"
+#!/bin/bash
+$cmd
+JLCMD""".alignLeft.trim + "\n"
+    // @formatter:on
 
-    //    Console.err.println("submission cmd is:\n" + submitCmd)
+    if (sys.env.get("JL_LOG_SUBMISSIONS").isDefined) {
+      println(s"submitting:\n${submitCmd}\n\n####\n")
+    }
+
 
     // optionally prefix with working directory
     if (File(".") != wd) {
@@ -106,7 +111,7 @@ class SlurmScheduler extends JobScheduler {
       map(slLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
         val splitLine = slLine.trim.split(" +")
-        val curstate: JobState= JobState.valueOf(slurmStateRemapping(splitLine(4)))
+        val curstate: JobState = JobState.valueOf(slurmStateRemapping(splitLine(4)))
         QueueStatus(splitLine(0).toInt, curstate)
       }).toList
   }

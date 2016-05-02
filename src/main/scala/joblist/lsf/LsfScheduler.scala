@@ -9,7 +9,6 @@ import org.joda.time.format.DateTimeFormat
 
 import scalautils.Bash
 import scalautils.Bash.BashResult
-import scalautils.StringUtils.ImplStringUtils
 
 
 /**
@@ -46,23 +45,31 @@ class LsfScheduler extends JobScheduler {
     val otherSubmitArgs = Option(jc.otherQueueArgs).getOrElse("")
 
     // compile all args into cluster configuration
-    val submitArgs = s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
+    val submitArgs =
+      s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 
     // submit the job to the lsf
     // for examples see scripts/test_jl.sh:91
+
+    // @formatter:off
     var submitCmd =
       s"""
-      bsub $submitArgs  <<"JLCMD"
-      ( $cmd ) 2>${jc.logs.err.absolute} 1>${jc.logs.out.absolute}
-      JLCMD
-      """.alignLeft.trim
-
+bsub $submitArgs  <<"JLCMD"
+(
+$cmd
+) 2>${jc.logs.err.absolute} 1>${jc.logs.out.absolute}
+JLCMD"""
+    // @formatter:on
 
     // optionally prefix with working directory
     if (File(".") != wd) {
       submitCmd = s"cd '${wd}'\n" + submitCmd
+    }
+
+    if (sys.env.get("JL_LOG_SUBMISSIONS").isDefined) {
+      println(s"submitting:\n${submitCmd}\n\n####\n")
     }
 
     // run
@@ -94,7 +101,7 @@ class LsfScheduler extends JobScheduler {
         val bjLineSplit = bjLine.split(" +")
 
         // do simplistic state remapping to allow for correct status reporting
-//        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
+        //        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
 
         QueueStatus(bjLineSplit(0).toInt, getLsfState(bjLineSplit(2)))
       }).toList
@@ -173,7 +180,7 @@ class LsfScheduler extends JobScheduler {
   }
 
 
-  def getLsfState(lsfJobStatus: String, killCause: String=""): JobState with Product with Serializable = {
+  def getLsfState(lsfJobStatus: String, killCause: String = ""): JobState with Product with Serializable = {
     val lsf2slurmStatus = Map(
       "DONE" -> "COMPLETED",
       "RUN" -> "RUNNING",
