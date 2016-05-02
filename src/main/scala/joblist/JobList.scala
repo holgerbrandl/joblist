@@ -15,7 +15,7 @@ import scalautils.CollectionUtils.StrictSetOps
   * @author Holger Brandl
   */
 
-case class JobList(file: File = File(".jobs"), scheduler: JobScheduler = guessScheduler()) extends AnyRef {
+case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = guessScheduler()) extends AnyRef {
 
 
   def this(name: String) = this(File(name))

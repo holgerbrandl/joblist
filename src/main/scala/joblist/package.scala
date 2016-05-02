@@ -23,6 +23,35 @@ package object joblist {
     def createHtmlReport() = new JobReport(jl).createHtmlReport()
   }
 
+
+  val DEFAULT_JL = ".jobs"
+
+
+  /** see https://github.com/holgerbrandl/joblist/milestones/v0.6
+    * The feature is optional and could be removed if it turns out to be too confusing for the users
+    */
+  val rememberMeFile = ".last_jl"
+
+  def updateLastJL(jl: JobList) = (jl.file.parent / rememberMeFile).write(jl.file.name)
+
+
+  def getDefaultJlFile(wd: File = File(".")): File = {
+    val fallbackFile: File = wd / ".jobs"
+
+    val wdRemMeFile: File = wd / rememberMeFile
+    if (wdRemMeFile.isRegularFile) {
+      val restoredJl: File = File(wdRemMeFile.lines.head)
+      println(s"restored jl is $restoredJl")
+      if (restoredJl.isRegularFile) {
+        return restoredJl
+      } else {
+        wdRemMeFile.delete(true)
+      }
+    }
+
+    fallbackFile
+  }
+
   def guessScheduler(): JobScheduler = {
 
     if (sys.env.get("JL_FORCE_LOCAL").isDefined) {

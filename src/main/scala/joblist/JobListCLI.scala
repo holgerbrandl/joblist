@@ -23,7 +23,6 @@ object JobListCLI extends App {
 
   val version = "0.6-SNAPSHOT"
 
-  val DEFAULT_JL = ".jobs"
 
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {
     println(
@@ -88,9 +87,15 @@ object JobListCLI extends App {
 
 
   def getJL(options: Map[String, String], jlArgName: String = "joblist_file") = {
-    val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
+//    val listFile = File(Option(options(jlArgName)).getOrElse(DEFAULT_JL))
+    val listFile = File(Option(options(jlArgName)).getOrElse(getDefaultJlFile().absolute.toString()))
 
-    new JobList(listFile)
+    val jl = new JobList(listFile)
+
+    // keep track of last instantiated jl per directory (see https://github.com/holgerbrandl/joblist/issues/41)
+    updateLastJL(jl)
+
+    jl
   }
 
 

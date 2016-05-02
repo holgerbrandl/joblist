@@ -111,36 +111,14 @@ jl.resubmit(new BetterQueue("long"))
 
 ```
 
-How to build?
------------------
-
-
-To package into a stand-alone jar run
-```
-sbt assembly
-```
-
-To deploy into the local ivy-index run
-
-```
-sbt publishLocal
-```
-
-To run the test suite simply do
-```
-sbt test
-```
-The tests will auto-detect the queuing system or fall back to use a local scheduler in case auto-detection fails
-
-
-Support & Documentation
+Support & Documentationy
 -----------------------
 
 Feel welcome to submit pull-requests or tickets,  or simply get in touch via gitter (see button on top).
 
 * [JobList Introduction](http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html) A presentation from December 2015 ([sources](./docs/joblist_intro/joblist_intro.md))
 * [FAQ](./faq.md)
-* [Developer Info](./docs/devel_joblist.md) Information about to build, test and improve joblist
+* [Developer Information](./docs/devel_joblist.md) with details about to build, test, release and improve `joblist`
 
 
 Related Projects

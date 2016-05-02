@@ -14,7 +14,7 @@ object JlDebug extends App {
 
   //  implicit val jl = new JobList("/home/brandl/test/.whit*")
   //  implicit val jl = new JobList("/Users/brandl/jl_test/.est_test")
-  implicit val jl = new JobList()
+  implicit val jl = new JobList(File(".myjobs"))
   jl.reset()
   jl.printStatus()
 
