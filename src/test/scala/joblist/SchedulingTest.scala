@@ -23,6 +23,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
   // clean up old unit-test data before running each of the tests
   before {
     wd.list.foreach(_.delete(true))
+    wd.list // nfs refresh, needed?
   }
 
 
@@ -90,9 +91,9 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     val restoredJC = jl.jobs.map(_.config).head
 
     // disabled because queuing config dependent and not generic
-//    if (!jl.scheduler.isInstanceOf[LocalScheduler]) {
-//      restoredJC.queue should equal("medium")
-//    }
+    //    if (!jl.scheduler.isInstanceOf[LocalScheduler]) {
+    //      restoredJC.queue should equal("medium")
+    //    }
   }
 
 
@@ -171,11 +172,12 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "reset should do a proper cleanup without harming non-jl files" in {
 
-    (wd / "some_data.txt").touch()
+//    (wd / "some_data.txt").touch() // touch does not work with sym-linked directories paths
+    (wd / "some_data.txt").toJava.createNewFile()
     wd.list.size should be(1)
 
     val jl = JobList(wd / ".reset_test")
-    jl.run(JobConfiguration(s"touch ${wd}/other_result.txt", wd=wd))
+    jl.run(JobConfiguration(s"touch ${wd}/other_result.txt", wd = wd))
 
     jl.waitUntilDone()
 
@@ -184,7 +186,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.reset()
 
     // original + result + logsdir + 2 logs (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
-//    wd.listRecursively.size should be(5)
+    //    wd.listRecursively.size should be(5)
     wd.listRecursively.toList should have size 5
   }
 
@@ -194,13 +196,13 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
   it should "submit jobs that contain single qutotes" in {
     // see https://github.com/holgerbrandl/joblist/issues/11
 
-    wd.list should be (empty)
+    wd.list should be(empty)
 
     val resultFile = wd / "single_quote_result.txt"
     resultFile.delete(true)
 
     val jl = JobList(wd / ".single_quotes")
-    jl.run(JobConfiguration(s"touch '${resultFile}'", wd=wd))
+    jl.run(JobConfiguration(s"touch '${resultFile}'", wd = wd))
 
     jl.waitUntilDone()
 

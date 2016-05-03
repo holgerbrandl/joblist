@@ -46,6 +46,8 @@ sbt test:console
 
 See http://www.scala-sbt.org/0.13/docs/Testing.html
 
+* The `unit_tests` must not be located under an NFS filesystem. This is because of [JDK File.exists() bug when using NFS](http://stackoverflow.com/questions/3833127/alternative-to-file-exists-in-java)
+
 Since some tests require an the assembled CLI make sure to prepare it first and add it to your PATH before running the
 tests
 ```
@@ -61,6 +63,7 @@ sbt testOnly joblist.*CLI
 sbt
 ## see http://stackoverflow.com/questions/11159953/scalatest-in-sbt-is-there-a-way-to-run-a-single-test-without-tags
 testOnly *TestCLI -- -z done
+testOnly *SchedulingTest -- -z proper
 
 ## this does not seem to work
 sbt testOnly joblist.ReportingTest

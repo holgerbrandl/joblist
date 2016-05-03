@@ -95,7 +95,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl.requiresRerun.size should be(1)
 
     // fix tag file to make job runnable and retry agin
-    failTagFile.touch()
+    failTagFile.toJava.createNewFile() // we can not use touch here because it does not work with sym-linked directories
 
     Bash.eval(s"ls -l ${failTagFile.pathAsString}").exitCode should be(0)
     //    Bash.eval(bashCmd)
