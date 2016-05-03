@@ -69,6 +69,10 @@ For details and examples see
 * https://github.com/twitter/scalding/blob/master/.travis.yml
 * http://conda.pydata.org/docs/travis.html (PATH)
 
+To speed up build consider caching
+https://blog.travis-ci.com/2013-12-05-speed-up-your-builds-cache-your-dependencies/
+
+
 ## Release Check List
 
 Before getting started:

@@ -6,5 +6,7 @@ install:
   - sudo apt-get install -y r-base
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
   - export IS_TRAVIS=true
+  ## print library path
+  - Rscript -e 'suppressMessages(if (!require("rms")) install.packages("rms"));  .libPaths()'
 
 script: sbt ++$TRAVIS_SCALA_VERSION assembly test
