@@ -44,6 +44,8 @@ sbt test:console
 
 ## How to test?
 
+See http://www.scala-sbt.org/0.13/docs/Testing.html
+
 Since some tests require an the assembled CLI make sure to prepare it first and add it to your PATH before running the
 tests
 ```
@@ -56,6 +58,11 @@ sbt test
 ## to run just one of the test classes do
 ## see http://stackoverflow.com/questions/6997730/how-to-execute-tests-that-match-a-regular-expression
 sbt testOnly joblist.*CLI
+sbt
+## see http://stackoverflow.com/questions/11159953/scalatest-in-sbt-is-there-a-way-to-run-a-single-test-without-tags
+testOnly *TestCLI -- -z done
+
+## this does not seem to work
 sbt testOnly joblist.ReportingTest
 
 ```

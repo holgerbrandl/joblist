@@ -1,5 +1,6 @@
 package joblist
 
+import better.files.File
 import better.files.File._
 import joblist.local.LocalScheduler
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -11,6 +12,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
   //  import Matchers._; import joblist._
 
   val wd = (home / "unit_tests").createIfNotExists(true)
+  val jlHome = File(".")
 
   // clean up old unit-test data before running each of the tests
   before {
@@ -32,7 +34,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     // submit some jobs
     val jobConfigs = for (fail_prob <- 1 to 100 by 5) yield {
-      JobConfiguration(s"fake_job.sh 5 ${fail_prob}", numThreads = threadsPerJob, wd = wd)
+      JobConfiguration(s"${jlHome}/test_data/fake_job.sh 5 ${fail_prob}", numThreads = threadsPerJob, wd = wd)
     }
 
     jobConfigs.foreach(jl.run)
@@ -56,7 +58,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.waitUntilDone()
     jl.requiresRerun shouldBe empty
-    jl.jobs should have size (20)
+    jl.jobs should have size 20
   }
 }
 

@@ -20,14 +20,14 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
   //  import Matchers._; import joblist._
 
 
-  val wd = (home / "unit_tests").createIfNotExists(true)
+  val wd = (home / "unit_tests").createIfNotExists(asDirectory = true)
 
   val jl = JobList(wd / ".cli_tests")
 
   // note by default sbt is running tests in parallel which will fail like that
   before {
+    Thread.sleep(1000)
     wd.list.foreach(_.delete(true))
-    jl.reset()
   }
 
   it should "capture the job id from stdin and wait for it" in {

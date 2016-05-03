@@ -132,6 +132,14 @@ package object joblist {
       File(file.path.toAbsolutePath.toString)
     }
 
+//    /** An nfs-aware exists implementation inspired by http://stackoverflow.com/questions/3833127/alternative-to-file-exists-in-java . */
+//    def refreshNfsStats = {
+//      //    Bash.eval(s"ls ${resultFile}").exitCode==0
+//      // by listing th parent directory meta-data is being refreshed.
+//      file.parent.list
+//      file
+//    }
+
 
     /** Expose Path.resolve for simpler typing and less braces. */
     def resolve(childName: String) = file / childName

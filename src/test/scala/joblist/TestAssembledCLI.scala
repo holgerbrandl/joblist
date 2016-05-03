@@ -76,6 +76,21 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     resultFile.toJava should exist
   }
 
+  /** Cope with filesystem delay (e.g. on cluster-fs. */
+  def waitForFile(file:File, maxTime:Int =20): File ={
+    var secCounter = maxTime
+
+    while(secCounter > 0){
+      if(file.exists) return file
+
+      secCounter = secCounter -1
+      println(s"waiting for $file")
+      Thread.sleep(1000)
+    }
+
+    file
+  }
+
 
 
   it should "split batch jobs up correctly" in {

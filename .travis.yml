@@ -6,9 +6,9 @@ jdk: oraclejdk8
 
 install:
   - sudo apt-get install -y r-base
+  - sudo apt-get install pandoc
+  - sudo apt-get install scala
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
-  ## - export IS_TRAVIS=true
-  ## print library path
   - sudo chmod -R ugo+w /usr/local/lib/R/site-library
   ## just test if we can install packages without user intervention
   - Rscript -e 'r = getOption("repos"); r["CRAN"] = "http://ftp5.gwdg.de/pub/misc/cran/"; options(repos = r); suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'

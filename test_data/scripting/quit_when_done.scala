@@ -1,5 +1,5 @@
 #!/bin/sh
-exec scala -J-Xmx4g -cp "$(ls $(dirname $0)/../../target/scala-2.11/joblist-assembly*jar)" -savecompiled "$0" "$@"
+exec scala -J-Xmx4g -cp "$(ls $(dirname $0)/../../target/joblist-assembly*jar)" -savecompiled "$0" "$@"
 !#
 
 
