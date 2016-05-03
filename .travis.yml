@@ -2,6 +2,9 @@ language: scala
 scala:
    - 2.11.7
 jdk: oraclejdk8
-sudo: false
-install: export PATH="$HOME/scripts/:$PATH"
+install:
+  - sudo apt-get install -y r-base
+  - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
+  - export IS_TRAVIS=true
+
 script: sbt ++$TRAVIS_SCALA_VERSION assembly test
