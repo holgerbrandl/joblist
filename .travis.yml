@@ -1,15 +1,16 @@
 language: scala
 scala:
    - 2.11.7
+
 jdk: oraclejdk8
+
 install:
   - sudo apt-get install -y r-base
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
   - export IS_TRAVIS=true
   ## print library path
   - sudo chmod -R ugo+w /usr/local/lib/R/site-library
-  - Rscript -e 'suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
-
+  ## - Rscript -e 'suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
 
 cache:
   bundler: true
