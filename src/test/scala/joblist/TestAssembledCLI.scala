@@ -69,7 +69,7 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     val result = Bash.eval(
       s"""
          cd $wd
-         $jlHome/test_data/scripting/quit_when_done.scala
+         $jlHome/test_data/quit_when_done.scala
       """.alignLeft, showOutput = true)
 
     result.exitCode should be (0)

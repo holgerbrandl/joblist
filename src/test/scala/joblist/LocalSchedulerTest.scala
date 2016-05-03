@@ -36,14 +36,14 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
 
     // disable when running with travis-ci which just has one core
-    if(jl.scheduler.asInstanceOf[LocalScheduler].NUM_THREADS<threadsPerJob){
+    if(jl.scheduler.asInstanceOf[LocalScheduler].NUM_THREADS < threadsPerJob){
       cancel
     }
 
 
     // submit some jobs
     val jobConfigs = for (fail_prob <- 1 to 100 by 5) yield {
-      JobConfiguration(s"${jlHome}/test_data/fake_job.sh 5 ${fail_prob}", numThreads = threadsPerJob, wd = wd)
+      JobConfiguration(s"${jlHome}/test_data/fake_job.sh 10 ${fail_prob}", numThreads = threadsPerJob, wd = wd)
     }
 
     jobConfigs.foreach(jl.run)
