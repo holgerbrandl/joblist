@@ -7,6 +7,13 @@ install:
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
   - export IS_TRAVIS=true
   ## print library path
-  - Rscript -e 'suppressMessages(if (!require("rms")) install.packages("rms"));  .libPaths()'
+  - sudo chmod -R ugo+w /usr/local/lib/R/site-library
+  - Rscript -e 'suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
+
+
+cache:
+  bundler: true
+  directories:
+    - /usr/local/lib/R/site-library
 
 script: sbt ++$TRAVIS_SCALA_VERSION assembly test
