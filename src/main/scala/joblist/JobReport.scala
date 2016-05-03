@@ -70,7 +70,8 @@ class JobReport(jl: JobList) {
 
     val reportScript = scala.io.Source.fromURL(JobList.getClass.getResource("jl_report.R")).mkString
 
-    val reportFile = scalautils.r.rendrSnippet(
+//    val reportFile = scalautils.r.rendrSnippet(
+    val reportFile = rendrSnippet(
       jl.file.name,
       reportScript, showCode = false,
       args = jl.file.pathAsString,
@@ -82,8 +83,8 @@ class JobReport(jl: JobList) {
     Console.out.println(s" done '${reportFile.name}'")
   }
 
-  //todo port back into scalautils
-  def rendrSnippet2(reportName: String, rSnippet: String,
+  //todo remove once we use the v0.3 of scalautils which contains this updated method
+  def rendrSnippet(reportName: String, rSnippet: String,
                    showCode: Boolean = true, args: String = "", wd: File = File(".")) = {
 
 

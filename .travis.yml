@@ -7,14 +7,15 @@ jdk: oraclejdk8
 install:
   - sudo apt-get install -y r-base
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
-  - export IS_TRAVIS=true
+  ## - export IS_TRAVIS=true
   ## print library path
   - sudo chmod -R ugo+w /usr/local/lib/R/site-library
-  ## - Rscript -e 'suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
+  ## just test if we can install packages without user intervention
+  - Rscript -e 'r = getOption("repos"); r["CRAN"] = "http://ftp5.gwdg.de/pub/misc/cran/"; options(repos = r); suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
 
-cache:
-  bundler: true
-  directories:
-    - /usr/local/lib/R/site-library
+# cache:
+#   bundler: true
+#   directories:
+#     - /usr/local/lib/R/site-library
 
 script: sbt ++$TRAVIS_SCALA_VERSION assembly test
