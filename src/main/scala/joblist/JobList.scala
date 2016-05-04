@@ -193,7 +193,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 //    jobLogs.cmd.write(jc.cmd)
 
 
-    require(jobs.forall(_.config.name != namedJC.name), "job names must be unique")
+    require(jobs.forall(_.config.name != namedJC.name), s"job names must be unique, and '${namedJC.name}' is already taken")
 
     add(jobId)
 
