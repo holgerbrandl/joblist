@@ -132,6 +132,6 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl status
     """.alignLeft
 
-    Bash.eval(script, showOutput = true).exitCode should be 0
+    Bash.eval(script, showOutput = true).exitCode should be (0)
   }
 }
