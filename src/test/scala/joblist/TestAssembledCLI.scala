@@ -112,4 +112,26 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl.jobs should have size 3
     jl.failed should have size 0
   }
+
+
+
+  // depends on https://github.com/holgerbrandl/joblist/issues/42
+  ignore should "remember last jl in a robust manner " in {
+
+    val script =
+      s"""
+    cd ${wd}
+
+    jl submit "echo test"
+    jl wait
+
+    ## delete .jobs
+    jl reset
+
+    ## use remember me to fetch status
+    jl status
+    """.alignLeft
+
+    Bash.eval(script, showOutput = true).exitCode should be 0
+  }
 }

@@ -94,6 +94,11 @@ object JobConfiguration {
 
   /** validate that the walltime format is [N]NN:NN */
   def validateWallTime(time: String ): Unit = {
-    require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(time).matches)
+    // does not work for slurm https://github.com/holgerbrandl/joblist/issues/44
+    if(isSLURM) {
+      require("[0-9]{1,3}:[0-9]{2}:[0-9]{2}".r.pattern.matcher(time).matches)
+    } else if(isLSF) {
+      require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(time).matches)
+    }
   }
 }
