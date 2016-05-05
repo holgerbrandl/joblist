@@ -46,6 +46,7 @@ object JobListCLI extends App {
     case "submit" => submit()
     case "add" => add()
     case "wait" => wait4jl()
+    case "resub" => resub()
     case "status" => status()
     case "cancel" => cancel()
     case "up" => btop()
@@ -72,8 +73,9 @@ object JobListCLI extends App {
         submit    Submits a job to the underlying queuing system and adds it to the list
         add       Extracts job-ids from stdin and adds them to the list
         wait      Wait for a list of jobs to finish
+        resub     Resubmit non-complete jobs with escalated scheduler parameters
         status    Prints various statistics and allows to create an html report for the list
-        cancel      Removes all  jobs of this list from the scheduler queue
+        cancel    Removes all  jobs of this list from the scheduler queue
         up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
         reset     Removes all information related to this joblist.
 

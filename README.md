@@ -32,54 +32,55 @@ Basic Usage
 Usage: jl <command> [options] [<joblist_file>]
 
 Supported commands are
-  submit    Submits a named job including automatic stream redirection and adds it to the list
-  add       Extract job-ids from stdin and add them to the list
-  wait      Wait for a list of tasks to finish
+  submit    Submits a job to the underlying queuing system and adds it to the list
+  add       Extracts job-ids from stdin and adds them to the list
+  wait      Wait for a list of jobs to finish
+  resub     Resubmit non-complete jobs with escalated scheduler parameters
   status    Prints various statistics and allows to create an html report for the list
-  kill      Removes all queued jobs of this list from the scheduler
-  up        Moves a list of jobs to the top of a queue if supported by the underlying scheduler
+  cancel    Removes all  jobs of this list from the scheduler queue
+  up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
+  reset     Removes all information related to this joblist.
 
-If no <joblist_file> is provided, jl will use '.jobs' as default
-
+If no <joblist_file> is provided, jl will use '.jobs' as default, but to save typing it will remember
+the last used joblist instance per directory.
 ```
-All commands provide more specific help if needed (e.g.  `jl submit --help`)
+All sub-commands provide more specific information (e.g.  `jl submit --help`)
 
-Submit some jobs with bsub/sbatch as you're used to and use jl for blocking and monitoring and final status handling:
-```
-bsub "echo foo" | jl add
-bsub "echo bar" | jl add
-bsub "exit 1"   | jl add
+The basic workflow is as follow:
 
-jl wait
+1) Submit some jobs
 
-if [ -n "$(jl status --failed)" ]; then
-    echo "some jobs failed"
-fi
-
-## print captured sterr to understand why they did fail
-jl status --failed --logs err
-```
-
-Or to give a slurm example:
-```
-echo '#!/bin/bash
-touch test.txt' | sbatch -p my_queue -J test_job --time=00:20 | jl add
-jl wait --report
-```
-
-All `jl` commands use `.jobs` as a default list, but you can provide your own for clarity:
-```
-bsub "sleep 3" | jl add .other_jobs
-```
-
-If jobs are submitted with `jl` they can also be resubmitted in case they fail:
 ```
 jl submit "sleep 10"          ## add a job
 jl submit "sleep 1000"        ## add another which won't finish in our default queue
-jl wait --resubmit_queue long ## wait and resubmit failing jobs to another queue
 ```
-Another advantage when submitting jobs via `jl` is that it decouples workflows from the underlying queuing system.
-Ie. the last example would run on a slurm system, an LSF cluster or simply locally on any desktop machine.
+
+2) Wait for them to finish
+```
+jl wait
+> 2 jobs in total;   0.0% complete; Remaining time       <NA>;    0 done;    0 running;    2 pending;    0 killed;    0 failed
+> 2 jobs in total;   0.0% complete; Remaining time       <NA>;    0 done;    2 running;    0 pending;    0 killed;    0 failed
+> 2 jobs in total;  50.0% complete; Remaining time       ~10S;    1 done;    1 running;    0 pending;    0 killed;    0 failed
+> 2 jobs in total;  50.0% complete; Remaining time       ~10S;    1 done;    0 running;    0 pending;    1 killed;    0 failed
+```
+
+3) Report status, render html-report and log information with
+```
+jl status
+> 2 jobs in total;  50.0% complete; Remaining time       ~10S;    1 done;    0 running;    0 pending;    1 killed;    0 failed
+
+jl status --report
+> .jobs: Exported statistics into .jobs.{runinfo|jc}.log
+> .jobs: Rendering HTML report... done
+```
+
+4) Resubmit non-complete jobs by escalating their scheduler configuration
+```
+jl resub --queue "long" ## wait and resubmit failing jobs to another queue
+```
+
+By using `jl` workflows will be decoupled from the underlying queuing system.
+Ie. `jl`-_ified_ workflows would run on a slurm system, an LSF cluster or simply locally on any desktop machine.
 
 API Usage
 ---------
@@ -118,7 +119,7 @@ Feel welcome to submit pull-requests or tickets,  or simply get in touch via git
 
 * [JobList Introduction](http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html) A presentation from December 2015 ([sources](./docs/joblist_intro/joblist_intro.md))
 * [JobList Mandual](./docs/user_guide.md) for detailed information about the model behind `joblist` and how to use it
-* [FAQ](./faq.md)
+* [FAQ](./docs/faq.md)
 * [Developer Information](./docs/devel_joblist.md) with details about to build, test, release and improve `joblist`
 
 
