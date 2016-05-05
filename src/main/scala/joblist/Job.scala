@@ -27,18 +27,17 @@ case class Job(id: Int)(implicit val jl: JobList) {
 
   def wasKilled = info.state == JobState.KILLED
 
-
   def hasFailed = info.state == JobState.FAILED
 
+  def isCompleted = info.state == JobState.COMPLETED
 
-  def isDone = info.state == JobState.COMPLETED
-
+  def wasCancelled = info.state == JobState.CANCELLED
 
   def isFinal = infoFile.isRegularFile && JobState.finalStates.contains(info.state)
 
 
   /** Job reached final state but is not done (because it either failed, was killed or canceled) */
-  def requiresRerun = infoFile.isRegularFile && isFinal && !isDone
+  def requiresRerun = infoFile.isRegularFile && isFinal && !isCompleted
 
 
   /** Update the job run statistics. This will silently skip over final runinfo */

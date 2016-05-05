@@ -80,6 +80,8 @@ package object joblist {
     Bash.eval("which bkill").sout.nonEmpty || Option(System.getenv("USE_FAKE_LSF")).isDefined
   }
 
+  def isLocal = !isLSF && !isSLURM
+
 
   def whoAmI: String = Bash.eval("whoami").sout
 

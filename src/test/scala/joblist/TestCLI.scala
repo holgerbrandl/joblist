@@ -107,7 +107,7 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     //    jl.jobs.head.info
     //    jl.jobs.head.config.cmd
-    jl.jobs.head.isDone should be(true)
+    jl.jobs.head.isCompleted should be(true)
   }
 
   it should "submit non-jl jobs but should not resubmit them" in {

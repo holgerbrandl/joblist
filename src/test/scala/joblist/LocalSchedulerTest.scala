@@ -56,7 +56,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.waitUntilDone()
     jl.requiresRerun should not be empty
-    jl.isDone should be(false)
+    jl.isComplete should be(false)
 
     // tweak commands in resubmission so that they all make it
     jl.resubmit(new ResubmitStrategy {

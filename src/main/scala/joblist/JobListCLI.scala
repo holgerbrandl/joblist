@@ -47,7 +47,7 @@ object JobListCLI extends App {
     case "add" => add()
     case "wait" => wait4jl()
     case "status" => status()
-    case "kill" => kill()
+    case "cancel" => cancel()
     case "up" => btop()
     case "shortcuts" => shortcuts()
     case "reset" => reset()
@@ -73,7 +73,7 @@ object JobListCLI extends App {
         add       Extracts job-ids from stdin and adds them to the list
         wait      Wait for a list of jobs to finish
         status    Prints various statistics and allows to create an html report for the list
-        kill      Removes all  jobs of this list from the scheduler queue
+        cancel      Removes all  jobs of this list from the scheduler queue
         up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
         reset     Removes all information related to this joblist.
 
@@ -274,8 +274,8 @@ object JobListCLI extends App {
      --resubmit_queue <resub_queue>     Resubmit to different queue
      --resubmit_wall <walltime>         Resubmit with different walltime limit
      --resubmit_threads <num_threads>   Resubmit with more threads
-     --resubmit_type <fail_type>        Defines which failed jobs are beeing resubmitted. Possible values are all,
-                                        killed or failed [default: all]
+     --resubmit_type <fail_type>        Defines which failed jobs are beeing resubmitted. Possible values are 'all',
+                                        'killed', 'cancelled' or 'failed' [default: all]
      --email                            Send an email report to the current user once this joblist has finished
      --report                           Create an html report for this joblist once the joblist has finished
       """.alignLeft.trim
@@ -304,7 +304,7 @@ object JobListCLI extends App {
       case "all" => jl.requiresRerun
       case "failed" => jl.jobs.filterNot(_.wasKilled)
       case "killed" => jl.jobs.filter(_.wasKilled)
-      case "canceled" => jl.jobs.filter(_.info.state == JobState.CANCELLED)
+      case "cancelled" => jl.jobs.filter(_.info.state == JobState.CANCELLED)
     }
 
     while (tbd.nonEmpty && numResubmits < resubChain.size) {
@@ -373,9 +373,9 @@ object JobListCLI extends App {
   }
 
 
-  def kill() = {
+  def cancel() = {
     val options = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
-    getJL(options).kill()
+    getJL(options).cancel()
   }
 
 

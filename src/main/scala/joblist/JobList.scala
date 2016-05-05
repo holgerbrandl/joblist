@@ -71,27 +71,18 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   //
 
 
-  def killed = {
-    jobs.filter(_.wasKilled)
-  }
-
-
   /** True if all jobs in the list are final and complete. */
-  def isDone = {
-    jobs.forall(_.isDone)
-  }
+  def isComplete = jobs.forall(_.isCompleted)
 
+  def killed = jobs.filter(_.wasKilled)
 
-  def failed = {
-    /* see man bjobs for exit code: The job has terminated with a non-zero status – it may have been aborted due
-     to an error in its execution, or killed by its owner or the LSF administrator */
-    jobs.filter(_.hasFailed)
-  }
+  def completed = jobs.filter(_.isCompleted)
 
+  def failed = jobs.filter(_.hasFailed)
 
-  def requiresRerun = {
-    jobs.filter(_.requiresRerun)
-  }
+  def cancelled = jobs.filter(_.wasCancelled)
+
+  def requiresRerun = jobs.filter(_.requiresRerun)
 
 
   def queueStatus() = {
@@ -189,8 +180,8 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     val jobId = scheduler.submit(namedJC)
 
     // save user logs (disabled because of https://github.com/holgerbrandl/joblist/issues/43)
-//    jobLogs.id.write(jobId + "")
-//    jobLogs.cmd.write(jc.cmd)
+    //    jobLogs.id.write(jobId + "")
+    //    jobLogs.cmd.write(jc.cmd)
 
 
     require(jobs.forall(_.config.name != namedJC.name), s"job names must be unique, and '${namedJC.name}' is already taken")
@@ -219,14 +210,6 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 
 
     Console.out.println(s"${file.name}: Added job '${jobId}'")
-  }
-
-
-  /** Waits for current jl to finish, resubmit failed jobs, wait again */
-  def waitResubWait(resubmitStrategy: ResubmitStrategy = new TryAgain()) = {
-    waitUntilDone()
-    resubmit(resubmitStrategy)
-    waitUntilDone()
   }
 
 
@@ -305,7 +288,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   }
 
 
-  def kill() = scheduler.cancel(jobs.map(_.id))
+  def cancel() = scheduler.cancel(jobs.map(_.id))
 
 
   //

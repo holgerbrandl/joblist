@@ -185,11 +185,11 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.reset()
 
-    // original + result + logsdir + 2 stats files (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
+    // original + result + logsdir (see https://github.com/holgerbrandl/joblist/issues/43 for cutdown)
     // does not work because of sym-links --> use visit options
 //    wd.listRecursively.toList should have size 5
 //    wd.listRecursively(File.VisitOptions.follow).toList should have size 5
-    wd.list.toList should have size 5
+    wd.list.toList should have size 3
   }
 
 

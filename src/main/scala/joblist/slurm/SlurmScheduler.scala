@@ -45,7 +45,12 @@ class SlurmScheduler extends JobScheduler {
     // note that we postfix the walltime argument with :00 since slurm also wants seconds
     // see https://github.com/holgerbrandl/joblist/issues/44
     val wallTime = if (!jc.wallTime.isEmpty) s"--time=${jc.wallTime}:00" else ""
-    val maxMem = if(jc.maxMemory > 0) s"-M ${jc.maxMemory}" else "" // slurm format is -M mem_in_mb
+
+    //    val maxMem = if(jc.maxMemory > 0) s"--mem-per-cpu ${(jc.maxMemory/numCores.toFloat).round}" else "" // slurm format is -M mem_in_mb
+    // --mem-per-cpu does not seem to work with falcon
+    // for --mem see https://rc.fas.harvard.edu/resources/documentation/slurm-memory/
+    // show job limit in kb with: sacct -o MaxRSS -j JOBID
+    val maxMem = if(jc.maxMemory > 0) s"--mem ${jc.maxMemory}" else "" // slurm format is -M mem_in_mb
 
     val queue = if (!jc.queue.isEmpty) s"-p ${jc.queue}" else ""
 
@@ -151,9 +156,11 @@ JLCMD""".alignLeft.trim + "\n"
     //1963414.batch|batch|00:00:32|2015-12-10T12:07:23|2015-12-10T12:06:51|2015-12-10T12:06:51|COMPLETED|0:0||
     //""".trim.split("\n")
 
-
+//    val logFile = File("/home/brandl/unit_tests/.jl/151449.runinfo"); val logData = logFile.lines.toSeq
+//
     val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
     rawLogFile.write(logData.mkString("\n"))
+
 
     val header = logData.head.split("[|]").map(_.trim)
     val vals = logData(1).split("[|]").map(_.trim)
@@ -174,7 +181,8 @@ JLCMD""".alignLeft.trim + "\n"
 
     // http://www.tutorialspoint.com/scala/scala_regular_expressions.htm
 
-    val slurmState = vals(header.indexOf("State")).split(" ")(0)
+    // no splitting here because otherwise we loose the 'by 0' when slurm kills a job
+    val slurmState = vals(header.indexOf("State")) //.split(" ")(0)
     var killReason = null
 
 

@@ -81,7 +81,7 @@ JLCMD"""
 
     // extract job id
     val submitConfirmMsg = submitStatus.filter(_.startsWith("Job <"))
-    require(submitConfirmMsg.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
+    require(bashResult.exitCode==0 && submitConfirmMsg.nonEmpty, s"job submission of '${jobName}' failed with:\n${bashResult.stderr.mkString("\n")}")
 
     val jobId = submitConfirmMsg.head.split(" ")(1).drop(1).dropRight(1).toInt
 

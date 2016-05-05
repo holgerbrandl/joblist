@@ -23,7 +23,7 @@ class ListStatus(jl: JobList) {
   //    }
 
   val numTotal = jobsSnapshot.size
-  val numDone = jobsSnapshot.count(_.isDone)
+  val numDone = jobsSnapshot.count(_.isCompleted)
   val numFinal = jobsSnapshot.count(_.isFinal)
   val numFailed = jobsSnapshot.count(_.hasFailed)
   val numKilled = jobsSnapshot.count(_.wasKilled)

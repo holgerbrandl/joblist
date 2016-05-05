@@ -30,7 +30,7 @@ object JlDebug extends App {
 
   //  jl.run(JobConfiguration("sleep 10", "test_job", numThreads = 3))
   jl.failed
-  jl.isDone
+  jl.isComplete
   jl.waitUntilDone()
 
   println("done")
