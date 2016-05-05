@@ -125,7 +125,8 @@ object JobListCLI extends App {
      -j --jl <joblist_file>               Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job. Must be unique within this joblist
      -t --num_threads <threads>           Number of threads [default: 1]
-     -W <walltime>                        Maximal walltime formatted as 'hour:minute'
+     -w --time <walltime>                 Maximal walltime formatted as '[hh]h:mm'
+     -m --maxmem <maxmem>                 Maximal memory in Mb
      -q --queue <queue>                   Queue/partition to submit job to. Ignored for local scheduler
      -O --other_queue_args <queue_args>   Additional queue parameters
      --debug                              Debug mode which will execute the first submission in the local shell and
@@ -145,13 +146,13 @@ object JobListCLI extends App {
     }
 
 
+
     val baseConfig = JobConfiguration(null,
+      wallTime = Option(options("time")).getOrElse(""),
       queue = Option(options("queue")).getOrElse(""),
       numThreads = options.get("num_threads").get.toInt,
-      wallTime = Option(options("W")).getOrElse(""),
-      otherQueueArgs = Option(options("other_queue_args")).getOrElse("")
-//      wd = jl.file.parent // not needed since in CLI mode it should be always current directory
-    )
+      maxMemory = Option(options("maxmem")).getOrElse("0").toInt,
+      otherQueueArgs = Option(options("other_queue_args")).getOrElse(""))
 
     val jobConfigs = ListBuffer.empty[JobConfiguration]
 
@@ -466,7 +467,7 @@ object JobListCLI extends App {
         (logReporting match {
           case "err" => job.config.logs.err.lines
           case "out" => job.config.logs.out.lines
-//          case "cmd" => job.config.logs.cmd // simplified because of https://github.com/holgerbrandl/joblist/issues/43
+          //          case "cmd" => job.config.logs.cmd // simplified because of https://github.com/holgerbrandl/joblist/issues/43
           case "cmd" => job.config.cmd.split("\n").toList
           case "config" => JobConfiguration.jcXML(job.id, jl.dbDir).lines
           case "runinfo" => job.infoFile.lines

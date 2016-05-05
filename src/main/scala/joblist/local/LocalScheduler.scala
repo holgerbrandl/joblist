@@ -89,6 +89,16 @@ class LocalScheduler extends JobScheduler {
       s"""threading requirements of $jc can't be met be local scheduler which """ +
         s"allows at max for jobs using $NUM_THREADS threads")
 
+    // inform the users about ignored parameters
+    def ignoreWarning(msg:String) = Console.err.println(this.getClass.getName + s": ${msg}")
+
+    // see https://github.com/holgerbrandl/joblist/issues/17
+    if (!jc.wallTime.isEmpty) ignoreWarning("ignoring walltime setting")
+    if(jc.maxMemory>0) ignoreWarning("ignoring memory setting")
+    if (!jc.queue.isEmpty) ignoreWarning("ignoring queue setting")
+    if (!jc.otherQueueArgs.isEmpty) ignoreWarning("ignoring other submission settings")
+
+
     val jobId = new Random().nextInt(Int.MaxValue)
 
     val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, "local", "none", "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)

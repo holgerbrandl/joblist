@@ -41,7 +41,12 @@ class SlurmScheduler extends JobScheduler {
 
     // todo what is the purpose of the ntasks argument?
     val threadArg = if (numCores > 1) s"--ntasks=1 --cpus-per-task=$numCores" else ""
-    val wallTime = if (!jc.wallTime.isEmpty) s"--time=${jc.wallTime}" else ""
+
+    // note that we postfix the walltime argument with :00 since slurm also wants seconds
+    // see https://github.com/holgerbrandl/joblist/issues/44
+    val wallTime = if (!jc.wallTime.isEmpty) s"--time=${jc.wallTime}:00" else ""
+    val maxMem = if(jc.maxMemory > 0) s"-M ${jc.maxMemory}" else "" // slurm format is -M mem_in_mb
+
     val queue = if (!jc.queue.isEmpty) s"-p ${jc.queue}" else ""
 
     // todo is the queue supported by slurm
@@ -57,7 +62,7 @@ class SlurmScheduler extends JobScheduler {
 
     // compile all args into cluster configuration
     val submitArgs =
-      s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
+      s"""-J $jobName $queue $wallTime $threadArg $maxMem $otherSubmitArgs""".trim
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 

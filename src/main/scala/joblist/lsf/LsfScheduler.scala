@@ -40,13 +40,15 @@ class LsfScheduler extends JobScheduler {
 
     val threadArg = if (numCores > 1) s"-R span[hosts=1] -n $numCores" else ""
     val wallTime = if (!jc.wallTime.isEmpty) s"-W ${jc.wallTime}" else ""
+    val maxMem = if(jc.maxMemory > 0) s"-M ${jc.maxMemory*1000}" else "" // lsf format is -M mem_in_kb
+
     val queue = if (!jc.queue.isEmpty) s"-q ${jc.queue}" else ""
 
     val otherSubmitArgs = if (!jc.otherQueueArgs.isEmpty) jc.otherQueueArgs else ""
 
     // compile all args into cluster configuration
     val submitArgs =
-      s"""-J $jobName $queue $wallTime $threadArg $otherSubmitArgs""".trim
+      s"""-J $jobName $queue $wallTime $threadArg $maxMem $otherSubmitArgs""".trim
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
 

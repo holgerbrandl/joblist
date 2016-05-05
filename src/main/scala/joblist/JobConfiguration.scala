@@ -12,11 +12,13 @@ import scala.util.Random
   *
   * @author Holger Brandl
   */
-
-case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "", numThreads: Int = 1, otherQueueArgs: String = "", wd: File = File(".")) {
+case class JobConfiguration(cmd: String, name: String = "", wallTime: String = "", queue: String = "", numThreads: Int = 1, maxMemory: Int = 0,  otherQueueArgs: String = "", wd: File = File(".")) {
 
   // validate inputs
-  if(!wallTime.isEmpty) validateWallTime(wallTime)
+  if (!wallTime.isEmpty) validateWallTime(wallTime)
+  require(maxMemory>=0, "memory limit must be greater than 0")
+  require(numThreads>0, "thread limit must be greater than 0")
+
 
   def saveAsXml(jobId: Int, inDir: File) = {
     val xmlFile = jcXML(jobId, inDir)
@@ -92,13 +94,9 @@ object JobConfiguration {
     nameElements.mkString("__")
   }
 
-  /** validate that the walltime format is [N]NN:NN */
-  def validateWallTime(time: String ): Unit = {
-    // does not work for slurm https://github.com/holgerbrandl/joblist/issues/44
-    if(isSLURM) {
-      require("[0-9]{1,3}:[0-9]{2}:[0-9]{2}".r.pattern.matcher(time).matches)
-    } else if(isLSF) {
-      require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(time).matches)
-    }
+  /** validate that the walltime format is [NN]N:NN */
+  def validateWallTime(time: String): Unit = {
+    // seehttps://github.com/holgerbrandl/joblist/issues/44
+    require("[0-9]{1,3}:[0-9]{2}".r.pattern.matcher(time).matches)
   }
 }
