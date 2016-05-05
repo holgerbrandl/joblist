@@ -125,8 +125,9 @@ jl status --report
 jl submit "sleep 10"          ## add a job
 jl submit "sleep 1000"        ## add another which won't fit in our default queue
 
-## wait and resubmit failing jobs to another queue
-jl wait --resubmit_queue long 
+## wait and resubmit failed/killed jobs to another queue
+jl wait
+jl resub --queue long
 ```
 
 * Decouple workflows from underlying queuing system

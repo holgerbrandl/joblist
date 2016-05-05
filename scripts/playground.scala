@@ -16,8 +16,6 @@ jl.printStatus()
 // block execution until are jobs are done
 jl.waitUntilDone()
 
-
-//JobListCLI.main(("wait --resubmit_retry " + jl.file.pathAsString).split(" "))
 JobListCLI.main("status --failed".split(" "))
 JobListCLI.main(Array("status"))
 

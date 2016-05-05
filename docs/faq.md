@@ -18,7 +18,7 @@ jl kill
 
 ## continue locally
 export JL_FORCE_LOCAL=true
-jl wait --resubmit_retry
+jl resub --retry
 ```
 This is especially handy to debug failing jobs.
 

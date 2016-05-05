@@ -8,6 +8,7 @@ import joblist.slurm.SlurmScheduler
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
+import scalautils.StringUtils.ImplStringUtils
 import scalautils.{Bash, IOUtils}
 
 /**
@@ -25,6 +26,19 @@ package object joblist {
 
 
   val DEFAULT_JL = ".jobs"
+
+
+  //  To use single verbs you can use some provided shortcuts by adding this to your bash_profile
+  //  ```
+  //  eval "$(jl shortcuts)"
+  //  ```
+  @Deprecated
+  def shortcuts() = {
+    println(
+      """
+         # none yet
+      """.alignLeft)
+  }
 
 
   /** see https://github.com/holgerbrandl/joblist/milestones/v0.6

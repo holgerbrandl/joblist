@@ -48,7 +48,8 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl submit -j ${jl.file.pathAsString} "echo foo"
     jl submit -j ${jl.file.pathAsString} "echo bar"
     jl submit -j ${jl.file.pathAsString} -O "-W 00:01" "sleep 120; touch whit.txt"
-    jl wait --resubmit_wall "00:10" ${jl.file.pathAsString}
+    jl wait
+    jl resub --time "00:10" ${jl.file.pathAsString}
     """.alignLeft
 
     println(cmdSeq)

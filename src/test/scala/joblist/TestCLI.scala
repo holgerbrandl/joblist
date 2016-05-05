@@ -102,7 +102,8 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     //    System.gc()
 
     // wait with retry object to fix the failed one
-    JobListCLI.main(("wait --resubmit_retry " + jl.file.pathAsString).split(" "))
+    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
+    JobListCLI.main(("resub --retry " + jl.file.pathAsString).split(" "))
     JobListCLI.main(("status " + jl.file.pathAsString).split(" "))
 
     //    jl.jobs.head.info
@@ -132,7 +133,8 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl.failed.size should be(1)
 
     an[AssertionError] should be thrownBy {
-      JobListCLI.main(("wait --resubmit_retry " + jl.file.pathAsString).split(" "))
+      JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
+      JobListCLI.main(("resub --retry " + jl.file.pathAsString).split(" "))
     }
 
     jl.jobs.size should be(1)

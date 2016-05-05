@@ -35,10 +35,16 @@ jl submit --other_queue_args "-W 00:01" "sleep 12"
 #bsub -W 00:01 "sleep 120; touch whit.txt" |  jl add .whit
 #jl wait
 
+#jl --help
+jl reset
 jl submit -j .whit "echo foo"
 jl submit -j .whit "echo bar"
-jl submit -j .whit -O "-W 00:01" "sleep 80; touch whit.txt"
-jl wait --resubmit_wall "00:10" .whit
+## direct lsf walltime
+#jl submit -j .whit -O "-W 00:01" "sleep 80; touch whit.txt"
+## newjl walltime
+jl submit -j .whit -w 00:01 "sleep 80; touch whit.txt"
+jl wait
+jl resub --time "00:10" .whit
 
 jl stats --report
 

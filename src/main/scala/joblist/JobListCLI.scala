@@ -46,7 +46,7 @@ object JobListCLI extends App {
     case "submit" => submit()
     case "add" => add()
     case "wait" => wait4jl()
-    case "resub" => resub()
+    case "resub" => resubmit()
     case "status" => status()
     case "cancel" => cancel()
     case "up" => btop()
@@ -126,7 +126,7 @@ object JobListCLI extends App {
     Options:
      -j --jl <joblist_file>               Joblist name [default: .jobs]
      -n --name <job_name>                 Name of the job. Must be unique within this joblist
-     -t --num_threads <threads>           Number of threads [default: 1]
+     -t --threads <num_threads>           Number of threads [default: 1]
      -w --time <walltime>                 Maximal walltime formatted as '[hh]h:mm'
      -m --maxmem <maxmem>                 Maximal memory in Mb
      -q --queue <queue>                   Queue/partition to submit job to. Ignored for local scheduler
@@ -152,7 +152,7 @@ object JobListCLI extends App {
     val baseConfig = JobConfiguration(null,
       wallTime = Option(options("time")).getOrElse(""),
       queue = Option(options("queue")).getOrElse(""),
-      numThreads = options.get("num_threads").get.toInt,
+      numThreads = options.get("threads").get.toInt,
       maxMemory = Option(options("maxmem")).getOrElse("0").toInt,
       otherQueueArgs = Option(options("other_queue_args")).getOrElse(""))
 
@@ -265,19 +265,12 @@ object JobListCLI extends App {
 
 
   def wait4jl() = {
-
     //    val args = "wait".split(" ")
     val doc =
       """
     Usage: jl wait [options] [<joblist_file>]
 
     Options:
-     --resubmit_retry                   Simply retry without any change
-     --resubmit_queue <resub_queue>     Resubmit to different queue
-     --resubmit_wall <walltime>         Resubmit with different walltime limit
-     --resubmit_threads <num_threads>   Resubmit with more threads
-     --resubmit_type <fail_type>        Defines which failed jobs are beeing resubmitted. Possible values are 'all',
-                                        'killed', 'cancelled' or 'failed' [default: all]
      --email                            Send an email report to the current user once this joblist has finished
      --report                           Create an html report for this joblist once the joblist has finished
       """.alignLeft.trim
@@ -293,30 +286,6 @@ object JobListCLI extends App {
 
     jl.waitUntilDone()
 
-    // in case jl.submit was used to launch the jobs retry in case they've failed
-    // see http://docs.scala-lang.org/overviews/collections/concrete-mutable-collection-classes.html
-
-    var numResubmits = 0
-    val resubChain = extractResubStrats(options).toIndexedSeq
-
-    if (resubChain.nonEmpty) assert(jl.jobs.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
-
-
-    def tbd = options("resubmit_type") match {
-      case "all" => jl.requiresRerun
-      case "failed" => jl.jobs.filterNot(_.wasKilled)
-      case "killed" => jl.jobs.filter(_.wasKilled)
-      case "cancelled" => jl.jobs.filter(_.info.state == JobState.CANCELLED)
-    }
-
-    while (tbd.nonEmpty && numResubmits < resubChain.size) {
-      // todo expose config root mapping as argument
-      jl.resubmit(resubChain.get(numResubmits), getConfigRoots(tbd))
-
-      numResubmits = numResubmits + 1
-
-      jl.waitUntilDone()
-    }
 
     // reporting
     if (options.get("email").get.toBoolean) {
@@ -334,6 +303,49 @@ object JobListCLI extends App {
   }
 
 
+  def resubmit() = {
+    //    val args = "resub".split(" ")
+    val doc =
+      """
+    Usage: jl resub [options] [<joblist_file>]
+
+    Options:
+     --retry                              Simply retry without any change
+     -t --threads <num_threads>           Resubmit with more threads
+     -w --time <walltime>                 Resubmit with different walltime limit formatted as '[hh]h:mm'
+     -m --maxmem <maxmem>                 Maximal memory in Mb
+     -q --queue <queue>                   Resubmit to different queue
+     -O --other_queue_args <queue_args>   Additional queue parameters
+     --type <fail_type>                   Defines which non-complete jobs should be resubmitted. Possible values
+                                          are 'all', 'killed', 'cancelled' or 'failed' [default: all]
+      """.alignLeft.trim
+
+    val options = parseArgs(args, doc)
+
+    val jl = getJL(options)
+    jl.requireListFile()
+
+
+    def tbd = options("type") match {
+      case "all" => jl.requiresRerun
+      case "failed" => jl.jobs.filterNot(_.wasKilled)
+      case "killed" => jl.jobs.filter(_.wasKilled)
+      case "cancelled" => jl.jobs.filter(_.info.state == JobState.CANCELLED)
+    }
+
+    assert(tbd.forall(_.isRestoreable), "all jobs must be submitted with jl to allow for resubmission")
+
+    val resubStrategy = extractResubStrats(options).toIndexedSeq.headOption
+    if (resubStrategy.isEmpty) {
+      Console.err.println("Missing resubmission confifguration")
+      println(doc)
+      System.exit(1)
+    }
+
+    jl.resubmit(resubStrategy.get, getConfigRoots(tbd))
+  }
+
+
   /** Handle the local scheduler here: restart all non complete jobs */
   def restartLocalScheduler(jl: JobList): Unit = {
     if (jl.scheduler.isInstanceOf[LocalScheduler]) {
@@ -345,22 +357,22 @@ object JobListCLI extends App {
   def extractResubStrats(options: Map[String, String]) = {
     val pargs = mutable.ListBuffer.empty[ResubmitStrategy]
 
-    if (options.get("resubmit_retry").get.toBoolean) {
+    if (options.get("retry").get.toBoolean) {
       pargs += new TryAgain()
     }
 
     val resubStrats = options.filter({ case (key, value) => value != "null" })
 
-    if (resubStrats.get("resubmit_queue").get != null) {
-      pargs += new BetterQueue(resubStrats.get("resubmit_queue").get)
+    if (resubStrats.get("queue").get != null) {
+      pargs += new BetterQueue(resubStrats.get("queue").get)
     }
 
-    if (resubStrats.get("resubmit_wall").get != null) {
-      pargs += new MoreTimeStrategy(resubStrats.get("resubmit_wall").get)
+    if (resubStrats.get("time").get != null) {
+      pargs += new MoreTimeStrategy(resubStrats.get("wall").get)
     }
 
-    if (resubStrats.get("resubmit_threads").get != null) {
-      pargs += new MoreThreads(options.get("resubmit_threads").get.toInt)
+    if (resubStrats.get("threads").get != null) {
+      pargs += new MoreThreads(options.get("threads").get.toInt)
     }
 
     require(pargs.length < 2, "multiple resub strategies are not yet possible. See and vote for https://github.com/holgerbrandl/joblist/issues/4")
@@ -503,18 +515,5 @@ object JobListCLI extends App {
       fields.mkString("\t")
 
     }).foreach(println)
-  }
-
-
-  //  To use single verbs you can use some provided shortcuts by adding this to your bash_profile
-  //  ```
-  //  eval "$(jl shortcuts)"
-  //  ```
-  @Deprecated
-  def shortcuts() = {
-    println(
-      """
-         # none yet
-      """.alignLeft)
   }
 }
