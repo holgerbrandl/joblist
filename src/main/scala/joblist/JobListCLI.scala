@@ -313,9 +313,8 @@ object JobListCLI extends App {
      --retry                              Simply retry without any change
      -t --threads <num_threads>           Resubmit with more threads
      -w --time <walltime>                 Resubmit with different walltime limit formatted as '[hh]h:mm'
-     -m --maxmem <maxmem>                 Maximal memory in Mb
+     -m --maxmem <max_memory>             Maximal memory in Mb
      -q --queue <queue>                   Resubmit to different queue
-     -O --other_queue_args <queue_args>   Additional queue parameters
      --type <fail_type>                   Defines which non-complete jobs should be resubmitted. Possible values
                                           are 'all', 'killed', 'cancelled' or 'failed' [default: all]
       """.alignLeft.trim
@@ -369,6 +368,10 @@ object JobListCLI extends App {
 
     if (resubStrats.get("time").get != null) {
       pargs += new MoreTimeStrategy(resubStrats.get("wall").get)
+    }
+
+    if (resubStrats.get("maxmem").get != null) {
+      pargs += new MoreMemoryStrategy(resubStrats.get("maxmem").get.toInt)
     }
 
     if (resubStrats.get("threads").get != null) {

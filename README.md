@@ -76,7 +76,10 @@ jl status --report
 
 4) Resubmit non-complete jobs by escalating their scheduler configuration
 ```
-jl resub --queue "long" ## wait and resubmit failing jobs to another queue
+## to different queue
+jl resub --queue "long"
+## or with 10h
+jl resub --time "10:00"
 ```
 
 By using `jl` workflows will be decoupled from the underlying queuing system.

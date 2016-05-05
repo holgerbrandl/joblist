@@ -45,6 +45,11 @@ case class MoreTimeStrategy(wallTime: String) extends ResubmitStrategy {
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
 }
 
+case class MoreMemoryStrategy(maxMemory: Int) extends ResubmitStrategy {
+
+  override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(maxMemory = maxMemory)
+}
+
 
 case class CompoundStrategy(elements: ResubmitStrategy*) extends ResubmitStrategy {
 
