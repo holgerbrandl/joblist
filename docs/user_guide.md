@@ -172,8 +172,8 @@ Misc
 
 `jl` can be globally configured by exporting some shell variables prior to launching `jl`.
 
-* `JL_FORCE_LOCAL`
+* `JL_FORCE_LOCAL`: Force local scheduler
 * `JL_DISABLE_REMEMBER_ME` tbd
-* `JL_MAX_LOCAL_THREADS` tbd
+* `JL_MAX_LOCAL_JOBS`:  maximum number of  concurrent local jobs. Just affects local scheduler.
 
 

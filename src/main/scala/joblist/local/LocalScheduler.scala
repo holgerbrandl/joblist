@@ -24,7 +24,12 @@ class LocalScheduler extends JobScheduler {
 
 
   // from http://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
-  val NUM_THREADS = Math.max(1, Runtime.getRuntime.availableProcessors() - 2)
+  val NUM_THREADS = {
+    if(sys.env.get("JL_MAX_LOCAL_JOBS").isDefined)
+      sys.env.get("JL_MAX_LOCAL_JOBS").get.toInt
+    else
+      Math.max(1, Runtime.getRuntime.availableProcessors() - 2)
+  }
 
   private val jobstats = mutable.HashMap.empty[Int, RunInfo]
   private val dummies = mutable.HashMap.empty[Int, Seq[ThreadPlaceHolder]]
