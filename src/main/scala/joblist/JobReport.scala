@@ -114,7 +114,7 @@ class JobReport(jl: JobList) {
 
     tmpR.write(rSnippet)
 
-    Bash.eval(s"""cd "${wd.path}"; ${rendr2use} ${if (showCode) "" else "-e"} "${tmpR.path}" $args""", showOutput = true)
+    Bash.eval(s"""cd "${wd.path}"; ${rendr2use} ${if (showCode) "" else "-e"} "${tmpR.path}" $args""", showOutput = sys.env.get("IS_TRAVIS_CI").isDefined)
 
     // todo convert result into status code
     wd / (reportFileName + ".html")

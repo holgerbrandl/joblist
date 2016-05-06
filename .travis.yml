@@ -8,9 +8,10 @@ dist: trusty
 install:
    #   - echo "deb https://<my.favorite.cran.mirror>/bin/linux/ubuntu precise/" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get install -y r-base
-  - sudo apt-get install pandoc
-  - sudo apt-get install scala
+  - sudo apt-get install pandoc -y
+  - sudo apt-get install scala -y
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
+  - export IS_TRAVIS_CI="true"
   - sudo chmod -R ugo+w /usr/local/lib/R/site-library
   ## just test if we can install packages without user intervention
   - Rscript -e 'r = getOption("repos"); r["CRAN"] = "http://ftp5.gwdg.de/pub/misc/cran/"; options(repos = r); suppressMessages(if (!require("docopt")) install.packages("docopt"));  .libPaths()'
