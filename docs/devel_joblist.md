@@ -104,7 +104,9 @@ version=$(grep "val version" src/main/scala/joblist/JobListCLI.scala | cut -d' '
 
 mkdir joblist_v${version}
 
-cp target/scala-2.11/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
+#cp target/scala-2.11/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
+ll joblist_v${version}/joblist_assembly.jar
+cp target/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
 
 echo '#!/usr/bin/env bash' > joblist_v${version}/jl
 echo 'java -Xmx1g -cp "$(dirname $0)/joblist_assembly.jar" joblist.JobListCLI "$@"' >> joblist_v${version}/jl
@@ -122,7 +124,7 @@ cp joblist_installer_v${version}.tar.gz /Users/brandl/Dropbox/Public/joblist_rel
 sbt publish
 
 # locate jar, sources.jar and pom for new version in
-open ~/.m2/repository/de/mpicbg/scicomp/joblist_2.11
+open ~/.m2/repository/de/mpicbg/scicomp/joblist
 ```
 
 Upload path (see crossPath notes in build.sbt)
