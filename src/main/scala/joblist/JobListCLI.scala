@@ -21,7 +21,8 @@ import scalautils.{Bash, ShellUtils}
   */
 object JobListCLI extends App {
 
-  val version = "0.6-SNAPSHOT"
+//  val version = "0.6-SNAPSHOT"
+  val version = "0.6"
 
 
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {

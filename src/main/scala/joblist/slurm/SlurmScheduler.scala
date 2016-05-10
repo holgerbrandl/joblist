@@ -1,7 +1,6 @@
 package joblist.slurm
 
 import better.files.File
-import joblist.JobState.JobState
 import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
