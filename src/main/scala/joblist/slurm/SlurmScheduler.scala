@@ -1,7 +1,7 @@
 package joblist.slurm
 
 import better.files.File
-import joblist.JobState.JobState
+import joblist.JobState.{CANCELLED, JobState}
 import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
@@ -50,7 +50,7 @@ class SlurmScheduler extends JobScheduler {
     // --mem-per-cpu does not seem to work with falcon
     // for --mem see https://rc.fas.harvard.edu/resources/documentation/slurm-memory/
     // show job limit in kb with: sacct -o MaxRSS -j JOBID
-    val maxMem = if(jc.maxMemory > 0) s"--mem ${jc.maxMemory}" else "" // slurm format is -M mem_in_mb
+    val maxMem = if (jc.maxMemory > 0) s"--mem ${jc.maxMemory}" else "" // slurm format is -M mem_in_mb
 
     val queue = if (!jc.queue.isEmpty) s"-p ${jc.queue}" else ""
 
@@ -156,8 +156,8 @@ JLCMD""".alignLeft.trim + "\n"
     //1963414.batch|batch|00:00:32|2015-12-10T12:07:23|2015-12-10T12:06:51|2015-12-10T12:06:51|COMPLETED|0:0||
     //""".trim.split("\n")
 
-//    val logFile = File("/home/brandl/unit_tests/.jl/151449.runinfo"); val logData = logFile.lines.toSeq
-//
+    //    val logFile = File("/home/brandl/unit_tests/.jl/151449.runinfo"); val logData = logFile.lines.toSeq
+    //
     val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
     rawLogFile.write(logData.mkString("\n"))
 
@@ -209,13 +209,20 @@ JLCMD""".alignLeft.trim + "\n"
 
 
   // tbd add other kill reasons hereslurmState
-  def slurmStateRemapping(slurmState: String) = slurmState.
-    //todo jobs without walltime are killed after 8-10 minutes and get a status CANCELED by 0 --> create ticket + unit test
+  def slurmStateRemapping(slurmState: String) = {
+
+    // queuing killed: CANCELED by 0
+    // user killed: CANCELED by $(id)
+
     // example jl submit --wait -q "haswell" "sleep 30; touch hihi.txt"  --> scancel it
     // for blast is seems that this is caused by hitting the memory limit
-    replaceFirst("^CANCELLED by 0$", "KILLED") match {
-    case "TIMEOUT" => "KILLED"
-    case other: String => other
+
+    slurmState.
+      replaceFirst("^CANCELLED by 0$", "KILLED").
+      replaceFirst("^CANCELLED by [0-9]*$", CANCELLED.toString) match {
+      case "TIMEOUT" => "KILLED"
+      case other: String => other
+    }
   }
 
 

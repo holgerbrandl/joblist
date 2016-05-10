@@ -82,6 +82,7 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     // this will just work if the status is updated beforehand
     jl.cancelled.size should be (1)
+    jl.jobs.head.info
 
     // simply retry but be more patient this time
     jl.resubmit()

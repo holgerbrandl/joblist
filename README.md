@@ -121,7 +121,7 @@ Support & Documentationy
 Feel welcome to submit pull-requests or tickets,  or simply get in touch via gitter (see button on top).
 
 * [JobList Introduction](http://holgerbrandl.github.io/joblist/joblist_intro/joblist_intro.html) A presentation from December 2015 ([sources](./docs/joblist_intro/joblist_intro.md))
-* [JobList Mandual](./docs/user_guide.md) for detailed information about the model behind `joblist` and how to use it
+* [JobList User Guide](./docs/user_guide.md) for detailed information about the model behind `joblist` and how to use it
 * [FAQ](./docs/faq.md)
 * [Developer Information](./docs/devel_joblist.md) with details about to build, test, release and improve `joblist`
 
