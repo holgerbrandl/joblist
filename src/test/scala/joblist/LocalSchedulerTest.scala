@@ -68,6 +68,7 @@ class LocalSchedulerTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.waitUntilDone()
     jl.requiresRerun shouldBe empty
     jl.jobs should have size 20
+    jl.isComplete shouldBe true
   }
 }
 

@@ -289,7 +289,12 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   }
 
 
-  def cancel() = scheduler.cancel(jobs.map(_.id))
+  def cancel(): Unit = {
+    scheduler.cancel(jobs.map(_.id))
+
+    // update job info
+    status
+  }
 
 
   //

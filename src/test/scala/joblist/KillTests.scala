@@ -21,17 +21,21 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "detect memory execceding jobs as killed" in {
     if(isLocal) cancel
+    if(isLSF) cancel // because memory limits do not seem to work properly
 
     val jl = new JobList(wd / ".mem_job")
     jl.reset()
 
     // from http://unix.stackexchange.com/questions/99334/how-to-fill-90-of-the-free-memory
+    // more elegant yes | tr \\n x | head -c $BYTES |  cat  | { grep n || true; }
+    // but process substituation does not seem to work with lsf
+
     val memHungryTask =
       """
-      BYTES=$(echo $((1024*1024*1024*5))) # 1gb
-      SECONDS=30
-      cat <(yes | tr \\n x | head -c $BYTES) <(sleep $SECONDS) |  { grep n || true; }
-      echo done filling memory
+      BYTES=$(echo $((1024*1024*1024*5))) # 5gb
+      # BYTES=$(echo $((1024*1024*5))) # 5gb
+      yes | tr \\n x | head -c $BYTES |  grep n
+      sleep 30
       exit 0
       """.alignLeft
 
@@ -40,6 +44,10 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
     jl.run(new JobConfiguration(memHungryTask, wd= wd, maxMemory=10))
     jl.waitUntilDone()
     jl.status
+
+    jl.jobs.head.config
+//    JobListCLI.shouldExit=false
+//    JobListCLI.main(s"jl status --log err ${jl.file}".split(" "))
 
     jl.killed.size should be (1)
     jl.jobs.head.resubOf.isDefined shouldBe false
@@ -50,12 +58,14 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
       override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(maxMemory = 10000)
     })
     jl.waitUntilDone()
+    jl.status
     jl.jobs.size should be (1)
     jl.isComplete shouldBe true
 
     // also validate resubmission model here
     jl.jobs.head.resubOf shouldBe defined
   }
+
 
   it should "detect user-cancelled jobs as such" in{
     if(isLocal) cancel
@@ -70,6 +80,7 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     jl.cancel()
 
+    // this will just work if the status is updated beforehand
     jl.cancelled.size should be (1)
 
     // simply retry but be more patient this time

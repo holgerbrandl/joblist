@@ -120,14 +120,14 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
   //  ignore should "remember last jl in a robust manner " in {
   it should "remember last jl in a robust manner " in {
 
-    Bash.eval("jl submit --jl .remtest 'echo test'", showOutput = true).exitCode should be(0)
-    Bash.eval("jl wait", showOutput = true).exitCode should be(0)
+    Bash.eval("jl submit --jl .remtest 'echo test'", showOutput = true, wd=wd).exitCode should be(0)
+    Bash.eval("jl wait", showOutput = true, wd=wd).exitCode should be(0)
 
     //  use remember me to fetch status
-    Bash.eval("jl status", showOutput = true).stdout.find(_.contains("1 done")) shouldBe defined
+    Bash.eval("jl status", showOutput = true, wd=wd).stdout.find(_.contains("1 done")) shouldBe defined
 
     // after reset status should throw error
-    Bash.eval("jl reset", showOutput = true).exitCode should be(0)
-    Bash.eval("jl status", showOutput = true).exitCode should be(1)
+    Bash.eval("jl reset", showOutput = true, wd=wd).exitCode should be(0)
+    Bash.eval("jl status", showOutput = true, wd=wd).exitCode should be(1)
   }
 }

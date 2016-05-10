@@ -10,7 +10,7 @@ import scala.util.Random
 /**
   * Defines a job and how it should be run
   *
-  * @param maxMemory The maximal memory in jb for the job. This will be divied by
+  * @param maxMemory The maximal memory in mb for the job. This will be divied by
   *                  the number of threads when configuring slurm with --mem-per-cpu
   * @author Holger Brandl
   */
