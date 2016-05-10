@@ -159,3 +159,17 @@ jl submit "sleep 10; echo baumaus"
 jl wait
 jl status --report
 
+
+## process substitution limitation on lsf
+
+cd '/home/brandl/unit_tests'
+
+bsub -J brandl__unit_tests__631135573__352196982    -M 10000000  <<"JLCMD"
+
+SECONDS=1
+cat <(yes | tr \\n x | head -c 10000)
+
+JLCMD
+
+
+bjobs -l 890568

@@ -51,6 +51,8 @@ class LsfScheduler extends JobScheduler {
       s"""-J $jobName $queue $wallTime $threadArg $maxMem $otherSubmitArgs""".trim
 
     require(!cmd.contains("JLCMD"), "Jobs must not contain JLCMD since joblist is using heredoc for job submission")
+    // todo fix this by using temp-script instead
+    require(!cmd.contains("<("), "Jobs must not use process substitution when running on lsf")
 
     // submit the job to the lsf
     // for examples see scripts/test_jl.sh:91
@@ -153,7 +155,12 @@ JLCMD"""
       }
     }
 
-    // lsf state graph: http://www.ccs.miami.edu/hpc/lsf/7.0.6/admin/job_ops.html
+    // lsf state graph: http://home.uni-leipzig.de/lutz/frame/arbeit/docs/lsf6.2_admin/job_ops.html
+
+    // correct termination: Tue May 10 10:56:07: Done successfully. The CPU time used is 0.0 seconds.
+    // user failure: Tue May 10 10:57:17: Exited with exit code 1. The CPU time used is 0.0 seconds.
+    // queue killed: exit code 2
+
 
     val killCause = logData.drop(3).mkString("\n")
     val lsfJobStatus: String = slimValues(2)
@@ -193,6 +200,10 @@ JLCMD"""
     )
 
     val state = if (killCause.contains("TERM_RUNLIMIT: job killed")) {
+      JobState.KILLED
+    }else if (killCause.contains("Exited with exit code 2")) {
+      // this will happen if process substituion is used in piped scripet which is killed right away by lsf
+      // see https://github.com/holgerbrandl/joblist/issues/46
       JobState.KILLED
     } else if (killCause.contains("TERM_OWNER: job killed by owner")) {
       JobState.CANCELLED
