@@ -57,7 +57,7 @@ object JobListCLI extends App {
   }
 
   // don't quit but simply return when running the unit tests
-  private val shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
+  var shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
 
   if (shouldExit) {
     System.exit(0)
@@ -363,15 +363,15 @@ object JobListCLI extends App {
     val resubStrats = options.filter({ case (key, value) => value != "null" })
 
     if (resubStrats.get("queue").get != null) {
-      pargs += new BetterQueue(resubStrats.get("queue").get)
+      pargs += new OtherQueue(resubStrats.get("queue").get)
     }
 
     if (resubStrats.get("time").get != null) {
-      pargs += new MoreTimeStrategy(resubStrats.get("wall").get)
+      pargs += new MoreTime(resubStrats.get("time").get)
     }
 
     if (resubStrats.get("maxmem").get != null) {
-      pargs += new MoreMemoryStrategy(resubStrats.get("maxmem").get.toInt)
+      pargs += new MoreMemory(resubStrats.get("maxmem").get.toInt)
     }
 
     if (resubStrats.get("threads").get != null) {
@@ -382,6 +382,7 @@ object JobListCLI extends App {
 
     pargs
   }
+
 
 
   def btop() = {

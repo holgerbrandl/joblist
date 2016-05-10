@@ -23,10 +23,9 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
   val wd = (home / "unit_tests").createIfNotExists(asDirectory = true)
 
   val jl = JobList(wd / ".cli_tests")
-
+//  JobListCLI.shouldExit =false
   // note by default sbt is running tests in parallel which will fail like that
   before {
-    Thread.sleep(1000)
     wd.list.foreach(_.delete(true))
   }
 
@@ -55,37 +54,18 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 
-  it should "submit a job and wait until it's done" in {
-    val resultFile: File = wd / "hello_jl.txt"
-    resultFile.delete(true)
+  it should "submit a job which is known to fail and resubmit it once it fails" in {
 
-    // http://stackoverflow.com/questions/7500081/scala-what-is-the-best-way-to-append-an-element-to-an-array
-    val cmd: Array[String] = s"submit -j ${jl.file.pathAsString} -n test_job".split(" ") :+ s"sleep 2; touch ${resultFile.pathAsString}"
+    val failTagFile = wd / "dont_fail_job.txt"
+    val noFailResult = wd / "no_fail.dat"
+
+    val bashCmd = s"""if [ ! -f "${failTagFile.pathAsString}" ]; then exit 1; fi; touch ${noFailResult}"""
+    val cmd = s"submit -j ${jl.file.pathAsString}".split(" ") :+ bashCmd
     JobListCLI.main(cmd)
+    //    JobListCLI.shouldExit = false
+    //    JobListCLI.main("status".split(" "))
 
-    jl.file.toJava should exist
-    //    bstatus should include(jl.jobIds.head.toString)
-
-    // wait until its done
-    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
-    jl.jobs.head.info
-
-    resultFile.toJava should exist
-
-    jl.jobs.head.isFinal should be(true)
-  }
-
-
-  it should "submit a job which is known to fail and resumit it once it fails" in {
-
-
-    val failTagFile = File("dont_fail_job.txt")
-    failTagFile.delete(true)
-    File("no_fail.dat").delete(true)
-
-    val bashCmd = s"""if [ ! -f "${failTagFile.pathAsString}" ]; then exit 1; fi; touch no_fail.dat"""
-    val cmd: Array[String] = s"submit -j ${jl.file.pathAsString}".split(" ") :+ bashCmd
-    JobListCLI.main(cmd)
+//    JobListCLI.main("submit".split(" ") :+ "ls")
 
     JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
 
@@ -104,12 +84,15 @@ class TestCLI extends FlatSpec with Matchers with BeforeAndAfter {
     // wait with retry object to fix the failed one
     JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
     JobListCLI.main(("resub --retry " + jl.file.pathAsString).split(" "))
+    JobListCLI.main(("wait " + jl.file.pathAsString).split(" "))
+
     JobListCLI.main(("status " + jl.file.pathAsString).split(" "))
 
     //    jl.jobs.head.info
     //    jl.jobs.head.config.cmd
     jl.jobs.head.isCompleted should be(true)
   }
+
 
   it should "submit non-jl jobs but should not resubmit them" in {
     if (!isLSF) {

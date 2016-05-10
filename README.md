@@ -111,7 +111,7 @@ jl.waitUntilDone()
 val killedInfo: List[RunInfo] = jl.killed.map(_.info)
 
 // resubmit to other queue
-jl.resubmit(new BetterQueue("long"))
+jl.resubmit(new OtherQueue("long"))
 
 ```
 

@@ -260,6 +260,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   }
 
 
+
   def reset(): Unit = {
     val jlLogDir = file.parent / ".jl"
 
@@ -276,7 +277,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     file.delete(true)
     resubGraphFile.delete(true)
 
-    file.parent.glob(s"${file.name}*").foreach(_.delete())
+    file.parent.glob_links(s"${file.name}.*").foreach(_.delete())
 
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
   }

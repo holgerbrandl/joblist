@@ -20,7 +20,7 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "detect memory execceding jobs as killed" in {
-    if(isLocal) ignore
+    if(isLocal) cancel
 
     val jl = new JobList(wd / ".mem_job")
     jl.reset()
@@ -58,6 +58,8 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   it should "detect user-cancelled jobs as such" in{
+    if(isLocal) cancel
+
     val jl = new JobList(wd / ".user_cancel")
     jl.reset()
 

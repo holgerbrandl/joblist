@@ -23,7 +23,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
   // clean up old unit-test data before running each of the tests
   before {
     wd.list.foreach(_.delete(true))
-    wd.list // nfs refresh, needed?
+//    wd.list // nfs refresh, needed?
   }
 
 
@@ -122,7 +122,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
     jl.requiresRerun should have size 2
 
     // resubmit killed jobs with more walltime
-    jl.resubmit(new MoreTimeStrategy("00:05"))
+    jl.resubmit(new MoreTime("00:05"))
     jl.scheduler.getQueued should have size 2
 
     jl.waitUntilDone()

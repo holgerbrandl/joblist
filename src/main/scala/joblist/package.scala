@@ -1,7 +1,7 @@
 import java.io.PrintWriter
-import java.nio.file.Files
+import java.nio.file.{FileVisitOption, Files, Path}
 
-import better.files.File
+import better.files._
 import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
 import joblist.slurm.SlurmScheduler
@@ -133,6 +133,12 @@ package object joblist {
 
   }
 
+
+  // configure better-files to always follow links
+  implicit val visitOptions: File.VisitOptions = File.VisitOptions.follow
+
+
+
   // @Deprecated Because fixed in latest not-yet-released better.files
   implicit class ImplFileUtils(file: File) {
 
@@ -159,6 +165,20 @@ package object joblist {
 
     /** Expose Path.resolve for simpler typing and less braces. */
     def resolve(childName: String) = file / childName
+
+
+    /**
+      * Util to glob from this file's path
+      * @return Set of files that matched
+      */
+//    def glob_links(pattern: String, syntax: String = "glob")(implicit visitOptions: File.VisitOptions = File.VisitOptions.default) = {
+    def glob_links(pattern: String, syntax: String = "glob")(implicit visitOptions: File.VisitOptions ) = {
+      val matcher = file.fileSystem.getPathMatcher(s"$syntax:$pattern")
+
+      java.nio.file.Files.walk(file.path, visitOptions:_*).iterator().toSeq.
+        filter(testPath => matcher.matches(file.relativize(testPath))).
+          map(new File(_))
+    }
 
 
     def saveAs: ((PrintWriter) => Unit) => Unit = IOUtils.saveAs(file.toJava)

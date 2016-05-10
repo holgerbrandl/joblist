@@ -36,6 +36,9 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     Bash.eval(cmdSeq, showOutput = true)
 
     (wd / (DEFAULT_JL + ".html")).toJava should exist
+
+    val jl = JobList(wd / DEFAULT_JL)
+    jl.jobs.head.isFinal should be(true)
   }
 
 
@@ -52,8 +55,6 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
     jl resub --time "00:10" ${jl.file.pathAsString}
     """.alignLeft
 
-    println(cmdSeq)
-
     Bash.eval(cmdSeq, showOutput = true)
 
     jl.file.toJava should exist
@@ -63,7 +64,7 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "run a scala script that is using jl-api and terminate" in {
     // this needs testing because if non-daemon threads were used by joblist jl, scripts won't terminate
-    val resultFile: File = wd/"script_result.txt"
+    val resultFile: File = wd / "script_result.txt"
     resultFile.delete(true)
 
 
@@ -73,25 +74,24 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
          $jlHome/test_data/quit_when_done.scala
       """.alignLeft, showOutput = true)
 
-    result.exitCode should be (0)
+    result.exitCode should be(0)
     resultFile.toJava should exist
   }
 
   /** Cope with filesystem delay (e.g. on cluster-fs. */
-  def waitForFile(file:File, maxTime:Int =20): File ={
+  def waitForFile(file: File, maxTime: Int = 20): File = {
     var secCounter = maxTime
 
-    while(secCounter > 0){
-      if(file.exists) return file
+    while (secCounter > 0) {
+      if (file.exists) return file
 
-      secCounter = secCounter -1
+      secCounter = secCounter - 1
       println(s"waiting for $file")
       Thread.sleep(1000)
     }
 
     file
   }
-
 
 
   it should "split batch jobs up correctly" in {
@@ -117,22 +117,17 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   // depends on https://github.com/holgerbrandl/joblist/issues/42
-  ignore should "remember last jl in a robust manner " in {
+  //  ignore should "remember last jl in a robust manner " in {
+  it should "remember last jl in a robust manner " in {
 
-    val script =
-      s"""
-    cd ${wd}
+    Bash.eval("jl submit --jl .remtest 'echo test'", showOutput = true).exitCode should be(0)
+    Bash.eval("jl wait", showOutput = true).exitCode should be(0)
 
-    jl submit "echo test"
-    jl wait
+    //  use remember me to fetch status
+    Bash.eval("jl status", showOutput = true).stdout.find(_.contains("1 done")) shouldBe defined
 
-    ## delete .jobs
-    jl reset
-
-    ## use remember me to fetch status
-    jl status
-    """.alignLeft
-
-    Bash.eval(script, showOutput = true).exitCode should be (0)
+    // after reset status should throw error
+    Bash.eval("jl reset", showOutput = true).exitCode should be(0)
+    Bash.eval("jl status", showOutput = true).exitCode should be(1)
   }
 }

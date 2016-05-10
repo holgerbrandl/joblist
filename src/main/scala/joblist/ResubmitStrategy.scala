@@ -32,20 +32,20 @@ case class MoreThreads(threads: Int) extends ResubmitStrategy {
 }
 
 
-case class BetterQueue(queue: String) extends ResubmitStrategy {
+case class OtherQueue(queue: String) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(queue = queue)
 }
 
 
-case class MoreTimeStrategy(wallTime: String) extends ResubmitStrategy {
+case class MoreTime(wallTime: String) extends ResubmitStrategy {
 
   JobConfiguration.validateWallTime(wallTime)
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(wallTime = wallTime)
 }
 
-case class MoreMemoryStrategy(maxMemory: Int) extends ResubmitStrategy {
+case class MoreMemory(maxMemory: Int) extends ResubmitStrategy {
 
   override def escalate(jc: JobConfiguration): JobConfiguration = jc.copy(maxMemory = maxMemory)
 }
