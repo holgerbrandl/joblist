@@ -1,7 +1,7 @@
 package joblist.slurm
 
 import better.files.File
-import joblist.JobState.{CANCELLED, JobState}
+import joblist.JobState.JobState
 import joblist.PersistUtils._
 import joblist._
 import org.joda.time.DateTime
@@ -122,7 +122,7 @@ JLCMD""".alignLeft.trim + "\n"
       map(slLine => {
         // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
         val splitLine = slLine.trim.split(" +")
-        val curstate: JobState = JobState.valueOf(slurmStateRemapping(splitLine(4)))
+        val curstate = JobState.valueOf(slurmStateRemapping(splitLine(4)))
         QueueStatus(splitLine(0).toInt, curstate)
       }).toList
   }
@@ -186,7 +186,7 @@ JLCMD""".alignLeft.trim + "\n"
     var killReason = null
 
 
-
+//    val slurmState = "CANCELLED by 8152"
     val state = JobState.valueOf(slurmStateRemapping(slurmState))
 
     val runLog = RunInfo(
@@ -219,7 +219,7 @@ JLCMD""".alignLeft.trim + "\n"
 
     slurmState.
       replaceFirst("^CANCELLED by 0$", "KILLED").
-      replaceFirst("^CANCELLED by [0-9]*$", CANCELLED.toString) match {
+      replaceFirst("^CANCELLED by [0-9]*$", JobState.CANCELLED.toString) match {
       case "TIMEOUT" => "KILLED"
       case other: String => other
     }

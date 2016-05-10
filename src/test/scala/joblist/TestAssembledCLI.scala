@@ -45,12 +45,14 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
   it should "use the shell launcher to trigger, monitor and resubmit jobs" in {
     val jl = JobList(wd / ".whit")
 
+    //todo create a unit test where -o and -w both provide walltime settings
+
     val cmdSeq =
       s"""
     cd ${wd.pathAsString}
     jl submit -j ${jl.file.pathAsString} "echo foo"
     jl submit -j ${jl.file.pathAsString} "echo bar"
-    jl submit -j ${jl.file.pathAsString} -O "-W 00:01" "sleep 120; touch whit.txt"
+    jl submit -j ${jl.file.pathAsString} -w "00:01" "sleep 120; touch whit.txt"
     jl wait
     jl resub --time "00:10" ${jl.file.pathAsString}
     """.alignLeft
