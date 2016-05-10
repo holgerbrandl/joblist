@@ -79,7 +79,7 @@ class JobReport(jl: JobList) {
     )
 
     // workaround for travis: just fake the presence of the report
-    if(sys.env.isDefinedAt("IS_TRAVIS_CI")){
+    if(isTravisCI){
       reportFile.toJava.createNewFile()
     }
 
@@ -120,7 +120,7 @@ class JobReport(jl: JobList) {
 
     tmpR.write(rSnippet)
 
-    Bash.eval(s"""cd "${wd.path}"; ${rendr2use} ${if (showCode) "" else "-e"} "${tmpR.path}" $args""", showOutput = sys.env.get("IS_TRAVIS_CI").isDefined)
+    Bash.eval(s"""cd "${wd.path}"; ${rendr2use} ${if (showCode) "" else "-e"} "${tmpR.path}" $args""", showOutput = isTravisCI)
 
     // todo convert result into status code
     wd / (reportFileName + ".html")

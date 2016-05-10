@@ -63,6 +63,8 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
 
   it should "run a scala script that is using jl-api and terminate" in {
+    if(isTravisCI) cancel
+
     // this needs testing because if non-daemon threads were used by joblist jl, scripts won't terminate
     val resultFile: File = wd / "script_result.txt"
     resultFile.delete(true)

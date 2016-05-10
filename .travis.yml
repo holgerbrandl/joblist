@@ -10,7 +10,8 @@ install:
    #   - echo "deb https://<my.favorite.cran.mirror>/bin/linux/ubuntu precise/" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get install -y r-base
   - sudo apt-get install pandoc -y
-  - sudo apt-get install scala -y
+# disabled because does not install 2.11 but somehting old (see joblist/TestAssembledCLI.scala:65)
+#  - sudo apt-get install scala -y
   - export PATH="$HOME/build/holgerbrandl/joblist/scripts/:$PATH"
   - export IS_TRAVIS_CI="true"
   - sudo chmod -R ugo+w /usr/local/lib/R/site-library

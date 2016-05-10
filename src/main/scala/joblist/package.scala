@@ -89,6 +89,8 @@ package object joblist {
     Bash.eval("which squeue").sout.nonEmpty
   }
 
+  def isTravisCI: Boolean = sys.env.isDefinedAt("IS_TRAVIS_CI")
+
 
   def isLSF: Boolean = {
     Bash.eval("which bkill").sout.nonEmpty || Option(System.getenv("USE_FAKE_LSF")).isDefined
