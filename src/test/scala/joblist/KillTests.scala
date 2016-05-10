@@ -19,7 +19,7 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 
-  it should "detect memory execceding jobs as killed" in {
+  it should "detect memory exceeding jobs as killed" in {
     if(isLocal) cancel
     if(isLSF) cancel // because memory limits do not seem to work properly
 
@@ -46,8 +46,6 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
     jl.status
 
     jl.jobs.head.config
-//    JobListCLI.shouldExit=false
-//    JobListCLI.main(s"jl status --log err ${jl.file}".split(" "))
 
     jl.killed.size should be (1)
     jl.jobs.head.resubOf.isDefined shouldBe false
@@ -82,7 +80,7 @@ class KillTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     // this will just work if the status is updated beforehand
     jl.cancelled.size should be (1)
-    jl.jobs.head.info
+//    jl.jobs.head.info
 
     // simply retry but be more patient this time
     jl.resubmit()
