@@ -115,7 +115,7 @@ jl.resubmit(new OtherQueue("long"))
 
 ```
 
-Support & Documentationy
+Support & Documentation
 -----------------------
 
 Feel welcome to submit pull-requests or tickets,  or simply get in touch via gitter (see button on top).
