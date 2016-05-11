@@ -88,13 +88,18 @@ Ie. `jl`-_ified_ workflows would run on a slurm system, an LSF cluster or simply
 API Usage
 ---------
 
-In addition to the provided shell utilities, joblist is also usable programatically. To get started add it as a dependency to your build.sbt
+In addition to the provided shell utilities, joblist can be also used programatically in Java, Scala, Kotlin and other JVM languages. To get started simply add it as a dependency via [BinTray](https://bintray.com/holgerbrandl/mpicbg-scicomp/joblist):
 
 ```
-libraryDependencies += "de.mpicbg.scicomp" %% "joblist" % "0.6"
+<dependency>
+  <groupId>de.mpicbg.scicomp</groupId>
+  <artifactId>joblist</artifactId>
+  <version>0.6</version>
+  <type>pom</type>
+</dependency>
 ```
 
-Here's a [Scala](http://www.scala-lang.org/) example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
+Shown below is a [Scala](http://www.scala-lang.org/) example that auto-detects the used scheduler (slurm, lsf, or simple multi-threading as fallback), submits some jobs, waits for all of them to finish, and resubmits failed ones again to another queue:
 ```
 import joblist._
 
