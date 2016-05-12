@@ -1,4 +1,4 @@
-JobList Manual
+JobList User Guide
 ==============
 
 __Work in progress!__
@@ -173,7 +173,12 @@ Misc
 `jl` can be globally configured by exporting some shell variables prior to launching `jl`.
 
 * `JL_FORCE_LOCAL`: Force local scheduler
-* `JL_DISABLE_REMEMBER_ME` tbd
-* `JL_MAX_LOCAL_JOBS`:  maximum number of  concurrent local jobs. Just affects local scheduler.
+* `JL_DISABLE_REMEMBER_ME` When set always fall back to .jobs if no joblist-name is given.
+* `JL_MAX_LOCAL_JOBS`:  Maximum number of concurrent local jobs. If not set `jl` will use the number of cores - 2 as default.
+   Just affects local scheduler.
+
+Expert and Debugging Options:
+
+* `JL_LOG_SUBMISSIONS`: Print the actual shell command that is executed by jl when submitting a job
 
 

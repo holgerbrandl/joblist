@@ -12,7 +12,7 @@ import scalautils.Bash.BashResult
 
 
 /**
-  * A scala reimplemenation of  https://raw.githubusercontent.com/holgerbrandl/datautils/master/bash/lsf_utils.sh
+  * A scala reimplementation of https://raw.githubusercontent.com/holgerbrandl/datautils/master/bash/lsf_utils.sh
   *
   * @author Holger Brandl
   */
@@ -94,8 +94,6 @@ JLCMD"""
   override def getQueued: List[QueueStatus] = {
     val queueStatus = Bash.eval("bjobs").stdout
 
-    // add some debug examples here for repl dev
-
     queueStatus.
       // we drop 1 because it's the header
       drop(1).
@@ -117,8 +115,6 @@ JLCMD"""
 
     val sb = new StringBuilder()
     sb.append(Bash.eval(s"bjobs -W ${jobId}").stdout.mkString("\n"))
-
-    //    if(!sb.toString.contains(jobId + "")) return // todo really??
 
     require(sb.toString.contains(jobId + ""), s"$jobId is no longer in job history") // use bhist in such a case
 

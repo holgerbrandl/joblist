@@ -10,16 +10,16 @@ import joblist.JobState.JobState
   */
 trait JobScheduler {
 
-  /** Extracts job IDs from job submission from stdin. */
+  /** Extracts job IDs from job submissions from stdin. */
   def readIdsFromStdin(): List[Int]
 
-  /** Submits a job and returns its jobID. */
+  /** Submits a job and returns its job ID. */
   def submit(jc: JobConfiguration): Int
 
-  /** Returns currently queued jobs of the users. */
+  /** Returns currently queued jobs. */
   def getQueued: List[QueueStatus]
 
-  /** Writes current the job statistics into the given file. */
+  /** Writes job statistics as XML serialized joblist.RunInfo into the given file. */
   def updateRunInfo(jobId: Int, logFile: File): Unit
 
   /** Cancel a list of jobs */
