@@ -392,7 +392,7 @@ object JobListCLI extends App {
 
 
   def cancel() = {
-    val options = parseArgs(args, "Usage: jl kill [options] [<joblist_file>]")
+    val options = parseArgs(args, "Usage: jl cancel [options] [<joblist_file>]")
     getJL(options).cancel()
   }
 
