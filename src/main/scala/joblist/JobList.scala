@@ -50,12 +50,12 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 
 
   private def needsCacheUpdate(): Boolean = {
-    // neccessary to emtpy cache after .reset
+    // necessary to emtpy cache after .reset
     if (!file.isRegularFile) {
       return true
     }
 
-    // not using modificated time seems broken since it does not update fast enough
+    // using modification time seems broken since it does not update fast enough
     val md5sum = file.md5
     if (md5sum != lastFileMD5) {
       lastFileMD5 = md5sum

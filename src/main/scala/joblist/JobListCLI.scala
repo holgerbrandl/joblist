@@ -178,6 +178,8 @@ object JobListCLI extends App {
         // http://stackoverflow.com/questions/7293617/split-up-a-list-at-each-element-satisfying-a-predicate-scala
         // http://stackoverflow.com/questions/14613995/whats-scalas-idiomatic-way-to-split-a-list-by-separator
         //        File("test_data/test_stdin.txt").lines.
+//                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/empty_chunks.txt").lines.
+//                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/non_regex_separators.txt").lines.
         io.Source.stdin.getLines().
           foldLeft(Seq(Seq.empty[String])) {
             (acc, line) =>
@@ -194,17 +196,21 @@ object JobListCLI extends App {
       }
 
 
+      // by doing so we allow to add more batch jobs to a batch jobs list (see https://github.com/holgerbrandl/joblist/issues/58)
+      val batchBaseIndex = jl.jobs.size + 1
+
       // convert all cmds into jobs
       cmds.
-        // remove empty elements due to formatting of input
-        filterNot(_.isEmpty).
-        map(_.alignLeft).
         map(_.trim).
+        filterNot(_.isEmpty).
+        // remove empty elements due to formatting of input
+        map(_.alignLeft).
+
         foreach(batchCmd => {
 
           jobConfigs += baseConfig.copy(
             cmd = batchCmd,
-            name = Option(options("name")).getOrElse("jobs") + "_batch" + jobConfigs.size
+            name = Option(options("name")).getOrElse("jobs") + "__batch_" + (batchBaseIndex + jobConfigs.size)
           ) // todo unit-test batch submission
         })
 
