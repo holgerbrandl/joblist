@@ -2,7 +2,11 @@
 
 ## Joblist v0.7
 
-tbd
+* `jl submit --wait` does not longer reset the list (see [#49](https://github.com/holgerbrandl/joblist/issues/49))
+* Added `--reset` to `jlsubmit`
+* support  java-Xmx-notation for memory limits. Example: `-m 5g`
+* More streamlined report generation
+* Improved batch-submission
 
 ## Joblist v0.6
 

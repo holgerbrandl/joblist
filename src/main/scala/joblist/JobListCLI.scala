@@ -134,16 +134,18 @@ object JobListCLI extends App {
      --debug                              Debug mode which will execute the first submission in the local shell and
                                           will ignore additional submissions. Creates a $${jl.name}.debug to track
                                           execution state
-     --wait                               Reset the joblist, add the job and wait until it is done. Useful for single
+     --wait                               Add the job and wait until it is done. Useful for single
                                           clusterized tasks
+     --reset                              Reset the joblist prior to submission
      --bsep <separator_pattern>           Batch separator character to separate jobs [default: ^]
       """.alignLeft.trim)
 
     val jl = getJL(options, "jl")
 
     val waitForJob = options.get("wait").get.toBoolean
+    val resetList = options.get("reset").get.toBoolean
 
-    if (waitForJob) {
+    if (resetList) {
       jl.reset()
     }
 
