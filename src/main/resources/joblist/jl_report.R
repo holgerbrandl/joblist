@@ -2,7 +2,6 @@
 
 if(!require(devtools)) install.packages("devtools")
 devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.26/R/core_commons.R")
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.26/R/ggplot_commons.R")
 
 loadpack(lubridate)
 loadpack(DT)
@@ -35,7 +34,7 @@ stopifnot(file.exists(joblist))
 
 #' ## Summary
 #+ results='asis'
-cat(system(paste("jl status", joblist), intern=T), sep='<br>')
+cat(system(paste("jl status", joblist, " | head -n50"), intern=T), sep='<br>')
 
 
 #' ## Job Example
