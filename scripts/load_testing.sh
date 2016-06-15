@@ -28,3 +28,16 @@ jl submit -n test "echo foo"
 jl submit -n test "echo bar"
 
 jl wait
+
+
+## TODO: command alignment seems broken
+
+jl reset
+for contig in chr1 chr2 chr3; do
+
+    echo "
+    ## pilonizing $contig
+    echo test
+    "
+done | jl submit  --jl .pilon -t 1  -n "pilon" --batch - --bsep '## pilon'
+jl status --log cmd

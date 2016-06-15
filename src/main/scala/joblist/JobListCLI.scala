@@ -183,7 +183,8 @@ object JobListCLI extends App {
         //        File("test_data/test_stdin.txt").lines.
 //                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/empty_chunks.txt").lines.
 //                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/non_regex_separators.txt").lines.
-        io.Source.stdin.getLines().
+                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/alignment_test.txt").lines.
+//        io.Source.stdin.getLines().
           foldLeft(Seq(Seq.empty[String])) {
             (acc, line) =>
               if (batchSep.findFirstIn(line).isDefined) acc :+ Seq(line)
@@ -194,7 +195,6 @@ object JobListCLI extends App {
         val batchFile = File(batchArg)
         require(batchFile.isRegularFile, s"batch file '${batchFile.name}' does not exist")
 
-
         batchFile.lines
       }
 
@@ -204,10 +204,9 @@ object JobListCLI extends App {
 
       // convert all cmds into jobs
       cmds.
-        map(_.trim).
-        filterNot(_.isEmpty).
-        // remove empty elements due to formatting of input
-        map(_.alignLeft).
+        // remove empty batch jobs due to formatting of input
+        filterNot(_.trim.isEmpty).
+        map(_.alignLeft.trim).
 
         foreach(batchCmd => {
 
