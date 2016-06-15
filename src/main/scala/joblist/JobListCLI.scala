@@ -1,5 +1,6 @@
 package joblist
 
+import java.lang.reflect.Modifier
 import java.util.Objects
 
 import better.files.File
@@ -241,8 +242,8 @@ object JobListCLI extends App {
       return
     }
 
-    // save for later in case we need to restore it
-    jobConfigs.foreach(jl.run)
+    // submit all jobs to the queue
+    jl.run(jobConfigs)
 
     // we  block here in 2 situations
     // a) the user asked for it.

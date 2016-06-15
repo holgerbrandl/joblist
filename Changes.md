@@ -6,7 +6,7 @@
 * Added `--reset` to `jlsubmit`
 * support  java-Xmx-notation for memory limits. Example: `-m 5g`
 * More streamlined report generation
-* Improved batch-submission
+* Dramatically improved batch-submission performance
 
 ## Joblist v0.6
 

@@ -126,6 +126,8 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 
 
   def waitUntilDone(sleepInterval: Long = 10000): Any = {
+    requireUniqeNames() // since we don't test for unique names when submitting jobs anymore, we double-check it here
+
     // stop if all jobs are final already
     if (jobs.forall(_.isFinal)) {
       return
@@ -164,6 +166,13 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
 
   /** Simple convenience wrapper around .run to submit multiple jobs. */
   def run(jobConfigs: Seq[JobConfiguration]): Seq[Job] = {
+
+    // make sure that all job names are unique
+    val allNames = jobConfigs.map(_.name).toList ::: jobs.map(_.name).toList
+    require(allNames.distinct.size == allNames.size,
+      "Can not submit jobs, because names are not unique!\n" + allNames.mkString("\n"))
+
+
     jobConfigs.map(run)
   }
 
@@ -184,7 +193,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     //    jobLogs.cmd.write(jc.cmd)
 
 
-    require(jobs.forall(_.config.name != namedJC.name), s"job names must be unique, and '${namedJC.name}' is already taken")
+//    require(jobs.forall(_.config.name != namedJC.name), s"job names must be unique, and '${namedJC.name}' is already taken")
 
     add(jobId)
 
@@ -217,6 +226,9 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     * different from DONE. */
   def resubmit(resubStrategy: ResubmitStrategy = new TryAgain(),
                resubJobs: List[Job] = getConfigRoots(requiresRerun)): Unit = {
+
+    // ensure that names are unique. without unique names we can not resubmit jobs at the moment. TODO why not using cmd-hash here??
+    requireUniqeNames()
 
     // tbd consider to move/rename user-logs
     if (resubJobs.isEmpty) return // can happen when rerunning wait with local scheduler or finished joblist
@@ -256,9 +268,13 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     // keep track of which jobs have been resubmitted by writing a graph file
     prev2NewIds.foreach { case (failedJob, resubJob) => resubGraphFile.appendLine(failedJob.id + "\t" + resubJob.id) }
 
-    require(jobs.map(_.config.name).distinct.size == jobs.size, "Inconsistent sate. Each job name should appear just once per joblist")
+    requireUniqeNames() // just a precaution
   }
 
+
+  def requireUniqeNames() = {
+    require(jobs.map(_.config.name).distinct.size == jobs.size, "Inconsistent state. Each job name must be unique per joblist")
+  }
 
 
   def reset(): Unit = {

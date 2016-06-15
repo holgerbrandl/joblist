@@ -73,6 +73,9 @@ class SlurmScheduler extends JobScheduler {
     // write temporary script since
     // submit the job to the lsf
     // @formatter:off
+
+    if(jc.logs.err.exists) System.err.println(s"WARNING: job name '${jc.name}' is not unique. Existing stream-captures will be overridden or may be corrupted!")
+
     var submitCmd =
       s"""
 sbatch $submitArgs -e ${jc.logs.err.absolute} -o ${jc.logs.out.absolute} <<"JLCMD"

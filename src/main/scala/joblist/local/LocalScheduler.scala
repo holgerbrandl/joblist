@@ -104,6 +104,8 @@ class LocalScheduler extends JobScheduler {
     if (!jc.otherQueueArgs.isEmpty) ignoreWarning("ignoring other submission settings")
 
 
+    if(jc.logs.err.exists) System.err.println(s"WARNING: job name '${jc.name}' is not unique. Existing stream-captures will be overridden or may be corrupted!")
+
     val jobId = new Random().nextInt(Int.MaxValue)
 
     val runInfo = new RunInfo(jobId, whoAmI, JobState.PENDING, "local", "none", "localhost", jc.name, new DateTime(), null, null, Int.MaxValue)
