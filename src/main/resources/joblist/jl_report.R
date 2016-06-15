@@ -1,10 +1,11 @@
 #!/usr/bin/env Rscript
 
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.22/R/core_commons.R")
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.22/R/ggplot_commons.R")
+if(!require(devtools)) install.packages("devtools")
+devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.26/R/core_commons.R")
+devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.26/R/ggplot_commons.R")
 
-require_auto(lubridate)
-require_auto(DT)
+loadpack(lubridate)
+loadpack(DT)
 
 
 if(!exists("joblist")){
