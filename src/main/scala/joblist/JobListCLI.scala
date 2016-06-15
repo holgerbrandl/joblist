@@ -128,7 +128,7 @@ object JobListCLI extends App {
      -n --name <job_name>                 Name of the job. Must be unique within this joblist
      -t --threads <num_threads>           Number of threads [default: 1]
      -w --time <walltime>                 Maximal walltime formatted as '[hh]h:mm'
-     -m --maxmem <maxmem>                 Maximal memory in Mb
+     -m --maxmem <maxmem>                 Maximal memory in Mb or using g-postfix for gigabytes (e.g. 5g)
      -q --queue <queue>                   Queue/partition to submit job to. Ignored for local scheduler
      -O --other_queue_args <queue_args>   Additional queue parameters
      --debug                              Debug mode which will execute the first submission in the local shell and
@@ -153,7 +153,7 @@ object JobListCLI extends App {
       wallTime = Option(options("time")).getOrElse(""),
       queue = Option(options("queue")).getOrElse(""),
       numThreads = options.get("threads").get.toInt,
-      maxMemory = Option(options("maxmem")).getOrElse("0").toInt,
+      maxMemory = parseMemory(Option(options("maxmem")).getOrElse("0")),
       otherQueueArgs = Option(options("other_queue_args")).getOrElse(""))
 
     val jobConfigs = ListBuffer.empty[JobConfiguration]
@@ -319,7 +319,7 @@ object JobListCLI extends App {
      --retry                              Simply retry without any change
      -t --threads <num_threads>           Resubmit with more threads
      -w --time <walltime>                 Resubmit with different walltime limit formatted as '[hh]h:mm'
-     -m --maxmem <max_memory>             Maximal memory in Mb
+     -m --maxmem <max_memory>             Maximal memory in Mb or using g-postfix for gigabytes (e.g. 5g)
      -q --queue <queue>                   Resubmit to different queue
      --type <fail_type>                   Defines which non-complete jobs should be resubmitted. Possible values
                                           are 'all', 'killed', 'cancelled' or 'failed' [default: all]
@@ -377,7 +377,7 @@ object JobListCLI extends App {
     }
 
     if (resubStrats.get("maxmem").get != null) {
-      pargs += new MoreMemory(resubStrats.get("maxmem").get.toInt)
+      pargs += new MoreMemory(parseMemory(resubStrats.get("maxmem").get))
     }
 
     if (resubStrats.get("threads").get != null) {
@@ -389,6 +389,8 @@ object JobListCLI extends App {
     pargs
   }
 
+
+  private def parseMemory(memString:String) = memString.toLowerCase().replace("g", "000").toInt
 
 
   def btop() = {
