@@ -183,8 +183,8 @@ object JobListCLI extends App {
         //        File("test_data/test_stdin.txt").lines.
 //                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/empty_chunks.txt").lines.
 //                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/non_regex_separators.txt").lines.
-                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/alignment_test.txt").lines.
-//        io.Source.stdin.getLines().
+//                File("/Users/brandl/Dropbox/cluster_sync/joblist/test_data/alignment_test.txt").lines.
+        io.Source.stdin.getLines().
           foldLeft(Seq(Seq.empty[String])) {
             (acc, line) =>
               if (batchSep.findFirstIn(line).isDefined) acc :+ Seq(line)
