@@ -42,6 +42,15 @@ sbt test:console
     sbt clean assembly
     ```
 
+    Intellij can sync to symbolic link as well (don't forget to exlude target and .git)
+    ```
+    mkdir /tmp/jl_devel
+    ln -s /tmp/jl_devel ~/jl_devel
+    # sync in intellij to jl_devel as remote path with user home being the origin of the sync configuration
+    cd /tmp/jl_devel
+    sbt clean assembly
+    ```
+
 ## How to test?
 
 See http://www.scala-sbt.org/0.13/docs/Testing.html
