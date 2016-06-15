@@ -116,37 +116,48 @@ jl wait --report
 
 ### Batch Submission
 
-Since jl startup is limited by the underlying java VM, subsequent invocation might be too slow to monitor/submit large (ie >1k) jobs jobs
+Since jl startup is limited by the underlying java VM, subsequent invocation might be too slow to monitor/submit large (ie >1k) jobs jobs. There are 2 options to overcome this limitation _batch submissions_ and _submission monitoring_.
 
-There are 2 options to overcome this limitation
+`jl` can read job definitions from a file or `/dev/stdin` and do a _batch submission_. By default it expects one job per line.
 
-* Batch submissions: `jl` can read job definitions from stdin (or from a file as well). By default it expects one job per line
+```
+for job_nr in $(seq 1 10 | head -n2); do
+    echo "echo 'sleeping for $job_nr seconds'; sleep $job_nr"
+done | jl submit --batch -
+```
 
-	```
-	for job_nr in $(seq 1 10); do
-	    echo "sleepTime=$(perl -e 'print int(rand(20)) + 10'); sleep $sleepTime; echo slept for $sleepTime seconds in job $job_nr"
-	done | jl submit --batch -
-	```
-	`joblist` also allows to use a custom separator charactor to process multi-line commands with this pattern
+`jl` also allows to use a custom separator regex pattern to separate and submit multi-line commands:
 
-    ```
-    for job_nr in $(seq 1 10); do
-        echo "
-        ## another job nr${job_nr}
-        sleepTime=$(perl -e 'print int(rand(20)) + 10');
-        sleep $sleepTime;
-        echo slept for $sleepTime seconds in job $job_nr
-        " | sed 's/^ *//' ## delete leading whitespace to allow for more robust regex
-	done | jl submit --batch - --bsep '^##'
-    ```
+```
+for job_nr in $(seq 1 10); do
+    echo "
+    ## another job nr${job_nr}
+    sleepTime=$(perl -e 'print int(rand(20)) + 10');
+    sleep $sleepTime;
+    echo slept for $sleepTime seconds in job $job_nr
+    " | sed 's/^ *//' ## delete leading whitespace to allow for more robust regex
+done | jl submit --batch - --bsep '^##'
+```
+The separator pattern is expected to be [java regular expression](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html) which will be matched unanchored to each line in order to split the input into job chunks.
 
-* Loop redirection: To just monitor a large number of jobs simply [pipe](http://stackoverflow.com/questions/18612603/redirecting-output-of-bash-for-loop) your submission loop into jl
+To debug such loops you can use `source /dev/stdin` as pipe sink
+```
+for job_nr in $(seq 1 10); do
+    echo "hello nr${job_nr}"
+done | source /dev/stdin
+```
+Differences to a simple `eval` are detailed out in [difference-between-eval-and-source-dev-stdin](http://unix.stackexchange.com/questions/123063/difference-between-eval-and-source-dev-stdin)
 
-	```
-	for job_nr in $(seq 1 10); do
-	    bsub "sleep 10"
-	done | jl submit add
-	```
+
+#### Submission Monitoring
+
+A simplified method to monitor just monitor a large number of jobs is to capture the job IDs directly from `stdout` using `jl add`. Here's an example:
+
+```
+for job_nr in $(seq 1 10); do
+    bsub "sleep 10"
+done | jl add
+```
 
 Job resubmission with `jl resub`
 -----------
