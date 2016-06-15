@@ -168,7 +168,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   def run(jobConfigs: Seq[JobConfiguration]): Seq[Job] = {
 
     // make sure that all job names are unique
-    val allNames = jobConfigs.map(_.name).toList ::: jobs.map(_.name).toList
+    val allNames = jobConfigs.map(_.withName().name).toList ::: jobs.map(_.name).toList
     require(allNames.distinct.size == allNames.size,
       "Can not submit jobs, because names are not unique!\n" + allNames.mkString("\n"))
 

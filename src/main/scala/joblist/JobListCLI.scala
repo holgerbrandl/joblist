@@ -1,6 +1,5 @@
 package joblist
 
-import java.lang.reflect.Modifier
 import java.util.Objects
 
 import better.files.File
