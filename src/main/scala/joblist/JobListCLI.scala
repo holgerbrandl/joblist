@@ -4,6 +4,8 @@ import java.util.Objects
 
 import better.files.File
 import joblist.local.LocalScheduler
+import joblist.lsf.LsfScheduler
+import joblist.slurm.SlurmScheduler
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
@@ -53,7 +55,7 @@ object JobListCLI extends App {
     case "resub" => resubmit()
     case "status" => status()
     case "cancel" => cancel()
-    case "up" => btop()
+    case "up" => up()
     case "shortcuts" => shortcuts()
     case "reset" => reset()
 
@@ -77,8 +79,8 @@ object JobListCLI extends App {
         resub     Resubmit non-complete jobs with escalated scheduler parameters
         status    Prints various statistics and allows to create an html report for the list
         cancel    Removes all  jobs of this list from the scheduler queue
-        up        Moves a list of jobs to the top of a queue (if supported by the underlying scheduler)
         reset     Removes all information related to this joblist.
+        up        Moves this list of jobs to the top of a queue (if supported by the underlying scheduler)
 
       If no <joblist_file> is provided, jl will use '.jobs' as default, but to save typing it will remember
       the last used joblist instance per directory.
@@ -407,9 +409,14 @@ object JobListCLI extends App {
   private def parseMemory(memString:String) = memString.toLowerCase().replace("g", "000").toInt
 
 
-  def btop() = {
+  def up() = {
     val options = parseArgs(args, "Usage: jl up <joblist_file>")
-    getJL(options).btop()
+
+    val jl: JobList = getJL(options)
+
+    require(jl.scheduler.isInstanceOf[LsfScheduler], "`up` is currently just supported when using LSF. See https://github.com/holgerbrandl/joblist/issues/45")
+
+    jl.jobs.map(job => s"btop ${job.id}").foreach(Bash.eval(_))
   }
 
 

@@ -8,6 +8,7 @@
 * Streamlined report generation [#50](https://github.com/holgerbrandl/joblist/issues/50)
 * Dramatically improved batch-submission performance
 * More idiomatic blocking with `jl wait || exit 1` (or `jl status || exit 1`)
+* Reduced # status files per job by 20% (4 instead of 5) on SLURM
 
 
 ## Joblist v0.6

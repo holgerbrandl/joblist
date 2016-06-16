@@ -3,7 +3,6 @@ package joblist
 import better.files.File
 import joblist.lsf.LsfScheduler
 
-import scalautils.Bash
 import scalautils.CollectionUtils.StrictSetOps
 
 /**
@@ -296,12 +295,6 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
     file.parent.glob_links(s"${file.name}.*").foreach(_.delete())
 
     //tbd why not just renaming them by default and have a wipeOut argument that would also clean up .jl files
-  }
-
-
-  def btop() = {
-    require(scheduler.isInstanceOf[LsfScheduler], "btop is currently just supported for lsf")
-    jobs.map(job => s"btop ${job.id}").foreach(Bash.eval(_))
   }
 
 
