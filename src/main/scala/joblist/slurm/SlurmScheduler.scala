@@ -160,8 +160,10 @@ JLCMD""".alignLeft.trim + "\n"
 
     //    val logFile = File("/home/brandl/unit_tests/.jl/151449.runinfo"); val logData = logFile.lines.toSeq
     //
-    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
-    rawLogFile.write(logData.mkString("\n"))
+
+    // disabled to reduce file-clutter
+//    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
+//    rawLogFile.write(logData.mkString("\n"))
 
 
     val header = logData.head.split("[|]").map(_.trim)
