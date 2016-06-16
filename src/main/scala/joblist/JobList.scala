@@ -87,7 +87,7 @@ case class JobList(file: File = File(DEFAULT_JL), scheduler: JobScheduler = gues
   def queueStatus() = {
     //noinspection ConvertibleToMethodValue
     val jobIds = jobs.map(_.id) // inlining ot would cause it to be evaulated jl.size times
-    scheduler.getQueued.filter(qs => jobIds.contains(qs.jobId))
+    scheduler.getJobStates(jobIds)
   }
 
 

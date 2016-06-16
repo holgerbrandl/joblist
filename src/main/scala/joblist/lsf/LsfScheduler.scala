@@ -91,7 +91,7 @@ JLCMD"""
   }
 
 
-  override def getQueued: List[QueueStatus] = {
+  override def getJobStates(jobIds: List[Int]): List[QueueStatus] = {
     val queueStatus = Bash.eval("bjobs").stdout
 
     queueStatus.
@@ -106,7 +106,11 @@ JLCMD"""
         //        val status = bjLineSplit(2).replace("RUN", JobState.RUNNING.toString)
 
         QueueStatus(bjLineSplit(0).toInt, getLsfState(bjLineSplit(2)))
-      }).toList
+      })
+      .toList
+
+      // just retain the jobs from the current joblist
+      .filter(qs => jobIds.contains(qs.jobId))
   }
 
 

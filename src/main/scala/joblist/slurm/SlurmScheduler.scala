@@ -109,24 +109,41 @@ JLCMD""".alignLeft.trim + "\n"
   }
 
 
-  override def getQueued: List[QueueStatus] = {
+  override def getJobStates(jobIds: List[Int]): List[QueueStatus] = {
     //    val queueStatus ="""             JOBID PARTITION     NAME     USER    STATE       TIME TIME_LIMI  NODES NODELIST(REASON)
     //           1664292 haswell64 test_job   brandl  PENDING       0:00   8:00:00      1 (None)
     //""".split("\n")
 
     val queueStatus = Bash.eval("squeue -lu $(whoami)").stdout
 
-    queueStatus.
+    val filteredQS = queueStatus.
       // we drop the first 2 lines (header and date) and use span to also remove custom header elements
       span(!_.trim.startsWith("JOBID"))._2.
       drop(1).
       filter(!_.isEmpty).
-      map(slLine => {
-        // http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
-        val splitLine = slLine.trim.split(" +")
-        val curstate = JobState.valueOf(slurmStateRemapping(splitLine(4)))
-        QueueStatus(splitLine(0).toInt, curstate)
-      }).toList
+
+      // remove jobs which are not part of the joblist to speed up parsing
+      map(_.trim.split(" +")). //  http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
+      map(splitLine => splitLine(0).toInt -> splitLine).toMap.
+      filterKeys(jobIds.contains(_))
+
+
+    // handle overlong walltime submissions which don't fit into the queue like: jl submit -w 40:00 "echo test"
+    val ptl = filteredQS.filter(sl => sl._2(8).contains("PartitionTimeLimit"))
+    if (ptl.nonEmpty) {
+      ptl.foreach(ptlJob =>
+        System.err.println(s"SLURM RESOURCE CONFIGURATION ERROR: Partition time limit detected for job ${ptlJob._1} which will cause job to pend forever:\n${ptlJob._2.mkString("\t")}")
+      )
+      System.exit(1) //todo should we really quit here
+    }
+
+
+    // parse remaining elements into QueueStatus instances
+    filteredQS.map { case (jobId, splitLine) => {
+      val curstate = JobState.valueOf(slurmStateRemapping(splitLine(4)))
+      QueueStatus(jobId, curstate)
+    }
+    }.toList
   }
 
 
@@ -148,6 +165,7 @@ JLCMD""".alignLeft.trim + "\n"
   override def updateRunInfo(jobId: Int, logFile: File): Unit = {
     // see https://sph.umich.edu/biostat/computing/cluster/slurm.html#sbatch
     val statsCmd = s"sacct -j  ${jobId} --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User,Partition,NodeList -P"
+    //    sacct -j  346176 --format=JobID,JobName,Elapsed,End,Submit,Start,State,ExitCode,Timelimit,User,Partition,NodeList -P
     val logData = queryRunData(statsCmd, jobId)
 
     require(logData.mkString.contains(jobId + ""), s"$jobId is not yet or no longer in the job history:\n" + logData)
@@ -162,8 +180,8 @@ JLCMD""".alignLeft.trim + "\n"
     //
 
     // disabled to reduce file-clutter
-//    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
-//    rawLogFile.write(logData.mkString("\n"))
+    //    val rawLogFile = File(logFile.pathAsString.replace(".xml", ""))
+    //    rawLogFile.write(logData.mkString("\n"))
 
 
     val header = logData.head.split("[|]").map(_.trim)
@@ -190,7 +208,7 @@ JLCMD""".alignLeft.trim + "\n"
     var killReason = null
 
 
-//    val slurmState = "CANCELLED by 8152"
+    //    val slurmState = "CANCELLED by 8152"
     val state = JobState.valueOf(slurmStateRemapping(slurmState))
 
     val runLog = RunInfo(

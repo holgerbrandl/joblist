@@ -17,7 +17,7 @@ trait JobScheduler {
   def submit(jc: JobConfiguration): Int
 
   /** Returns currently queued jobs. */
-  def getQueued: List[QueueStatus]
+  def getJobStates(jobIds: List[Int]): List[QueueStatus]
 
   /** Writes job statistics as XML serialized joblist.RunInfo into the given file. */
   def updateRunInfo(jobId: Int, logFile: File): Unit

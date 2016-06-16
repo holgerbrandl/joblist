@@ -25,7 +25,7 @@ class LocalScheduler extends JobScheduler {
 
   // from http://www.nurkiewicz.com/2014/11/executorservice-10-tips-and-tricks.html
   val NUM_THREADS = {
-    if(sys.env.get("JL_MAX_LOCAL_JOBS").isDefined)
+    if (sys.env.get("JL_MAX_LOCAL_JOBS").isDefined)
       sys.env.get("JL_MAX_LOCAL_JOBS").get.toInt
     else
       Math.max(1, Runtime.getRuntime.availableProcessors() - 2)
@@ -95,16 +95,16 @@ class LocalScheduler extends JobScheduler {
         s"allows at max for jobs using $NUM_THREADS threads")
 
     // inform the users about ignored parameters
-    def ignoreWarning(msg:String) = Console.err.println(this.getClass.getName + s": ${msg}")
+    def ignoreWarning(msg: String) = Console.err.println(this.getClass.getName + s": ${msg}")
 
     // see https://github.com/holgerbrandl/joblist/issues/17
     if (!jc.wallTime.isEmpty) ignoreWarning("ignoring walltime setting")
-    if(jc.maxMemory>0) ignoreWarning("ignoring memory setting")
+    if (jc.maxMemory > 0) ignoreWarning("ignoring memory setting")
     if (!jc.queue.isEmpty) ignoreWarning("ignoring queue setting")
     if (!jc.otherQueueArgs.isEmpty) ignoreWarning("ignoring other submission settings")
 
 
-    if(jc.logs.err.exists) System.err.println(s"WARNING: job name '${jc.name}' is not unique. Existing stream-captures will be overridden or may be corrupted!")
+    if (jc.logs.err.exists) System.err.println(s"WARNING: job name '${jc.name}' is not unique. Existing stream-captures will be overridden or may be corrupted!")
 
     val jobId = new Random().nextInt(Int.MaxValue)
 
@@ -144,10 +144,12 @@ class LocalScheduler extends JobScheduler {
   }
 
 
-  override def getQueued: List[QueueStatus] = {
+  override def getJobStates(jobIds: List[Int]): List[QueueStatus] = {
     jobstats.
       filterNot({ case (id, runInfo) => JobState.finalStates.contains(runInfo.state) }).
-      map { case (id, runInfo) => QueueStatus(id, runInfo.state) }.toList
+      map { case (id, runInfo) => QueueStatus(id, runInfo.state) }
+        .toList
+//        .filter(qs => jobIds.contains(qs.jobId)) // should no be necessary for local scheduler
   }
 
 

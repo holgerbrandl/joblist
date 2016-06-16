@@ -123,7 +123,7 @@ class SchedulingTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     // resubmit killed jobs with more walltime
     jl.resubmit(new MoreTime("00:05"))
-    jl.scheduler.getQueued should have size 2
+    jl.queueStatus() should have size 2
 
     jl.waitUntilDone()
     jl.killed should be(empty)

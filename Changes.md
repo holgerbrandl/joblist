@@ -1,6 +1,6 @@
 
 
-## Joblist v0.7
+## Joblist v0.7 (not yet released)
 
 * `jl submit --wait` does not longer reset the list [#49](https://github.com/holgerbrandl/joblist/issues/49)
 * Added `--reset` to `jl submit`
@@ -9,7 +9,7 @@
 * Dramatically improved batch-submission performance
 * More idiomatic blocking with `jl wait || exit 1` (or `jl status || exit 1`)
 * Reduced # status files per job by 20% (4 instead of 5) on SLURM
-
+* Validate that no jobs would pend forever due to `PartitonTimeLimt` on SLURM
 
 ## Joblist v0.6
 
