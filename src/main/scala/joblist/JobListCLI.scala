@@ -42,6 +42,10 @@ object JobListCLI extends App {
   }
 
 
+  // don't quit but simply return when running the unit tests
+  var shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
+
+
   args.head match {
     case "submit" => submit()
     case "add" => add()
@@ -55,9 +59,6 @@ object JobListCLI extends App {
 
     case _ => printUsageAndExit()
   }
-
-  // don't quit but simply return when running the unit tests
-  var shouldExit = !Thread.currentThread().getName.contains("ScalaTest")
 
   if (shouldExit) {
     System.exit(0)
@@ -307,6 +308,18 @@ object JobListCLI extends App {
     if (options.get("report").get.toBoolean) {
       val reportFile = new JobReport(jl).createHtmlReport()
     }
+
+
+    exitOneIfIncomplete(jl)
+  }
+
+
+  def exitOneIfIncomplete(jl: JobList, errMsg:String=""): Unit = {
+    if (shouldExit && !jl.isComplete) {
+      if(errMsg.nonEmpty)  System.err.println(errMsg)
+
+      System.exit(1)
+    }
   }
 
 
@@ -430,7 +443,7 @@ object JobListCLI extends App {
      --report             Create an html report for this joblist
      --failed             Only print the status for final but not yet done jobs in this joblist. This could be because those job
                           failed due to incorrect user logic, or because the queuing system killed them
-                          has been completely processed without errors. Useful for flow-control in bash scripts.
+                          has been completely processed without errors.
      --killed             Only print the status of jobs killed by the queuing system.
      --ids <csv_ids>      Limit reporting to the comma-separted list of jobs ids
      --first              Limit reporting to the first job only
@@ -457,7 +470,7 @@ object JobListCLI extends App {
     restartLocalScheduler(jl)
 
 
-    if (!options.get("no_header").get.toBoolean && !options.get("failed").get.toBoolean) {
+    if (!options.get("no_header").get.toBoolean) {
       println(jl.toString)
       println(jl.status)
     }
@@ -512,7 +525,8 @@ object JobListCLI extends App {
     //    val isVerbose = options.get("verbose").get.toBoolean
     //    val fields = options.get("fields").get.split(",").map(ExportProps.valueOf(_))
 
-    new JobReport(jl).exportStatistics()
+      // disabled because just needed for html report for now
+      // new JobReport(jl).exportStatistics()
 
     statusJobs.map(job => {
       val ri = job.info
@@ -528,5 +542,7 @@ object JobListCLI extends App {
       fields.mkString("\t")
 
     }).foreach(println)
+
+    exitOneIfIncomplete(jl)
   }
 }

@@ -1,0 +1,12 @@
+
+    ## pilonizing chr1
+    echo test
+    
+
+    ## pilonizing chr2
+    echo test
+    
+
+    ## pilonizing chr3
+    echo test
+    

@@ -91,11 +91,10 @@ bsub "echo foo" | jl add
 bsub "echo bar" | jl add
 bsub "exit 1"   | jl add
 
-jl wait
+// wait and exit with 1 (or do whatever you feel is most appropriate) if some
+// jobs fail to complete (which will cause jl to exit with 1
+jl wait || exit 1
 
-if [ -n "$(jl status --failed)" ]; then
-    echo "some jobs failed"
-fi
 
 ## print captured sterr to understand why they did fail
 jl status --failed --logs err

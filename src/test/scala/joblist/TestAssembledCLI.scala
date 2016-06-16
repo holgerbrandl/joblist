@@ -98,28 +98,6 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
 
-  it should "split batch jobs up correctly" in {
-
-    val script =
-      s"""
-    cd ${wd.pathAsString}
-
-    jl reset
-    cat "${jlHome}/test_data/test_stdin.txt" | jl submit --batch - --bsep '^##'
-
-    jl wait
-    """.alignLeft
-
-    Bash.eval(script, showOutput = true)
-
-    val jl = JobList(wd / DEFAULT_JL)
-
-    jl.jobs should have size 3
-    jl.failed should have size 0
-  }
-
-
-
   // depends on https://github.com/holgerbrandl/joblist/issues/42
   //  ignore should "remember last jl in a robust manner " in {
   it should "remember last jl in a robust manner " in {
@@ -132,6 +110,17 @@ class TestAssembledCLI extends FlatSpec with Matchers with BeforeAndAfter {
 
     // after reset status should throw error
     Bash.eval("jl reset", showOutput = true, wd=wd).exitCode should be(0)
+    Bash.eval("jl status", showOutput = true, wd=wd).exitCode should be(1)
+  }
+
+
+  it should "report errors with  jl wait exits 1 if processing is not complete" in {
+
+    Bash.eval("jl submit 'echo foo'", showOutput = true, wd=wd).exitCode should be(0)
+    Bash.eval("jl submit 'echo bar >&2 ; exit 1'", showOutput = true, wd=wd).exitCode should be(0)
+
+    // ensure that status code is 1 if compressing is incomplete
+    Bash.eval("jl wait", showOutput = true, wd=wd).exitCode should be(1)
     Bash.eval("jl status", showOutput = true, wd=wd).exitCode should be(1)
   }
 }
