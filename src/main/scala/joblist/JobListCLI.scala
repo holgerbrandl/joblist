@@ -251,6 +251,7 @@ object JobListCLI extends App {
     // b) if a local scheduler is being used, which is suboptimal since the multithreading does not kick in
     if (waitForJob) {
       jl.waitUntilDone()
+      exitOneIfIncomplete(jl)
     }
   }
 
