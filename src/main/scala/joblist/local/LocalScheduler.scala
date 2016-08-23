@@ -54,7 +54,7 @@ class LocalScheduler extends JobScheduler {
 
     protected override def beforeExecute(t: Thread, r: Runnable) {
       if (r.isInstanceOf[JobRunnable]) {
-        Thread.sleep(3000) // wait a second to avoid that jobs are actually started in add mode
+        Thread.sleep(10000) // wait a second to avoid that jobs are actually started in add mode
 
         val jobId = r.asInstanceOf[JobRunnable].jobId
         jobstats += (jobId -> jobstats(jobId).copy(state = JobState.RUNNING, startTime = new DateTime()))
