@@ -5,7 +5,6 @@ import java.util.Objects
 import better.files.File
 import joblist.local.LocalScheduler
 import joblist.lsf.LsfScheduler
-import joblist.slurm.SlurmScheduler
 import org.docopt.Docopt
 
 import scala.collection.JavaConversions._
@@ -23,7 +22,7 @@ import scalautils.{Bash, ShellUtils}
   */
 object JobListCLI extends App {
 
-  val version = "0.7-SNAPSHOT"
+  val version = "0.7"
 
 
   if (args.length == 1 && (args(0) == "-v" || args(0) == "--version")) {

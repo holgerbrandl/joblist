@@ -66,7 +66,7 @@ class LocalScheduler extends JobScheduler {
     protected override def afterExecute(r: Runnable, t: Throwable) {
 
       if (r.isInstanceOf[JobRunnable]) {
-
+c
         val jobRunnable = r.asInstanceOf[JobRunnable]
         val jobId = jobRunnable.jobId
 
