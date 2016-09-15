@@ -1,6 +1,6 @@
 
 
-## Joblist v0.7 (not yet released)
+## Joblist v0.7 (15.9.2016)
 
 * `jl submit --wait` does not longer reset the list [#49](https://github.com/holgerbrandl/joblist/issues/49)
 * Added `--reset` to `jl submit`
