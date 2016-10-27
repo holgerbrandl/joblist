@@ -456,7 +456,7 @@ object JobListCLI extends App {
      --first              Limit reporting to the first job only
      --by_name <pattern>  Limit reporting to those jobs whose names match the given regex
      --no_header          Do not print the joblist summary as header
-     --log <what>         Print details for selected jobs. Possible values are "cmd", "err", "out", "config" and "runinfo"
+     --log <what>         Print details for selected jobs. Possible values are "state" "cmd", "err", "out", "config" and "runinfo"
       """.alignLeft.trim)
 
     //    --fields <what>      Define which job details to include in the table. Comma-separated list of "basics","logs",
@@ -518,7 +518,8 @@ object JobListCLI extends App {
           case "cmd" => job.config.cmd.split("\n").toList
           case "config" => JobConfiguration.jcXML(job.id, jl.dbDir).lines
           case "runinfo" => job.infoFile.lines
-        }).foreach(println(_))
+          case "state" => ListBuffer(job.info.jobId, job.info.jobName, job.info.state).mkString("\t").toList
+        }).foreach(println)
 
         println() // add an empty line for better readability
       })
@@ -526,29 +527,12 @@ object JobListCLI extends App {
       return
     }
 
-    // by default do regular table reporting
-
 
     //    val isVerbose = options.get("verbose").get.toBoolean
     //    val fields = options.get("fields").get.split(",").map(ExportProps.valueOf(_))
 
       // disabled because just needed for html report for now
       // new JobReport(jl).exportStatistics()
-
-    statusJobs.map(job => {
-      val ri = job.info
-      val fields = ListBuffer(ri.jobId, ri.jobName, ri.state)
-
-      //      if (isVerbose) {
-      //        //        fields += Seq(job.config.logs.err, job.config.logs.out)
-      //        fields += File(".").relativize(job.config.logs.err)
-      //        fields += File(".").relativize(job.config.logs.out)
-      //        fields += File(".").relativize(job.config.logs.cmd)
-      //      }
-
-      fields.mkString("\t")
-
-    }).foreach(println)
 
     exitOneIfIncomplete(jl)
   }
