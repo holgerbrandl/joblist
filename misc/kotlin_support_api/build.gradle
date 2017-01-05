@@ -1,0 +1,60 @@
+group 'de.mpicbg.scicomp.joblist'
+version '1.0'
+
+buildscript {
+    ext.kotlin_version = '1.0.6'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.5
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "de.mpicbg.scicomp:joblist:0.7"
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+
+// http://stackoverflow.com/questions/11474729/how-to-build-sources-jar-with-gradle
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+// cd /Users/brandl/Dropbox/cluster_sync/scalautils && sbt publish
+// cd /Users/brandl/Dropbox/cluster_sync/joblist && sbt publish
+// cd ~/mnt/mack/bioinfo/holger/misc/Dropbox/cluster_sync/scalautils && sbt publish
+// cd ~/mnt/mack/bioinfo/holger/misc/Dropbox/cluster_sync/joblist && sbt publish
+// cd ~ &&  git clone https://github.com/holgerbrandl/kutils.git && cd kutils && gradle install
+
+// https://docs.gradle.org/current/userguide/maven_plugin.html
+uploadArchives {
+    repositories {
+        mavenDeployer {
+//            pom.groupId = 'de.mpicbg.scicomp'
+//            pom.version = '0.1-SNAPSHOT'
+            pom.artifactId = 'joblist-kotlin'
+
+            repository(url: "file://localhost/tmp/myRepo/")
+        }
+    }
+}
