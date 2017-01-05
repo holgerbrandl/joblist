@@ -120,6 +120,12 @@ jl.resubmit(new OtherQueue("long"))
 
 ```
 
+To use joblist with [Kotlin](https://kotlinlang.org/), we suggest using a little [support API](misc/kotlin_support_api/src/main/kotlin/JoblistSupportAPI.kt) which is available as an artifact under
+```
+de.mpicbg.scicomp.joblist:joblist-kotlin:1.0
+```
+See [joblist_test.kts](misc/kotlin_support_api/joblist_test.kts) for an example made with [kscript](https://github.com/holgerbrandl/kscript).
+
 Support & Documentation
 -----------------------
 
