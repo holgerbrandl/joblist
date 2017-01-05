@@ -1,0 +1,18 @@
+# Created by .ignore support plugin (hsz.mobi)
+
+**/.idea
+
+## File-based project format:
+*.iws
+
+## Plugin-specific files:
+
+# IntelliJ
+/out/
+
+**/.gradle
+**/gradle*
+**/build/
+
+!gradle-wrapper.jar
+
