@@ -1,6 +1,6 @@
 #!/usr/bin/env kscript
 
-//DEPS de.mpicbg.scicomp.joblist:joblist-kotlin:1.0'
+//DEPS de.mpicbg.scicomp.joblist:joblist-kotlin:1.1
 
 
 import de.mpicbg.scicomp.kutils.joblist.JobConfig
