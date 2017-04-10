@@ -15,7 +15,7 @@ Installation
 
 ```
 cd ~/bin
-curl https://dl.dropboxusercontent.com/u/113630701/joblist_releases/joblist_installer_v0.7.tar.gz | tar -zxvf -
+curl https://cloud.mpi-cbg.de/index.php/s/hjRbxtxcuhNKlTz/download | tar -zxvf -
 echo 'export PATH='$(pwd)/joblist_v0.7':$PATH' >> ~/.bash_profile
 source ~/.bash_profile
 ```
