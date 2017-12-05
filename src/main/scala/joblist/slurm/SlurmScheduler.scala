@@ -124,6 +124,7 @@ JLCMD""".alignLeft.trim + "\n"
 
       // remove jobs which are not part of the joblist to speed up parsing
       map(_.trim.split(" +")). //  http://stackoverflow.com/questions/10079415/splitting-a-string-with-multiple-spaces
+      filter(splitLine=> !splitLine(0).contains("_")).
       map(splitLine => splitLine(0).toInt -> splitLine).toMap.
       filterKeys(jobIds.contains(_))
 
