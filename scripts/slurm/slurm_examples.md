@@ -133,8 +133,26 @@ Result is
 ```
 
 
-## Job Status Reporting
+## array jobs example
 
+```bash
+
+echo '#!/bin/bash
+#SBATCH -J myprog # A single job name for the array
+#SBATCH -c 1 # Number of cores
+#SBATCH -N 1 # All tasks on one machine
+
+sleep 30
+#./do_something input$SLURM_ARRAY_TASK_ID.dat
+' > myslurmarray.slurm
+
+sbatch --array=1-30 myslurmarray.slurm
+
+## run jl to see if it can cope with array ids
+jl submit --wait "sleep 30; echo foo" 
+
+
+```
 
 ## Links
 
