@@ -114,22 +114,58 @@ version=$(grep "val version" src/main/scala/joblist/JobListCLI.scala | cut -d' '
 mkdir joblist_v${version}
 
 #cp target/scala-2.11/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
-ll joblist_v${version}/joblist_assembly.jar
 cp target/joblist-assembly-*.jar joblist_v${version}/joblist_assembly.jar
+ll joblist_v${version}/joblist_assembly.jar
 
 echo '#!/usr/bin/env bash' > joblist_v${version}/jl
 echo 'java -Xmx1g -cp "$(dirname $0)/joblist_assembly.jar" joblist.JobListCLI "$@"' >> joblist_v${version}/jl
 chmod ugo+x joblist_v${version}/jl
 
 tar -cvzf joblist_installer_v${version}.tar.gz  joblist_v${version}
-
-cp joblist_installer_v${version}.tar.gz /Users/brandl/Dropbox/Public/joblist_releases
 ```
 
-4) Attach installer to release
 
-5) Create new version on [jcenter](https://bintray.com/holgerbrandl/mpicbg-scicomp/joblist/view`
-)
+4. Create github release with attached bin-release
+
+```bash
+source /Users/brandl/Dropbox/archive/gh_token.sh
+export GITHUB_TOKEN=${GH_TOKEN}
+#echo $GITHUB_TOKEN
+
+# make your tag and upload
+
+jl_version=$(grep "val version" src/main/scala/joblist/JobListCLI.scala | cut -d' ' -f6 | tr -d '"')
+echo $jl_version
+
+
+#git tag v${jl_version} && git push --tags
+(git diff --exit-code && git tag v${jl_version})  || echo "could not tag current branch"
+git push --tags
+
+# check the current tags and existing releases of the repo
+github-release info -u holgerbrandl -r joblist
+
+# create a formal release
+github-release release \
+    --user holgerbrandl \
+    --repo joblist \
+    --tag "v${jl_version}" \
+    --name "v${jl_version}" \
+    --description "See [Changes.md](https://github.com/holgerbrandl/joblist/blob/master/Changes.md) for changes." 
+
+
+## upload sdk-man binary set
+ll joblist_installer_v${version}.tar.gz
+github-release upload \
+    --user holgerbrandl \
+    --repo joblist \
+    --tag "v${jl_version}" \
+    --name "joblist_installer_v${version}.tar.gz" \
+    --file joblist_installer_v${version}.tar.gz
+
+```
+
+3. Create new version on [jcenter](https://bintray.com/holgerbrandl/mpicbg-scicomp/joblist/view`)
 ```
 sbt publish
 
