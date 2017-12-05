@@ -99,11 +99,11 @@ Before getting started:
 * make sure to now use any non-public SNAPSHOT dependencies
 
 
-1) Increment version in build.sbt, `joblist.JobListCLI.version`
+1) Increment version in [`build.sbt`](../build.sbt), [JobListCLI](../src/main/scala/joblist/JobListCLI.scala#L25-L28)
 2) Update version in README.md (installation and sbt inclusion)
 2) Push and and create version on github
 3) Build assembly jar, build tar.gz with
-```
+```bash
 cd /dir/with/joblist
 rm -rf target ## to get rid of old version-tag assebmly
 
@@ -125,6 +125,7 @@ tar -cvzf joblist_installer_v${version}.tar.gz  joblist_v${version}
 
 cp joblist_installer_v${version}.tar.gz /Users/brandl/Dropbox/Public/joblist_releases
 ```
+
 4) Attach installer to release
 
 5) Create new version on [jcenter](https://bintray.com/holgerbrandl/mpicbg-scicomp/joblist/view`

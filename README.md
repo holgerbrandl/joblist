@@ -94,7 +94,7 @@ In addition to the provided shell utilities, joblist can be also used programati
 <dependency>
   <groupId>de.mpicbg.scicomp</groupId>
   <artifactId>joblist</artifactId>
-  <version>0.7</version>
+  <version>0.7.1</version>
   <type>pom</type>
 </dependency>
 ```
