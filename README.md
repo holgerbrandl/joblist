@@ -13,10 +13,15 @@ Conceptually `jl` is *just* managing lists of job-ids as reported by the underly
 Installation
 ------------
 
-```
+```bash
 cd ~/bin
-curl https://cloud.mpi-cbg.de/index.php/s/hjRbxtxcuhNKlTz/download | tar -zxvf -
-echo 'export PATH='$(pwd)/joblist_v0.7':$PATH' >> ~/.bash_profile
+wget https://github.com/holgerbrandl/joblist/releases/download/v0.7.1/joblist_installer_v0.7.1.tar.gz 
+tar -zxvf joblist_installer_v0.7.1.tar.gz
+
+# You also may want to update your bash profile to includ jl in your PATH by default
+echo '
+export PATH='$(pwd)/joblist_v0.7.1':$PATH
+' >> ~/.bash_profile
 source ~/.bash_profile
 ```
 
