@@ -146,7 +146,7 @@ sleep 30
 #./do_something input$SLURM_ARRAY_TASK_ID.dat
 ' > myslurmarray.slurm
 
-sbatch --array=1-30 myslurmarray.slurm
+sbatch --array=1-5%3 myslurmarray.slurm
 
 ## run jl to see if it can cope with array ids
 jl submit --wait "sleep 30; echo foo" 
