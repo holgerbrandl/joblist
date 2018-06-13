@@ -14,9 +14,9 @@ fun JobList.createHtmlReport() {
     `package$`.`MODULE$`.ImplJobListUtils(this).createHtmlReport()
 }
 
-fun JobList.createHtmlReport(resubStrategy: ResubmitStrategy = TryAgain(),
-                             configRoots: List<Job> = `package$`.`MODULE$`.getConfigRoots(this.requiresRerun())) {
-    return resubmit(resubStrategy, configRoots)
+
+fun JobList.resubmit(resubStrategy: ResubmitStrategy = TryAgain()) {
+    return resubmit(resubStrategy, `package$`.`MODULE$`.getConfigRoots(this.requiresRerun()))
 }
 
 
